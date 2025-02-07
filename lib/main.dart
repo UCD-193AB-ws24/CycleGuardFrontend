@@ -31,6 +31,9 @@ class MyApp extends StatelessWidget {
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo),
         ),
         home: MyHomePage(),
+        routes: {
+          '/loginpage': (context) => LoginPage(),
+        }
       ),
     );
   }
@@ -80,55 +83,56 @@ class _MyHomePageState extends State<MyHomePage> {
         return Scaffold(
           body: Row(
             children: [
-              SafeArea(
-                child: NavigationRail(
-                  extended: constraints.maxWidth >= 600,
-                  destinations: [
-                    NavigationRailDestination(
-                      icon: Icon(Icons.waving_hand_outlined),
-                      label: Text('Start'),
-                    ),
-                    NavigationRailDestination(
-                      icon: Icon(Icons.login),
-                      label: Text('Login'),
-                    ),
-                    NavigationRailDestination(
-                      icon: Icon(Icons.home_outlined),
-                      label: Text('Home'),
-                    ),
-                    NavigationRailDestination(
-                      icon: Icon(Icons.person_outline),
-                      label: Text('Social'),
-                    ),
-                    NavigationRailDestination(
-                      icon: Icon(Icons.calendar_month_outlined),
-                      label: Text('History'),
-                    ),
-                    NavigationRailDestination(
-                      icon: Icon(Icons.emoji_events_outlined),
-                      label: Text('Achievements'),
-                    ),
-                    NavigationRailDestination(
-                      icon: Icon(Icons.pedal_bike),
-                      label: Text('Routes'),
-                    ),
-                    NavigationRailDestination(
-                      icon: Icon(Icons.monetization_on_outlined),
-                      label: Text('Store'),
-                    ),
-                    NavigationRailDestination(
-                      icon: Icon(Icons.settings_outlined),
-                      label: Text('Settings'),
-                    ),
-                  ],
-                  selectedIndex: selectedIndex,
-                  onDestinationSelected: (value) {
-                    setState(() {
-                      selectedIndex = value;
-                    });
-                  },
+              if (selectedIndex != 0) // comment out this line and the navigation rail will show everywhere except the login page after clicking "get started" button
+                SafeArea(
+                  child: NavigationRail(
+                    extended: constraints.maxWidth >= 600,
+                    destinations: [
+                      NavigationRailDestination(
+                        icon: Icon(Icons.waving_hand_outlined),
+                        label: Text('Start'),
+                      ),
+                      NavigationRailDestination(
+                        icon: Icon(Icons.login),
+                        label: Text('Login'),
+                      ),
+                      NavigationRailDestination(
+                        icon: Icon(Icons.home_outlined),
+                        label: Text('Home'),
+                      ),
+                      NavigationRailDestination(
+                        icon: Icon(Icons.person_outline),
+                        label: Text('Social'),
+                      ),
+                      NavigationRailDestination(
+                        icon: Icon(Icons.calendar_month_outlined),
+                        label: Text('History'),
+                      ),
+                      NavigationRailDestination(
+                        icon: Icon(Icons.emoji_events_outlined),
+                        label: Text('Achievements'),
+                      ),
+                      NavigationRailDestination(
+                        icon: Icon(Icons.pedal_bike),
+                        label: Text('Routes'),
+                      ),
+                      NavigationRailDestination(
+                        icon: Icon(Icons.monetization_on_outlined),
+                        label: Text('Store'),
+                      ),
+                      NavigationRailDestination(
+                        icon: Icon(Icons.settings_outlined),
+                        label: Text('Settings'),
+                      ),
+                    ],
+                    selectedIndex: selectedIndex,
+                    onDestinationSelected: (value) {
+                      setState(() {
+                        selectedIndex = value;
+                      });
+                    },
+                  ),
                 ),
-              ),
               Expanded(
                 child: Container(
                   color: Theme.of(context).colorScheme.primaryContainer,

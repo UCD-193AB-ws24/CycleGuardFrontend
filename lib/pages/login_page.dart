@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../main.dart'; // Import MyAppState
+import '../main.dart';
 
 class LoginPage extends StatelessWidget {
   @override

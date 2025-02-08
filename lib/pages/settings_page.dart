@@ -73,6 +73,21 @@ class SettingsPage extends StatelessWidget {
                   );
                 },
               ),
+              // Reset Button
+              SizedBox(height: 20),
+              Center(
+                child: ElevatedButton(
+                  onPressed: () {
+                    final appState = Provider.of<MyAppState>(context, listen: false);
+                    appState.updateThemeColor(Colors.indigo);
+                    appState.toggleDarkMode(false);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    elevation: 10,
+                  ),
+                  child: Text('Reset Default Settings'),
+                ),
+              ),
             ],
           ),
         ),

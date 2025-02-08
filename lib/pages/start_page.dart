@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-// import '../main.dart'; // Import MyHomePage for navigation
+// import '../main.dart'; 
 
 class StartPage extends StatelessWidget {
   @override
@@ -12,13 +12,11 @@ class StartPage extends StatelessWidget {
             ClipRRect(
               borderRadius: BorderRadius.circular(200),
               child: Image.asset(
-              'assets/cg_img_1.png',
-              width: 300,
-              height: 300,
-            
+                'assets/cg_img_1.png',
+                width: 300,
+                height: 300,
               ),
             ),
-            
             SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {

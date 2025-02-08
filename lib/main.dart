@@ -28,9 +28,14 @@ class MyApp extends StatelessWidget {
         builder: (context, appState, child) {
           return MaterialApp(
             title: 'Cycle Guard App',
+            themeMode: appState.isDarkMode ? ThemeMode.dark : ThemeMode.light,
             theme: ThemeData(
               useMaterial3: true,
               colorScheme: ColorScheme.fromSeed(seedColor: appState.selectedColor),
+            ),
+            darkTheme: ThemeData.dark().copyWith(
+              brightness: Brightness.dark,
+              colorScheme: ColorScheme.fromSeed(seedColor: appState.selectedColor)
             ),
             home: MyHomePage(),
             routes: {
@@ -45,10 +50,16 @@ class MyApp extends StatelessWidget {
 
 class MyAppState extends ChangeNotifier {
   Color selectedColor = Colors.indigo;
+  bool isDarkMode = false;
 
   void updateThemeColor(Color newColor) {
     selectedColor = newColor;
-    notifyListeners(); // Notify widgets to rebuild
+    notifyListeners(); 
+  }
+
+  void toggleDarkMode(bool isEnabled) {
+    isDarkMode = isEnabled;
+    notifyListeners();
   }
 }
 
@@ -60,6 +71,18 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
 
   var selectedIndex = 0;
+
+  Color? getIconColor(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark
+        ? Colors.white70 
+        : Colors.black; 
+  }
+
+  Color? getNavRailBackgroundColor(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark
+        ? Theme.of(context).colorScheme.secondary
+        : Theme.of(context).colorScheme.secondaryFixedDim; 
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -92,46 +115,47 @@ class _MyHomePageState extends State<MyHomePage> {
         return Scaffold(
           body: Row(
             children: [
-              // if (selectedIndex != 0) // comment out this line and the navigation rail will show everywhere except the login page after clicking "get started" button
-                SafeArea(
+              // if (selectedIndex != 0) //comment out for navigation menu access
+                SizedBox(
+                  height: double.infinity,
                   child: NavigationRail(
-                    backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
+                    backgroundColor: getNavRailBackgroundColor(context),
                     extended: constraints.maxWidth >= 600,
                     destinations: [
                       NavigationRailDestination(
-                        icon: Icon(Icons.waving_hand_outlined),
+                        icon: Icon(Icons.waving_hand_outlined, color: getIconColor(context),),
                         label: Text('Start'),
                       ),
                       NavigationRailDestination(
-                        icon: Icon(Icons.login),
+                        icon: Icon(Icons.login_outlined, color: getIconColor(context),),
                         label: Text('Login'),
                       ),
                       NavigationRailDestination(
-                        icon: Icon(Icons.home_outlined),
+                        icon: Icon(Icons.home, color: getIconColor(context),),
                         label: Text('Home'),
                       ),
                       NavigationRailDestination(
-                        icon: Icon(Icons.person_outline),
+                        icon: Icon(Icons.person_outline, color: getIconColor(context),),
                         label: Text('Social'),
                       ),
                       NavigationRailDestination(
-                        icon: Icon(Icons.calendar_month_outlined),
+                        icon: Icon(Icons.calendar_month_outlined, color: getIconColor(context),),
                         label: Text('History'),
                       ),
                       NavigationRailDestination(
-                        icon: Icon(Icons.emoji_events_outlined),
+                        icon: Icon(Icons.emoji_events_outlined, color: getIconColor(context),),
                         label: Text('Achievements'),
                       ),
                       NavigationRailDestination(
-                        icon: Icon(Icons.pedal_bike),
+                        icon: Icon(Icons.pedal_bike, color: getIconColor(context),),
                         label: Text('Routes'),
                       ),
                       NavigationRailDestination(
-                        icon: Icon(Icons.monetization_on_outlined),
+                        icon: Icon(Icons.monetization_on_outlined, color: getIconColor(context),),
                         label: Text('Store'),
                       ),
                       NavigationRailDestination(
-                        icon: Icon(Icons.settings_outlined),
+                        icon: Icon(Icons.settings_outlined, color: getIconColor(context),),
                         label: Text('Settings'),
                       ),
                     ],
@@ -144,15 +168,29 @@ class _MyHomePageState extends State<MyHomePage> {
                   ),
                 ),
               Expanded(
-                child: Container(
-                  color: Theme.of(context).colorScheme.secondaryContainer,
-                  child: page,
-                ),
+                child: page,
               ),
             ],
           ),
         );
-      }
+      },
     );
   }
+}
+
+AppBar createAppBar(BuildContext context, String titleText) {
+  return AppBar(
+    title: Text(
+      titleText,
+      style: TextStyle(
+        fontWeight: FontWeight.bold,
+        color: Theme.of(context).brightness == Brightness.dark 
+            ? Colors.white70 
+            : Colors.black,
+      ),
+    ),
+    backgroundColor: Theme.of(context).brightness == Brightness.dark 
+        ? Colors.black12 
+        : Theme.of(context).colorScheme.surface,
+  );
 }

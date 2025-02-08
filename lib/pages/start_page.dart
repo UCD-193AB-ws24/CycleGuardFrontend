@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 // import '../main.dart'; // Import MyHomePage for navigation
-// import 'login_page.dart';
 
 class StartPage extends StatelessWidget {
   @override
@@ -23,10 +22,6 @@ class StartPage extends StatelessWidget {
             SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
-                /*final homePageState = context.findAncestorStateOfType<_MyHomePageState>();
-                if (homePageState != null) {
-                  homePageState.updateSelectedIndex(1);
-                }*/
                 Navigator.pushNamed(context, '/loginpage');
               },
               style: ElevatedButton.styleFrom(

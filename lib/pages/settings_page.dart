@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../main.dart'; // Import MyAppState
+import '../main.dart';
 
 class SettingsPage extends StatelessWidget {
   final List<Map<String, dynamic>> themeOptions = [
@@ -15,21 +15,15 @@ class SettingsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          'Settings',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-          )
-        ),
-      ),
-      body: Container(
+      appBar: createAppBar(context, 'Settings'),
+      body: SizedBox(
         width: double.infinity,
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Themes
               Text(
                 'Select Theme Color:',
                 style: Theme.of(context).textTheme.headlineSmall,
@@ -59,6 +53,22 @@ class SettingsPage extends StatelessWidget {
                       if (newColor != null) {
                         appState.updateThemeColor(newColor);
                       }
+                    },
+                  );
+                },
+              ),
+              // Dark Mode
+              SizedBox(height:10),
+              Consumer<MyAppState>(
+                builder: (context, appState, child) {
+                  return SwitchListTile(
+                    title: Text(
+                      'Dark Mode', 
+                      style: Theme.of(context).textTheme.headlineSmall,
+                    ),
+                    value: appState.isDarkMode, 
+                    onChanged: (bool value) {
+                      appState.toggleDarkMode(value);
                     },
                   );
                 },

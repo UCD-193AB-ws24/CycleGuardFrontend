@@ -24,23 +24,32 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (context) => MyAppState(),
-      child: MaterialApp(
-        title: 'Cycle Guard App',
-        theme: ThemeData(
-          useMaterial3: true,
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo),
-        ),
-        home: MyHomePage(),
-        routes: {
-          '/loginpage': (context) => LoginPage(),
-        }
+      child: Consumer<MyAppState>(
+        builder: (context, appState, child) {
+          return MaterialApp(
+            title: 'Cycle Guard App',
+            theme: ThemeData(
+              useMaterial3: true,
+              colorScheme: ColorScheme.fromSeed(seedColor: appState.selectedColor),
+            ),
+            home: MyHomePage(),
+            routes: {
+              '/loginpage': (context) => LoginPage(),
+            },
+          );
+        },
       ),
     );
   }
 }
 
 class MyAppState extends ChangeNotifier {
+  Color selectedColor = Colors.indigo;
 
+  void updateThemeColor(Color newColor) {
+    selectedColor = newColor;
+    notifyListeners(); // Notify widgets to rebuild
+  }
 }
 
 class MyHomePage extends StatefulWidget {
@@ -83,9 +92,10 @@ class _MyHomePageState extends State<MyHomePage> {
         return Scaffold(
           body: Row(
             children: [
-              if (selectedIndex != 0) // comment out this line and the navigation rail will show everywhere except the login page after clicking "get started" button
+              // if (selectedIndex != 0) // comment out this line and the navigation rail will show everywhere except the login page after clicking "get started" button
                 SafeArea(
                   child: NavigationRail(
+                    backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
                     extended: constraints.maxWidth >= 600,
                     destinations: [
                       NavigationRailDestination(
@@ -135,7 +145,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 ),
               Expanded(
                 child: Container(
-                  color: Theme.of(context).colorScheme.primaryContainer,
+                  color: Theme.of(context).colorScheme.secondaryContainer,
                   child: page,
                 ),
               ),

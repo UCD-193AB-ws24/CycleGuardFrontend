@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:ffi';
 import 'package:http/http.dart' as http;
 
 class AuthUtil {
@@ -16,8 +15,7 @@ class AuthUtil {
     print(username);
     print(password);
     if (isLoggedIn()) {
-      print("Already logged in!");
-      // TODO throw error if already logged in
+      throw "Already logged in!";
     }
     
     final requestBody = {
@@ -35,13 +33,22 @@ class AuthUtil {
     );
 
     print(uri);
-    final future = http.post(uri, body: jsonEncode(requestBody), headers: {'Content-Type':'application/json'});
-    // String response;
-    future.then((res) {
-      String response = res.body;
-      print(response);
-    });
+    final response = await http.post(uri, body: jsonEncode(requestBody), headers: {'Content-Type':'application/json'});
+
+    final newToken = response.body;
+    print("Got response from server: $newToken");
+
+    if (newToken.length != 16) {
+      print("Login failed!");
+      return false;
+    }
+
+    _token = newToken;
 
     return true;
+  }
+
+  static void logout() {
+
   }
 }

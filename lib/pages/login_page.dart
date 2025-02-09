@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:cycle_guard_app/auth/auth_util.dart';
+import 'package:cycle_guard_app/pages/home_page.dart';
 import 'package:flutter/material.dart';
 import '../main.dart'; // Import MyAppState
 
@@ -23,7 +24,11 @@ class LoginFormState extends State<LoginPage> {
     bool loginSuccess = await AuthUtil.login(username, password);
     print(loginSuccess?"Login success!":"Login failed!");
 
-
+    if (loginSuccess) {
+      setState(() {
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => HomePage()));
+      });
+    }
   }
 
   @override

@@ -28,7 +28,7 @@ class AuthUtil {
 
     final uri = Uri(
       scheme: "https",
-      host: "immortal-hot-cat.ngrok-free.app",
+      host: "cycleguardbackend-638241752910.us-central1.run.app",
       path: "/login",
     );
 

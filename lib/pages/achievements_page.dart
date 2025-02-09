@@ -100,7 +100,7 @@ class AchievementCard extends StatelessWidget {
         ),
       ),
       elevation: 4,
-      color: isDarkMode ? Colors.grey[800] : Colors.white, // Card color
+      color: isDarkMode ? Theme.of(context).colorScheme.onSecondaryFixedVariant : Colors.white, // Card color
       child: Stack(
         children: [
           Padding(
@@ -111,7 +111,7 @@ class AchievementCard extends StatelessWidget {
                 Icon(
                   icon,
                   size: 40,
-                  color: isCompleted ? Colors.amber : selectedColor, // Icon color
+                  color: isCompleted ? Colors.amber : Theme.of(context).colorScheme.onPrimaryFixed, // Icon color
                 ),
                 SizedBox(height: 8),
                 Text(

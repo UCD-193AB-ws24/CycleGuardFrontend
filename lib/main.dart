@@ -37,7 +37,7 @@ class OnBoardStartState extends State<OnBoardStart>{
           PageView(
             controller: pageController,
             children: [
-              StartPage(),
+              StartPage(pageController),
               LoginPage()
             ],
           ),
@@ -76,9 +76,7 @@ class MyApp extends StatelessWidget {
               colorScheme: ColorScheme.fromSeed(seedColor: appState.selectedColor)
             ),
             home: OnBoardStart(),
-            routes: {
-              '/loginpage': (context) => LoginPage(),
-            },
+
           );
         },
       ),
@@ -147,7 +145,7 @@ class _MyHomePageState extends State<MyHomePage> {
     Widget page;
     switch (selectedIndex) {
       case 0:
-        page = StartPage();
+        page = LoginPage();
       case 1:
         page = LoginPage();
       case 2:

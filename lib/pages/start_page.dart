@@ -1,9 +1,12 @@
+import 'package:cycle_guard_app/pages/login_page.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 // import '../main.dart'; 
 
 class StartPage extends StatelessWidget {
   @override
+  final PageController pageController;
+  StartPage(this.pageController);
   Widget build(BuildContext context) {
     final poppinsStyle = TextStyle(fontSize: 60,fontWeight: FontWeight.bold);
     return Scaffold(
@@ -32,7 +35,10 @@ class StartPage extends StatelessWidget {
             SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
-                Navigator.pushNamed(context, '/loginpage');
+                pageController.nextPage(
+                  duration: Duration(milliseconds: 300),
+                  curve: Curves.easeInOut,
+                );
               },
               style: ElevatedButton.styleFrom(
                 elevation: 10,

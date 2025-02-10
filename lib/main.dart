@@ -65,6 +65,7 @@ class MyApp extends StatelessWidget {
         builder: (context, appState, child) {
           return MaterialApp(
             title: 'Cycle Guard App',
+            debugShowCheckedModeBanner: false,
             themeMode: appState.isDarkMode ? ThemeMode.dark : ThemeMode.light,
             theme: ThemeData(
               useMaterial3: true,

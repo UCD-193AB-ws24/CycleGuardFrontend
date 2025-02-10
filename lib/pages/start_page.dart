@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 // import '../main.dart'; 
 
 class StartPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final poppinsStyle = TextStyle(fontSize: 60,fontWeight: FontWeight.bold);
     return Scaffold(
-      backgroundColor: Color(0xFFD6D5C2),
+      //backgroundColor: Color(0xFFD6D5C9),
+      backgroundColor: Color(0xFFD9D7C8),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -13,11 +16,8 @@ class StartPage extends StatelessWidget {
 
             Text(
               "CycleGuard",
-              style: TextStyle(
-                fontSize: 50,
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
-                letterSpacing: 1.2,
+              style: GoogleFonts.poppins(
+                textStyle: poppinsStyle,
               ),
             ),
             SizedBox(height: 40),

@@ -1,13 +1,12 @@
 import 'dart:math';
 
 import 'package:cycle_guard_app/auth/auth_util.dart';
-import 'package:cycle_guard_app/pages/create_account.dart';
 import 'package:cycle_guard_app/pages/home_page.dart';
+import 'package:cycle_guard_app/pages/login_page.dart';
 import 'package:flutter/material.dart';
+import '../main.dart'; // Import MyAppState
 
-import '../main.dart';
-
-class LoginPage extends StatefulWidget {
+class CreateAccountPage extends StatefulWidget {
   @override
 
 
@@ -15,29 +14,28 @@ class LoginPage extends StatefulWidget {
   State<StatefulWidget> createState() => LoginFormState();
 }
 
-class LoginFormState extends State<LoginPage> {
+class LoginFormState extends State<CreateAccountPage> {
   final usernameController = TextEditingController();
   final passwordController = TextEditingController();
   bool _isCreatingAccount = false;
 
-  void _tryLogin() async {
+  void _tryCreateAccount() async {
     final username = usernameController.text;
     final password = passwordController.text;
 
-    bool loginSuccess = await AuthUtil.login(username, password);
-    print(loginSuccess?"Login success!":"Login failed!");
+    bool createSuccess = await AuthUtil.createAccount(username, password);
+    print(createSuccess?"Create account success!":"Create account failed!");
 
-    if (loginSuccess) {
+    if (createSuccess) {
       setState(() {
         Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => MyHomePage()));
       });
     }
   }
 
-  void _createAccount() {
-    print("Creating account...");
+  void _login() {
     setState(() {
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => CreateAccountPage()));
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => LoginPage()));
     });
   }
 
@@ -51,11 +49,11 @@ class LoginFormState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: createAppBar(context, 'Login'),
+      appBar: createAppBar(context, 'Create Account'),
       body: Center(
           child: Column(
             children: [
-              Text('Login Page'),
+              Text('Create Account Page'),
               TextField(
                 decoration: InputDecoration(
                   border: OutlineInputBorder(),
@@ -75,13 +73,13 @@ class LoginFormState extends State<LoginPage> {
                   // foregroundColor: Colors.purple,
                   elevation: 0,
                 ),
-                onPressed: _tryLogin,
-                child: Text("Log in"),
+                onPressed: _tryCreateAccount,
+                child: Text("Create account"),
               ),
               InkWell(
-                onTap: _createAccount,
+                onTap: _login,
                 child: const Text(
-                  'Create account',
+                  'Already have an account? Login',
                   style: TextStyle(
                     fontSize: 12,
                     color: Colors.blue,

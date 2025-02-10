@@ -5,10 +5,22 @@ class StartPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Color(0xFFD6D5C2),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+
+            Text(
+              "CycleGuard",
+              style: TextStyle(
+                fontSize: 50,
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+                letterSpacing: 1.2,
+              ),
+            ),
+            SizedBox(height: 40),
             ClipRRect(
               borderRadius: BorderRadius.circular(200),
               child: Image.asset(

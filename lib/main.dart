@@ -1,6 +1,7 @@
 //import 'package:english_words/english_words.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
 // import pages 
 import 'pages/start_page.dart';
@@ -15,6 +16,42 @@ import 'pages/settings_page.dart';
 
 void main() {
   runApp(MyApp());
+}
+
+
+
+class OnBoardStart extends StatefulWidget{
+  const OnBoardStart({Key?key}) : super(key:key);
+  @override
+  OnBoardStartState createState() => OnBoardStartState();
+
+}
+
+class OnBoardStartState extends State<OnBoardStart>{
+  PageController pageController = PageController();
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Stack(
+        children: [
+          PageView(
+            controller: pageController,
+            children: [
+              StartPage(),
+              LoginPage()
+            ],
+          ),
+          Container(
+             alignment: const Alignment(0, .75),
+              child: SmoothPageIndicator(
+                  controller:pageController,
+                  count:2
+              ),
+          )
+        ],
+      )
+    );
+  }
 }
 
 class MyApp extends StatelessWidget {
@@ -37,7 +74,7 @@ class MyApp extends StatelessWidget {
               brightness: Brightness.dark,
               colorScheme: ColorScheme.fromSeed(seedColor: appState.selectedColor)
             ),
-            home: MyHomePage(),
+            home: OnBoardStart(),
             routes: {
               '/loginpage': (context) => LoginPage(),
             },

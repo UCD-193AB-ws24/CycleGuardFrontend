@@ -89,6 +89,21 @@ class MyAppState extends ChangeNotifier {
   Color selectedColor = Colors.indigo;
   bool isDarkMode = false;
 
+  final List<Map<String, dynamic>> availableThemes = [
+    {'name': 'Indigo', 'color': Colors.indigo},
+    {'name': 'Red', 'color': Colors.red},
+    {'name': 'Green', 'color': Colors.green},
+    {'name': 'Blue', 'color': Colors.blue},
+    {'name': 'Purple', 'color': Colors.purple},
+    {'name': 'Orange', 'color': Colors.orange},
+  ];
+
+  final List<Map<String, dynamic>> storeThemes = [
+    {'name': 'Teal', 'color': Colors.teal},
+    {'name': 'Lime', 'color': Colors.lime},
+    {'name': 'Pink', 'color': Colors.pink},
+  ];
+
   void updateThemeColor(Color newColor) {
     selectedColor = newColor;
     notifyListeners(); 
@@ -96,6 +111,12 @@ class MyAppState extends ChangeNotifier {
 
   void toggleDarkMode(bool isEnabled) {
     isDarkMode = isEnabled;
+    notifyListeners();
+  }
+
+  void purchaseTheme(Map<String, dynamic> theme) {
+    availableThemes.add(theme);
+    storeThemes.removeWhere((item) => item['color'] == theme['color']);
     notifyListeners();
   }
 }

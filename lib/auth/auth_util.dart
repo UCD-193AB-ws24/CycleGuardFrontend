@@ -5,6 +5,11 @@ class AuthUtil {
   AuthUtil._();
 
   static String _token = "";
+  static String _username = "";
+
+  static get username {
+    return _username;
+  }
 
   static bool isLoggedIn() {
     return _token.isNotEmpty;
@@ -44,6 +49,7 @@ class AuthUtil {
     }
 
     _token = newToken;
+    _username = username;
 
     return true;
   }
@@ -82,6 +88,7 @@ class AuthUtil {
     }
 
     _token = newToken;
+    _username = username;
 
     return true;
   }

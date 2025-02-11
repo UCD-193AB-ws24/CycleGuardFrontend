@@ -4,7 +4,10 @@ import 'package:cycle_guard_app/auth/auth_util.dart';
 import 'package:cycle_guard_app/pages/home_page.dart';
 import 'package:cycle_guard_app/pages/login_page.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import '../main.dart'; // Import MyAppState
+
+import 'package:google_fonts/google_fonts.dart';
 
 class CreateAccountPage extends StatefulWidget {
   @override
@@ -15,13 +18,24 @@ class CreateAccountPage extends StatefulWidget {
 }
 
 class LoginFormState extends State<CreateAccountPage> {
+  final poppinsStyle = TextStyle(fontSize: 30,fontWeight: FontWeight.bold);
   final usernameController = TextEditingController();
   final passwordController = TextEditingController();
-  bool _isCreatingAccount = false;
+
 
   void _tryCreateAccount() async {
     final username = usernameController.text;
     final password = passwordController.text;
+
+    Fluttertoast.showToast(
+        msg: "Creating account...",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.CENTER,
+        timeInSecForIosWeb: 1,
+        backgroundColor: Colors.blueAccent,
+        textColor: Colors.white,
+        fontSize: 16.0
+    );
 
     bool createSuccess = await AuthUtil.createAccount(username, password);
     print(createSuccess?"Create account success!":"Create account failed!");
@@ -35,7 +49,7 @@ class LoginFormState extends State<CreateAccountPage> {
 
   void _login() {
     setState(() {
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => LoginPage()));
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => OnBoardStart()));
     });
   }
 
@@ -46,32 +60,64 @@ class LoginFormState extends State<CreateAccountPage> {
     super.dispose();
   }
 
+  Widget emailTextField() => TextField(
+
+    decoration: InputDecoration(
+      filled: true,
+      fillColor: Colors.white,
+      hintText: 'username@example.com',
+      labelText: 'Email',
+      prefixIcon:  Icon(Icons.mail),
+      border: OutlineInputBorder(),
+    ),
+    controller: usernameController,
+    keyboardType: TextInputType.emailAddress,
+    textInputAction: TextInputAction.done,
+  );
+  bool isVisible = true;
+  Widget passwordTextField() => TextField(
+    decoration: InputDecoration(
+      filled: true,
+      fillColor: Colors.white,
+      labelText: 'password',
+      //errorText: 'Incorrect Password',
+      border: OutlineInputBorder(),
+      suffixIcon: IconButton(
+        icon: isVisible ? Icon(Icons.visibility) : Icon(Icons.visibility_off),
+        onPressed: ()=>  setState(() => isVisible = !isVisible),
+      ),
+    ),
+    controller: passwordController,
+    textInputAction: TextInputAction.done,
+    obscureText: isVisible,
+  );
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: createAppBar(context, 'Create Account'),
+      backgroundColor: Color(0xFFD9D7C8),
+      appBar: AppBar(
+        title: Text(
+            'Create Account',
+            style: GoogleFonts.poppins(
+                textStyle: poppinsStyle
+            )),
+        backgroundColor: Color(0xFFD9D7C8),
+      ),
       body: Center(
-          child: Column(
+          child: ListView(
+            padding: EdgeInsets.all(32),
+
             children: [
-              Text('Create Account Page'),
-              TextField(
-                decoration: InputDecoration(
-                  border: OutlineInputBorder(),
-                  hintText: 'Username',
-                ),
-                controller: usernameController,
-              ),
-              TextField(
-                decoration: InputDecoration(
-                  border: OutlineInputBorder(),
-                  hintText: 'Password',
-                ),
-                controller: passwordController,
-              ),
+              emailTextField(),
+              const SizedBox(height:24),
+              passwordTextField(),
+              const SizedBox(height:24),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   // foregroundColor: Colors.purple,
-                  elevation: 0,
+                  elevation: 5,
+
                 ),
                 onPressed: _tryCreateAccount,
                 child: Text("Create account"),

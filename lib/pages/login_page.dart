@@ -27,7 +27,6 @@ class LoginFormState extends State<LoginPage> {
   final poppinsStyle = TextStyle(fontSize: 30,fontWeight: FontWeight.bold);
   final usernameController = TextEditingController();
   final passwordController = TextEditingController();
-  bool _isCreatingAccount = false;
 
   void _tryLogin() async {
     final username = usernameController.text;

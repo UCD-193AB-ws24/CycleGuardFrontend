@@ -36,7 +36,11 @@ dependencies:
   cupertino_icons: ^1.0.8
   provider: ^6.1.2
   fl_chart: ^0.70.2
-
+  flutter_native_splash: ^2.1.2
+  smooth_page_indicator: ^1.1.0
+  get: ^4.6.5
+  get_storage: ^2.1.1
+  google_fonts: ^6.1.0
 dev_dependencies:
   flutter_test:
     sdk: flutter

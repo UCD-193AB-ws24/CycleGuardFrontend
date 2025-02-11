@@ -1,6 +1,7 @@
 //import 'package:english_words/english_words.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
 // import pages 
 import 'pages/start_page.dart';
@@ -17,6 +18,42 @@ void main() {
   runApp(MyApp());
 }
 
+
+
+class OnBoardStart extends StatefulWidget{
+  const OnBoardStart({Key?key}) : super(key:key);
+  @override
+  OnBoardStartState createState() => OnBoardStartState();
+
+}
+
+class OnBoardStartState extends State<OnBoardStart>{
+  PageController pageController = PageController();
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Stack(
+        children: [
+          PageView(
+            controller: pageController,
+            children: [
+              StartPage(pageController),
+              LoginPage()
+            ],
+          ),
+          Container(
+             alignment: const Alignment(0, .75),
+              child: SmoothPageIndicator(
+                  controller:pageController,
+                  count:2
+              ),
+          )
+        ],
+      )
+    );
+  }
+}
+
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -28,6 +65,7 @@ class MyApp extends StatelessWidget {
         builder: (context, appState, child) {
           return MaterialApp(
             title: 'Cycle Guard App',
+            debugShowCheckedModeBanner: false,
             themeMode: appState.isDarkMode ? ThemeMode.dark : ThemeMode.light,
             theme: ThemeData(
               useMaterial3: true,
@@ -37,10 +75,8 @@ class MyApp extends StatelessWidget {
               brightness: Brightness.dark,
               colorScheme: ColorScheme.fromSeed(seedColor: appState.selectedColor)
             ),
-            home: MyHomePage(),
-            routes: {
-              '/loginpage': (context) => LoginPage(),
-            },
+            home: OnBoardStart(),
+
           );
         },
       ),
@@ -109,7 +145,7 @@ class _MyHomePageState extends State<MyHomePage> {
     Widget page;
     switch (selectedIndex) {
       case 0:
-        page = StartPage();
+        page = LoginPage();
       case 1:
         page = LoginPage();
       case 2:

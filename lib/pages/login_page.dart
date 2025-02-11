@@ -1,11 +1,19 @@
-import 'dart:math';
+import 'dart:ffi';
 
 import 'package:cycle_guard_app/auth/auth_util.dart';
 import 'package:cycle_guard_app/pages/create_account.dart';
-import 'package:cycle_guard_app/pages/home_page.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+
+import 'package:fluttertoast/fluttertoast.dart';
 
 import '../main.dart';
+
+/*
+Username: javagod123
+Password: c++sucks
+*/
+
 
 class LoginPage extends StatefulWidget {
   @override
@@ -16,21 +24,43 @@ class LoginPage extends StatefulWidget {
 }
 
 class LoginFormState extends State<LoginPage> {
+  final poppinsStyle = TextStyle(fontSize: 30,fontWeight: FontWeight.bold);
   final usernameController = TextEditingController();
   final passwordController = TextEditingController();
-  bool _isCreatingAccount = false;
 
   void _tryLogin() async {
     final username = usernameController.text;
     final password = passwordController.text;
 
+    Fluttertoast.showToast(
+        msg: "Logging in...",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.CENTER,
+        timeInSecForIosWeb: 1,
+        backgroundColor: Colors.blueAccent,
+        textColor: Colors.white,
+        fontSize: 16.0
+    );
+
     bool loginSuccess = await AuthUtil.login(username, password);
     print(loginSuccess?"Login success!":"Login failed!");
 
     if (loginSuccess) {
+      Fluttertoast.cancel();
       setState(() {
         Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => MyHomePage()));
       });
+    } else {
+      Fluttertoast.cancel();
+      Fluttertoast.showToast(
+          msg: "Incorrect username or password",
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.CENTER,
+          timeInSecForIosWeb: 1,
+          backgroundColor: Colors.red,
+          textColor: Colors.white,
+          fontSize: 16.0
+      );
     }
   }
 
@@ -48,32 +78,64 @@ class LoginFormState extends State<LoginPage> {
     super.dispose();
   }
 
+  Widget emailTextField() => TextField(
+
+    decoration: InputDecoration(
+      filled: true,
+      fillColor: Colors.white,
+      hintText: 'username@example.com',
+      labelText: 'Email',
+      prefixIcon:  Icon(Icons.mail),
+      border: OutlineInputBorder(),
+    ),
+    controller: usernameController,
+    keyboardType: TextInputType.emailAddress,
+    textInputAction: TextInputAction.done,
+  );
+  bool isVisible = true;
+  Widget passwordTextField() => TextField(
+    decoration: InputDecoration(
+      filled: true,
+      fillColor: Colors.white,
+      labelText: 'password',
+      //errorText: 'Incorrect Password',
+      border: OutlineInputBorder(),
+      suffixIcon: IconButton(
+        icon: isVisible ? Icon(Icons.visibility) : Icon(Icons.visibility_off),
+        onPressed: ()=>  setState(() => isVisible = !isVisible),
+      ),
+    ),
+    controller: passwordController,
+    textInputAction: TextInputAction.done,
+    obscureText: isVisible,
+  );
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: createAppBar(context, 'Login'),
+      backgroundColor: Color(0xFFD9D7C8),
+      appBar: AppBar(
+        title: Text(
+                    'Login',
+                    style: GoogleFonts.poppins(
+                      textStyle: poppinsStyle
+                    )),
+        backgroundColor: Color(0xFFD9D7C8),
+      ),
       body: Center(
-          child: Column(
+          child: ListView(
+            padding: EdgeInsets.all(32),
+
             children: [
-              Text('Login Page'),
-              TextField(
-                decoration: InputDecoration(
-                  border: OutlineInputBorder(),
-                  hintText: 'Username',
-                ),
-                controller: usernameController,
-              ),
-              TextField(
-                decoration: InputDecoration(
-                  border: OutlineInputBorder(),
-                  hintText: 'Password',
-                ),
-                controller: passwordController,
-              ),
+              emailTextField(),
+              const SizedBox(height:24),
+              passwordTextField(),
+              const SizedBox(height:24),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   // foregroundColor: Colors.purple,
-                  elevation: 0,
+                  elevation: 5,
+
                 ),
                 onPressed: _tryLogin,
                 child: Text("Log in"),

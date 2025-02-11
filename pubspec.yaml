@@ -40,6 +40,7 @@ dependencies:
   get: ^4.6.5
   get_storage: ^2.1.1
   google_fonts: ^6.1.0
+  fluttertoast: ^8.2.11
 dev_dependencies:
   flutter_test:
     sdk: flutter

@@ -5,6 +5,8 @@ import 'package:cycle_guard_app/pages/create_account.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import 'package:fluttertoast/fluttertoast.dart';
+
 import '../main.dart';
 
 /*
@@ -31,13 +33,35 @@ class LoginFormState extends State<LoginPage> {
     final username = usernameController.text;
     final password = passwordController.text;
 
+    Fluttertoast.showToast(
+        msg: "Logging in...",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.CENTER,
+        timeInSecForIosWeb: 1,
+        backgroundColor: Colors.blueAccent,
+        textColor: Colors.white,
+        fontSize: 16.0
+    );
+
     bool loginSuccess = await AuthUtil.login(username, password);
     print(loginSuccess?"Login success!":"Login failed!");
 
     if (loginSuccess) {
+      Fluttertoast.cancel();
       setState(() {
         Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => MyHomePage()));
       });
+    } else {
+      Fluttertoast.cancel();
+      Fluttertoast.showToast(
+          msg: "Incorrect username or password",
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.CENTER,
+          timeInSecForIosWeb: 1,
+          backgroundColor: Colors.red,
+          textColor: Colors.white,
+          fontSize: 16.0
+      );
     }
   }
 

@@ -145,22 +145,18 @@ class _MyHomePageState extends State<MyHomePage> {
     Widget page;
     switch (selectedIndex) {
       case 0:
-        page = LoginPage();
-      case 1:
-        page = LoginPage();
-      case 2:
         page = HomePage();
-      case 3:
+      case 1:
         page = SocialPage();
-      case 4:
+      case 2:
         page = HistoryPage();
-      case 5:
+      case 3:
         page = AchievementsPage();
-      case 6:
+      case 4:
         page = RoutesPage();
-      case 7: 
+      case 5:
         page = StorePage();
-      case 8: 
+      case 6:
         page = SettingsPage();
       default:
         throw UnimplementedError('no widget for $selectedIndex');
@@ -178,14 +174,6 @@ class _MyHomePageState extends State<MyHomePage> {
                     backgroundColor: getNavRailBackgroundColor(context),
                     extended: constraints.maxWidth >= 600,
                     destinations: [
-                      NavigationRailDestination(
-                        icon: Icon(Icons.waving_hand_outlined, color: getIconColor(context),),
-                        label: Text('Start'),
-                      ),
-                      NavigationRailDestination(
-                        icon: Icon(Icons.login_outlined, color: getIconColor(context),),
-                        label: Text('Login'),
-                      ),
                       NavigationRailDestination(
                         icon: Icon(Icons.home, color: getIconColor(context),),
                         label: Text('Home'),

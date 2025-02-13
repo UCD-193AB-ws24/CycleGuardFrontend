@@ -6,26 +6,27 @@ import 'package:http/http.dart' as http;
 class RequestsUtil {
   RequestsUtil._();
 
-  static final _host = "cycleguardbackend-638241752910.us-central1.run.app";
+  // static final _host = "cycleguardbackend-638241752910.us-central1.run.app";
+  static final _host = "immortal-hot-cat.ngrok-free.app";
   static final _scheme = "https";
 
-  static Future<Object> postWithToken(String endpoint, Map<String, String> body, String token) async {
-    return await _post(endpoint, body, true, token);
+  static Future<http.Response> postWithToken(String endpoint, Map<String, String> body) async {
+    return await _post(endpoint, body, true);
   }
 
-  static Future<Object> postWithoutToken(String endpoint, Map<String, String> body) async {
-    return await _post(endpoint, body, false, "");
+  static Future<http.Response> postWithoutToken(String endpoint, Map<String, String> body) async {
+    return await _post(endpoint, body, false);
   }
 
-  static Future<Object> getWithToken(String endpoint, String token) async {
-    return await _get(endpoint, true, token);
+  static Future<http.Response> getWithToken(String endpoint) async {
+    return await _get(endpoint, true);
   }
 
-  static Future<Object> getWithoutToken(String endpoint) async {
-    return await _get(endpoint, false, "");
+  static Future<http.Response> getWithoutToken(String endpoint) async {
+    return await _get(endpoint, false);
   }
 
-  
+
 
   static Uri _getUri(String endpoint) {
     return Uri(
@@ -35,18 +36,18 @@ class RequestsUtil {
     );
   }
 
-  static Map<String, String> _getHeaders(bool useToken, String token) {
+  static Map<String, String> _getHeaders(bool useToken) {
     Map<String, String> headers = {'Content-Type':'application/json'};
-    if (useToken) headers.addIf(useToken, "Authorization", token);
+    if (useToken) headers.addIf(useToken, "Authorization", AuthUtil.token);
 
     return headers;
   }
 
-  static Future<Object> _post(String endpoint, Map<String, String> body, bool useToken, String token) async {
-    return await http.post(_getUri(endpoint), body: jsonEncode(body), headers: _getHeaders(useToken, token));
+  static Future<http.Response> _post(String endpoint, Map<String, String> body, bool useToken) async {
+    return await http.post(_getUri(endpoint), body: jsonEncode(body), headers: _getHeaders(useToken));
   }
 
-  static Future<Object> _get(String endpoint, bool useToken, String token) async {
-    return await http.get(_getUri(endpoint), headers: _getHeaders(useToken, token));
+  static Future<http.Response> _get(String endpoint, bool useToken) async {
+    return await http.get(_getUri(endpoint), headers: _getHeaders(useToken));
   }
 }

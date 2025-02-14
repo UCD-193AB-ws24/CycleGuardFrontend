@@ -1,8 +1,24 @@
+import 'package:cycle_guard_app/data/purchase_info.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:provider/provider.dart';
 import '../main.dart';
 
 class StorePage extends StatelessWidget {
+  void _addCycleCoins() async {
+    print("Adding...");
+    final newCoins = await PurchaseInfo.addCycleCoins();
+
+    Fluttertoast.showToast(
+        msg: "You now have $newCoins CycleCoins!",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.CENTER,
+        timeInSecForIosWeb: 5,
+        backgroundColor: Colors.blueAccent,
+        textColor: Colors.white,
+        fontSize: 16.0
+    );
+  }
   @override
   Widget build(BuildContext context) {
     final appState = Provider.of<MyAppState>(context);
@@ -30,6 +46,13 @@ class StorePage extends StatelessWidget {
                     padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
                   ),
                   child: Text("Buy"),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    elevation: 5,
+                  ),
+                  onPressed: _addCycleCoins,
+                  child: Text("Temp: Add 10 CycleCoins to account"),
                 ),
               ],
             ),

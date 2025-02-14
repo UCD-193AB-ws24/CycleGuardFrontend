@@ -6,8 +6,8 @@ import 'package:http/http.dart' as http;
 class RequestsUtil {
   RequestsUtil._();
 
-  // static final _host = "cycleguardbackend-638241752910.us-central1.run.app";
-  static final _host = "immortal-hot-cat.ngrok-free.app";
+  static final _host = "cycleguardbackend-638241752910.us-central1.run.app";
+  // static final _host = "immortal-hot-cat.ngrok-free.app";
   static final _scheme = "https";
 
   static Future<http.Response> postWithToken(String endpoint, Map<String, String> body) async {
@@ -38,7 +38,7 @@ class RequestsUtil {
 
   static Map<String, String> _getHeaders(bool useToken) {
     Map<String, String> headers = {'Content-Type':'application/json'};
-    if (useToken) headers.addIf(useToken, "Authorization", AuthUtil.token);
+    if (useToken) headers.addIf(useToken, "Token", AuthUtil.token);
 
     return headers;
   }

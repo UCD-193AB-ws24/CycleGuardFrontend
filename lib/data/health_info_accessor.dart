@@ -10,24 +10,28 @@ class HealthInfoAccessor {
     if (response.statusCode == 200) {
       return HealthInfo.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
     } else {
-      throw Exception('Failed to get CycleCoins');
+      throw Exception('Failed to get health info');
     }
   }
 
-  /// Sets health info, given height (inches), weight (pounds), age (years).
-  static Future<int> setHealthInfo(int height, int weight, int age) async {
+  static Future<void> setHealthInfo(String height, String weight, String age) async {
     final body = {
-      "heightInches": "$height",
-      "weightPounds": "$weight",
-      "ageYears": "$age"
+      "heightInches": height,
+      "weightPounds": weight,
+      "ageYears": age
     };
     final response = await RequestsUtil.postWithToken("/health/set", body);
 
     if (response.statusCode == 200) {
-      return int.parse(response.body);
+      return;
     } else {
       throw Exception('Failed to update CycleCoins');
     }
+  }
+
+  /// Sets health info, given height (inches), weight (pounds), age (years).
+  static Future<void> setHealthInfoInts(int height, int weight, int age) async {
+    await setHealthInfo("$height", "$weight", "$age");
   }
 }
 

@@ -1,4 +1,4 @@
-import 'package:cycle_guard_app/data/purchase_info.dart';
+import 'package:cycle_guard_app/data/purchase_info_accessor.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:provider/provider.dart';
@@ -7,8 +7,9 @@ import '../main.dart';
 class StorePage extends StatelessWidget {
   void _addCycleCoins() async {
     print("Adding...");
-    final newCoins = await PurchaseInfo.addCycleCoins();
+    final newCoins = await CycleCoinInfo.addCycleCoins(5);
 
+    Fluttertoast.cancel();
     Fluttertoast.showToast(
         msg: "You now have $newCoins CycleCoins!",
         toastLength: Toast.LENGTH_SHORT,
@@ -19,6 +20,38 @@ class StorePage extends StatelessWidget {
         fontSize: 16.0
     );
   }
+
+  void _getCycleCoins() async {
+    final newCoins = await CycleCoinInfo.getCycleCoins();
+
+    Fluttertoast.cancel();
+    Fluttertoast.showToast(
+        msg: "You have $newCoins CycleCoins!",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.CENTER,
+        timeInSecForIosWeb: 5,
+        backgroundColor: Colors.blueAccent,
+        textColor: Colors.white,
+        fontSize: 16.0
+    );
+  }
+
+  void _getOwnedItems() async {
+    print("Showing owned items...");
+    final items = await PurchaseInfo.getOwnedItems();
+
+    Fluttertoast.cancel();
+    Fluttertoast.showToast(
+        msg: "Your owned items: $items",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.CENTER,
+        timeInSecForIosWeb: 5,
+        backgroundColor: Colors.blueAccent,
+        textColor: Colors.white,
+        fontSize: 16.0
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final appState = Provider.of<MyAppState>(context);
@@ -51,8 +84,22 @@ class StorePage extends StatelessWidget {
                   style: ElevatedButton.styleFrom(
                     elevation: 5,
                   ),
+                  onPressed: _getCycleCoins,
+                  child: Text("Temp: Display current CycleCoin count"),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    elevation: 5,
+                  ),
                   onPressed: _addCycleCoins,
-                  child: Text("Temp: Add 10 CycleCoins to account"),
+                  child: Text("Temp: Add 5 CycleCoins to account"),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    elevation: 5,
+                  ),
+                  onPressed: _getOwnedItems,
+                  child: Text("Temp: Show owned items"),
                 ),
               ],
             ),

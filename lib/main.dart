@@ -1,5 +1,7 @@
 //import 'package:english_words/english_words.dart';
+import 'package:cycle_guard_app/data/purchase_info_accessor.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:provider/provider.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
@@ -113,9 +115,25 @@ class MyAppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  void purchaseTheme(Map<String, dynamic> theme) {
-    availableThemes.add(theme);
-    storeThemes.removeWhere((item) => item['color'] == theme['color']);
+  void purchaseTheme(Map<String, dynamic> theme) async {
+    // availableThemes.add(theme);
+    // storeThemes.removeWhere((item) => item['color'] == theme['color']);
+
+    print("Purchasing theme: $theme");
+    final themeName = theme["name"];
+
+    final purchaseResponse = await PurchaseInfo.buyItem(themeName);
+
+    Fluttertoast.showToast(
+        msg: "Server response: $purchaseResponse",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.CENTER,
+        timeInSecForIosWeb: 5,
+        backgroundColor: Colors.blueAccent,
+        textColor: Colors.white,
+        fontSize: 16.0
+    );
+
     notifyListeners();
   }
 }

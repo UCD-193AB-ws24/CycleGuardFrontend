@@ -1,5 +1,6 @@
 //import 'package:english_words/english_words.dart';
 import 'package:cycle_guard_app/data/purchase_info_accessor.dart';
+import 'package:cycle_guard_app/pages/feature_testing.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:provider/provider.dart';
@@ -176,6 +177,8 @@ class _MyHomePageState extends State<MyHomePage> {
         page = StorePage();
       case 6:
         page = SettingsPage();
+      case 7:
+        page = TestingPage();
       default:
         throw UnimplementedError('no widget for $selectedIndex');
     }
@@ -219,6 +222,10 @@ class _MyHomePageState extends State<MyHomePage> {
                       NavigationRailDestination(
                         icon: Icon(Icons.settings_outlined, color: getIconColor(context),),
                         label: Text('Settings'),
+                      ),
+                      NavigationRailDestination(
+                        icon: Icon(Icons.perm_device_info_rounded, color: getIconColor(context),),
+                        label: Text('Feature Testing'),
                       ),
                     ],
                     selectedIndex: selectedIndex,

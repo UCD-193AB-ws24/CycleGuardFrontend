@@ -1,5 +1,15 @@
 import 'dart:convert';
+import 'package:cycle_guard_app/auth/requests_util.dart';
 import 'package:http/http.dart' as http;
+
+enum CreateAccountStatus {
+  duplicateUsername,
+  negativeHeight,
+  negativeWeight,
+  negativeAge,
+  serverError,
+  success
+}
 
 class AuthUtil {
   AuthUtil._();
@@ -11,11 +21,15 @@ class AuthUtil {
     return _username;
   }
 
+  static get token {
+    return _token;
+  }
+
   static bool isLoggedIn() {
     return _token.isNotEmpty;
   }
 
-  static Future<bool> login(String username, String password) async {
+  static Future<CreateAccountStatus> login(String username, String password) async {
     print("In AuthUtil.login");
     print(username);
     print(password);
@@ -23,35 +37,26 @@ class AuthUtil {
       throw "Already logged in!";
     }
     
-    final requestBody = {
+    final body = {
       "username": username,
       "password": password
     };
-    
-    print(requestBody);
-    print(jsonEncode(requestBody));
 
-    final uri = Uri(
-      scheme: "https",
-      host: "cycleguardbackend-638241752910.us-central1.run.app",
-      path: "/login",
-    );
-
-    print(uri);
-    final response = await http.post(uri, body: jsonEncode(requestBody), headers: {'Content-Type':'application/json'});
+    final response = await RequestsUtil.postWithoutToken("/account/login", body);
 
     final newToken = response.body;
     print("Got response from server: $newToken");
 
     if (newToken.length != 16) {
+      if (newToken == "DUPLICATE") return CreateAccountStatus.duplicateUsername;
       print("Login failed!");
-      return false;
+      return CreateAccountStatus.serverError;
     }
 
     _token = newToken;
     _username = username;
 
-    return true;
+    return CreateAccountStatus.success;
   }
 
   static Future<bool> createAccount(String username, String password) async {
@@ -62,28 +67,18 @@ class AuthUtil {
       throw "Already logged in!";
     }
 
-    final requestBody = {
+    final body = {
       "username": username,
       "password": password
     };
 
-    print(requestBody);
-    print(jsonEncode(requestBody));
-
-    final uri = Uri(
-      scheme: "https",
-      host: "cycleguardbackend-638241752910.us-central1.run.app",
-      path: "/account/create",
-    );
-
-    print(uri);
-    final response = await http.post(uri, body: jsonEncode(requestBody), headers: {'Content-Type':'application/json'});
+    final response = await RequestsUtil.postWithoutToken("/account/create", body);
 
     final newToken = response.body;
     print("Got response from server: $newToken");
 
     if (newToken.length != 16) {
-      print("Login failed!");
+      print("Create account failed!");
       return false;
     }
 

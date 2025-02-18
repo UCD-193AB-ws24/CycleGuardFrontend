@@ -42,7 +42,8 @@ class LoginFormState extends State<LoginPage> {
         fontSize: 16.0
     );
 
-    bool loginSuccess = await AuthUtil.login(username, password);
+    CreateAccountStatus loginStatus = await AuthUtil.login(username, password);
+    final loginSuccess = loginStatus==CreateAccountStatus.success;
     print(loginSuccess?"Login success!":"Login failed!");
 
     if (loginSuccess) {

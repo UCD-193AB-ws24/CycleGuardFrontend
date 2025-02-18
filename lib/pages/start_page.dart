@@ -10,8 +10,7 @@ class StartPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final poppinsStyle = TextStyle(fontSize: 60,fontWeight: FontWeight.bold);
     return Scaffold(
-      //backgroundColor: Color(0xFFD6D5C9),
-      backgroundColor: Color(0xFFD9D7C8),
+      backgroundColor: Color(0xFFD6D5C9),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

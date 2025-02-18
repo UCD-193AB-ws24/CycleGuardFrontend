@@ -92,6 +92,8 @@ class LoginFormState extends State<LoginPage> {
     keyboardType: TextInputType.emailAddress,
     textInputAction: TextInputAction.done,
   );
+
+
   bool isVisible = true;
   Widget passwordTextField() => TextField(
     decoration: InputDecoration(

@@ -42,6 +42,9 @@ dependencies:
   get_storage: ^2.1.1
   google_fonts: ^6.1.0
   fluttertoast: ^8.2.11
+  google_maps_flutter: ^2.10.0
+  permission_handler: ^10.0.0
+  location: ^5.0.1
 dev_dependencies:
   flutter_test:
     sdk: flutter

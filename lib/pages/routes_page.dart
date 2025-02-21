@@ -1,15 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
-import 'package:location/location.dart';
 
-//import 'package:google_maps_flutter_android/google_maps_flutter_android.dart';
 class RoutesPage extends StatefulWidget {
+
   @override
   Widget build(BuildContext context) {
     return Center(child: Text('Routes Page'));
   }
-
   @override
   State<StatefulWidget> createState() => mapState();
 }
@@ -17,7 +15,7 @@ class RoutesPage extends StatefulWidget {
 class mapState extends State<RoutesPage>{
   late GoogleMapController mapController;
   final locationController = Location();
-  late LatLng center = new LatLng(0,0);
+  LatLng? center;
 
   @override
   void initState(){
@@ -28,17 +26,56 @@ class mapState extends State<RoutesPage>{
   void onMapCreated(GoogleMapController controller){
     mapController=controller;
   }
+
+  Widget mainMap() => GoogleMap(
+    initialCameraPosition: CameraPosition(
+        target: center!,
+        zoom: 13.0),
+    markers: {
+      Marker(
+          markerId: MarkerId("centerMarker"),
+          icon: BitmapDescriptor.defaultMarker,
+          position: center!
+      ),
+    },
+  );
+
+  Widget locationTextInput() => Positioned(
+    top: 100.0,
+    left: 50.0,
+    right: 75.0,
+    child: Container(
+      padding: EdgeInsets.symmetric(horizontal: 30.0, vertical: 1.0),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(), // Background with some opacity
+        borderRadius: BorderRadius.circular(10.0),
+      ),
+      child: TextField(
+        decoration: InputDecoration(
+          prefixIcon: Icon(Icons.location_pin),
+          hintText: 'Search here',
+          border: InputBorder.none,
+        ),
+      ),
+    ),
+  );
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
 
-      body: GoogleMap(
-          initialCameraPosition: CameraPosition(
-              target: center,
-              zoom: 11.0)
+      body: Stack(
+        children: [
+          center == null ? const Center(child: CircularProgressIndicator()) : mainMap(),
+          locationTextInput()
+        ],
+
       ),
+
     );
   }
+
+
   Future<void> fetchLocationUpdates() async{
     bool serviceEnabled;
     PermissionStatus permissionGranted;
@@ -57,14 +94,14 @@ class mapState extends State<RoutesPage>{
         return;
       }
     }
-    locationController.onLocationChanged.listen((center){});
-    if(center.latitude != null && center.longitude != null){
-      setState(() {
-        center = LatLng(
-            center.latitude,
-            center.longitude);
-      });
-    }
+    locationController.onLocationChanged.listen((currentLocation){
+      if(currentLocation.latitude!=null && currentLocation.longitude!=null){
+        setState(() {
+          center = LatLng(currentLocation.latitude!, currentLocation.longitude!);
+          print(center);
+        });
+      }
+    });
   }
 
 }

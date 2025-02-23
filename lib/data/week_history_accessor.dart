@@ -8,7 +8,8 @@ class WeekHistoryAccessor {
     final response = await RequestsUtil.getWithToken("/history/getWeekHistory");
 
     if (response.statusCode == 200) {
-      throw Exception("TODO: implement JSON parsing. Look at health_info_accessor for an example");
+      print(response.body);
+      throw Exception("TODO: implement JSON parsing. Look at health_info_accessor and user_stats_accessor for an example");
       // return WeekHistory.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
     } else {
       throw Exception('Failed to get health info');

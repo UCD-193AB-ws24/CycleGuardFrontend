@@ -2,6 +2,7 @@ import 'package:cycle_guard_app/data/achievements_accessor.dart';
 import 'package:cycle_guard_app/data/health_info_accessor.dart';
 import 'package:cycle_guard_app/data/submit_ride_service.dart';
 import 'package:cycle_guard_app/data/user_stats_accessor.dart';
+import 'package:cycle_guard_app/data/week_history_accessor.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -113,6 +114,13 @@ class TestingPage extends StatelessWidget {
     print("Successfully retrieved user stats!");
   }
 
+  Future<void> _getWeekHistory() async {
+    final weekHistory = await WeekHistoryAccessor.getWeekHistory();
+    print(weekHistory);
+
+    print("Successfully retrieved week history!");
+  }
+
   @override
   Widget build(BuildContext context) {
     final appState = Provider.of<MyAppState>(context);
@@ -148,6 +156,14 @@ class TestingPage extends StatelessWidget {
                     padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
                   ),
                   child: Text("Get Achievement Info"),
+                ),
+                ElevatedButton(
+                  onPressed: () => _getWeekHistory(),
+                  style: ElevatedButton.styleFrom(
+                    elevation: 5,
+                    padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
+                  ),
+                  child: Text("Get Week History"),
                 ),
                 ElevatedButton(
                   onPressed: () => _getUserStats(),

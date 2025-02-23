@@ -1,4 +1,7 @@
+import 'package:cycle_guard_app/data/achievements_accessor.dart';
 import 'package:cycle_guard_app/data/health_info_accessor.dart';
+import 'package:cycle_guard_app/data/submit_ride_service.dart';
+import 'package:cycle_guard_app/data/user_stats_accessor.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -85,6 +88,31 @@ class TestingPage extends StatelessWidget {
       },
     );
   }
+
+  Future<void> _addRideInfo() async {
+    final distance = 1.0;
+    final calories = 1.0;
+    final time = 1.0;
+    SubmitRideService.addRideRaw(distance, calories, time);
+
+    print("Successfully added ride info!");
+  }
+
+  Future<void> _getAchievementInfo() async {
+    final achievementInfo = await AchievementInfoAccessor.getAchievementInfo();
+
+    print(achievementInfo);
+
+    print("Successfully retrieved achievement info!");
+  }
+
+  Future<void> _getUserStats() async {
+    final userStats = await UserStatsAccessor.getUserStats();
+    print(userStats);
+
+    print("Successfully retrieved user stats!");
+  }
+
   @override
   Widget build(BuildContext context) {
     final appState = Provider.of<MyAppState>(context);
@@ -104,6 +132,30 @@ class TestingPage extends StatelessWidget {
                     padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
                   ),
                   child: Text("Set fitness info"),
+                ),
+                ElevatedButton(
+                  onPressed: () => _addRideInfo(),
+                  style: ElevatedButton.styleFrom(
+                    elevation: 5,
+                    padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
+                  ),
+                  child: Text("Add Ride Info: 1 mile, 1 minute, 1 calorie"),
+                ),
+                ElevatedButton(
+                  onPressed: () => _getAchievementInfo(),
+                  style: ElevatedButton.styleFrom(
+                    elevation: 5,
+                    padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
+                  ),
+                  child: Text("Get Achievement Info"),
+                ),
+                ElevatedButton(
+                  onPressed: () => _getUserStats(),
+                  style: ElevatedButton.styleFrom(
+                    elevation: 5,
+                    padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
+                  ),
+                  child: Text("Get User Stats"),
                 ),
               ],
             ),

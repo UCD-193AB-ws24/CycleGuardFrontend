@@ -109,27 +109,35 @@ class StorePage extends StatelessWidget {
     );
   }
 
-  void _showThemeMenu(BuildContext context, MyAppState appState) {
+  void _showThemeMenu(BuildContext context, MyAppState appState) async {
+    // Fetch the owned themes to ensure up-to-date data
+    await appState.fetchOwnedThemes();
+
+    // Filter storeThemes dynamically instead of mutating it
+    final purchasableThemes = Map.fromEntries(
+      appState.storeThemes.entries.where((entry) => !appState.ownedThemes.containsKey(entry.key))
+    );
+
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
           title: Text(
             "Choose a Theme",
-            style: TextStyle(
-              color: Colors.black
-            )
+            style: TextStyle(color: Colors.black),
           ),
-          content: appState.storeThemes.isNotEmpty
+          content: purchasableThemes.isNotEmpty
               ? Column(
                   mainAxisSize: MainAxisSize.min,
-                  children: appState.storeThemes.map((theme) {
+                  children: purchasableThemes.entries.map((entry) {
                     return ListTile(
-                      leading: Icon(Icons.color_lens, color: theme['color']),
-                      title: Text(theme['name']),
-                      onTap: () {
-                        appState.purchaseTheme(theme); // Move to settings
-                        Navigator.pop(context); // Close the dialog
+                      leading: Icon(Icons.color_lens, color: entry.value),
+                      title: Text(entry.key),
+                      onTap: () async {
+                        final success = await appState.purchaseTheme(entry.key);
+                        if (success) {
+                          Navigator.pop(context); // Close dialog on success
+                        }
                       },
                     );
                   }).toList(),

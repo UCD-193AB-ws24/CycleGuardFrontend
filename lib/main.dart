@@ -88,23 +88,37 @@ class MyApp extends StatelessWidget {
 }
 
 class MyAppState extends ChangeNotifier {
-  Color selectedColor = Colors.indigo;
+  Color selectedColor = Colors.orange;
   bool isDarkMode = false;
 
-  final List<Map<String, dynamic>> availableThemes = [
-    {'name': 'Indigo', 'color': Colors.indigo},
-    {'name': 'Red', 'color': Colors.red},
-    {'name': 'Green', 'color': Colors.green},
-    {'name': 'Blue', 'color': Colors.blue},
-    {'name': 'Purple', 'color': Colors.purple},
-    {'name': 'Orange', 'color': Colors.orange},
-  ];
+  final Map<String, Color> availableThemes = {
+    'Indigo': Colors.indigo,
+    'Red': Colors.red,
+    'Green': Colors.green,
+    'Blue': Colors.blue,
+    'Purple': Colors.purple,
+    'Orange': Colors.orange,
+  };
 
-  final List<Map<String, dynamic>> storeThemes = [
-    {'name': 'Teal', 'color': Colors.teal},
-    {'name': 'Lime', 'color': Colors.lime},
-    {'name': 'Pink', 'color': Colors.pink},
-  ];
+  final Map<String, Color> storeThemes = {
+    'Teal': Colors.teal,
+    'Lime': Colors.lime,
+    'Pink': Colors.pink,
+  };
+
+  final Map<String, Color> ownedThemes = {}; // Keeps track of owned themes
+
+  Future<void> fetchOwnedThemes() async {
+    final ownedThemeNames = await PurchaseInfo.getOwnedItems(); // Fetch owned theme names
+
+    for (var themeName in ownedThemeNames) {
+      if (storeThemes.containsKey(themeName)) {
+        ownedThemes[themeName] = storeThemes[themeName]!; // Add only existing themes
+      }
+    }
+
+    notifyListeners(); // Notify UI of changes
+  }
 
   void updateThemeColor(Color newColor) {
     selectedColor = newColor;
@@ -116,26 +130,34 @@ class MyAppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  void purchaseTheme(Map<String, dynamic> theme) async {
-    // availableThemes.add(theme);
-    // storeThemes.removeWhere((item) => item['color'] == theme['color']);
+  Future<bool> purchaseTheme(String themeName) async {
+    final coins = await CycleCoinInfo.getCycleCoins();
+    if (coins < 10) {
+      Fluttertoast.showToast(
+        msg: "Not enough CycleCoins!",
+        backgroundColor: Colors.red,
+      );
+      return false; // Return false if not enough coins
+    }
 
-    print("Purchasing theme: $theme");
-    final themeName = theme["name"];
-
-    final purchaseResponse = await PurchaseInfo.buyItem(themeName);
-
-    Fluttertoast.showToast(
-        msg: "Server response: $purchaseResponse",
-        toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.CENTER,
-        timeInSecForIosWeb: 5,
-        backgroundColor: Colors.blueAccent,
-        textColor: Colors.white,
-        fontSize: 16.0
-    );
-
-    notifyListeners();
+    final response = await PurchaseInfo.buyItem(themeName);
+    switch (response) {
+      case BuyResponse.success:
+        final color = storeThemes.remove(themeName);
+        if (color != null) availableThemes[themeName] = color;
+        Fluttertoast.showToast(msg: "Purchase successful!");
+        notifyListeners();
+        return true; // Return true if purchase is successful
+      case BuyResponse.notEnoughCoins:
+        Fluttertoast.showToast(msg: "Not enough CycleCoins!");
+        return false; // Return false if not enough coins
+      case BuyResponse.alreadyOwned:
+        Fluttertoast.showToast(msg: "You already own this theme!");
+        return false; // Return false if already owned
+      default:
+        Fluttertoast.showToast(msg: "Purchase failed. Try again later.");
+        return false; // Return false for any other failure
+    }
   }
 }
 
@@ -258,8 +280,5 @@ AppBar createAppBar(BuildContext context, String titleText) {
             : Colors.black,
       ),
     ),
-    backgroundColor: Theme.of(context).brightness == Brightness.dark 
-        ? Colors.black12 
-        : Theme.of(context).colorScheme.surface,
   );
 }

@@ -29,7 +29,6 @@ class HomePage extends StatelessWidget {
             ),
           ],
         ),
-        backgroundColor: isDarkMode ? Colors.black12 : Colors.white,
       ),
       body: SingleChildScrollView( // Wrap the content in a SingleChildScrollView
         padding: const EdgeInsets.all(8.0),

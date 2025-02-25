@@ -2,7 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../main.dart';
 
-class SettingsPage extends StatelessWidget {
+class SettingsPage extends StatefulWidget {
+  @override
+  _SettingsPageState createState() => _SettingsPageState();
+}
+
+class _SettingsPageState extends State<SettingsPage> {
+  @override
+  void initState() {
+    super.initState();
+    // Fetch owned themes when the settings page is initialized
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<MyAppState>(context, listen: false).fetchOwnedThemes();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -24,24 +38,32 @@ class SettingsPage extends StatelessWidget {
                 builder: (context, appState, child) {
                   return DropdownButton<Color>(
                     value: appState.selectedColor,
-                    items: appState.availableThemes.isEmpty
-                        ? []
-                        : appState.availableThemes.map((theme) {
-                            return DropdownMenuItem<Color>(
-                              value: theme['color'],
-                              child: Row(
-                                children: [
-                                  Container(
-                                    width: 24,
-                                    height: 24,
-                                    color: theme['color'],
-                                  ),
-                                  SizedBox(width: 15),
-                                  Text(theme['name']),
-                                ],
-                              ),
-                            );
-                          }).toList(),
+                    items: [
+                      ...appState.availableThemes.entries.map((entry) {
+                        return DropdownMenuItem<Color>(
+                          value: entry.value,
+                          child: Row(
+                            children: [
+                              Container(width: 24, height: 24, color: entry.value),
+                              SizedBox(width: 15),
+                              Text(entry.key),
+                            ],
+                          ),
+                        );
+                      }),
+                      ...appState.ownedThemes.entries.map((entry) {
+                        return DropdownMenuItem<Color>(
+                          value: entry.value,
+                          child: Row(
+                            children: [
+                              Container(width: 24, height: 24, color: entry.value),
+                              SizedBox(width: 15),
+                              Text(entry.key),
+                            ],
+                          ),
+                        );
+                      }),
+                    ],
                     onChanged: (newColor) {
                       if (newColor != null) {
                         appState.updateThemeColor(newColor);
@@ -65,18 +87,15 @@ class SettingsPage extends StatelessWidget {
                   );
                 },
               ),
-              // Reset Button
               SizedBox(height: 20),
               Center(
                 child: ElevatedButton(
                   onPressed: () {
                     final appState = Provider.of<MyAppState>(context, listen: false);
-                    appState.updateThemeColor(Colors.indigo);
+                    appState.updateThemeColor(Colors.orange);
                     appState.toggleDarkMode(false);
                   },
-                  style: ElevatedButton.styleFrom(
-                    elevation: 10,
-                  ),
+                  style: ElevatedButton.styleFrom(elevation: 10),
                   child: Text('Reset Default Settings'),
                 ),
               ),

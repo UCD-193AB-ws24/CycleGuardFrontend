@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../main.dart';
+import 'package:intl/intl.dart';
+import 'package:cycle_guard_app/data/user_stats_accessor.dart';
 
 class SettingsPage extends StatefulWidget {
   @override
@@ -8,6 +10,7 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
+  int accountCreationTime = 0;
   @override
   void initState() {
     super.initState();
@@ -15,7 +18,18 @@ class _SettingsPageState extends State<SettingsPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<MyAppState>(context, listen: false).fetchOwnedThemes();
     });
+    _getUserStats();
   }
+
+  void _getUserStats() async {
+    final userStats = await UserStatsAccessor.getUserStats();
+    if (mounted) {
+      setState(() {
+        accountCreationTime = userStats.accountCreationTime;
+      });
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -98,6 +112,32 @@ class _SettingsPageState extends State<SettingsPage> {
                   style: ElevatedButton.styleFrom(elevation: 10),
                   child: Text('Reset Default Settings'),
                 ),
+              ),
+              SizedBox(height: 20),
+              // Display account creation time and duration since account creation
+              Consumer<MyAppState>(
+                builder: (context, appState, child) {
+                  DateTime creationDate = DateTime.fromMillisecondsSinceEpoch(accountCreationTime * 1000);
+                  Duration duration = DateTime.now().difference(creationDate);
+
+                  String formattedCreationDate = DateFormat('yyyy-MM-dd').format(creationDate);
+                  String durationString = '${duration.inDays} days, ${duration.inHours % 24} hours, ${duration.inMinutes % 60} minutes';
+
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Account Created On: $formattedCreationDate',
+                        ),
+                        Text(
+                          'Member for: $durationString',
+                        ),
+                      ],
+                    ),
+                  );
+                },
               ),
             ],
           ),

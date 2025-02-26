@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../main.dart';
-import 'package:cycle_guard_app/data/user_stats_accessor.dart';
 import 'package:provider/provider.dart';
 import 'package:cycle_guard_app/data/user_stats_provider.dart';
 
@@ -10,10 +9,6 @@ class AchievementsPage extends StatefulWidget {
 }
 
 class _AchievementsPageState extends State<AchievementsPage> {
-  /*double totalDistance = 0; 
-  double totalTime = 0;
-  int rideStreak = 0;
-  int bestStreak = 0;*/
 
   final List<Map<String, dynamic>> uniqueAchievements = [
     {'title': 'First Ride', 'description': 'Complete your first ride', 'icon': Icons.directions_bike},
@@ -48,24 +43,11 @@ class _AchievementsPageState extends State<AchievementsPage> {
   void initState() {
     super.initState();
     Future.microtask(() => Provider.of<UserStatsProvider>(context, listen: false).fetchUserStats());
-    //_getUserStats();
   }
 
-    /*void _getUserStats() async {
-    final userStats = await UserStatsAccessor.getUserStats();
-    if (mounted) {
-      setState(() {
-        totalDistance = userStats.totalDistance;
-        totalTime = userStats.totalTime;
-        rideStreak = userStats.rideStreak;
-        bestStreak = userStats.bestStreak;
-      });
-    }
-  }*/
 
   @override
-  Widget build(BuildContext context) {
-    //_getUserStats(); 
+  Widget build(BuildContext context) { 
     final userStats = Provider.of<UserStatsProvider>(context);
 
     final selectedColor = Theme.of(context).colorScheme.primary;
@@ -102,11 +84,14 @@ class _AchievementsPageState extends State<AchievementsPage> {
               padding: const EdgeInsets.only(bottom: 8),
               child: Text(
                 subtitle,
-                style: TextStyle(fontSize: 16, color: Colors.grey[700]),
+                style: TextStyle(
+                  fontSize: 16, 
+                  color: isDarkMode ? Colors.grey[300] : Colors.grey[700],
+                  ),
               ),
             ),
           ...achievements.map((achievement) {
-            final index = achievementIndex++; // Assign and increment the global index
+            final index = achievementIndex++; 
             return AchievementCard(
               title: achievement['title']!,
               description: achievement['description']!,
@@ -172,7 +157,10 @@ class AchievementCard extends StatelessWidget {
                   SizedBox(height: 4),
                   Text(
                     description,
-                    style: TextStyle(fontSize: 12, color: Colors.grey[700]),
+                    style: TextStyle(
+                      fontSize: 12, 
+                      color: isDarkMode ? Colors.grey[300] : Colors.grey[700],
+                      ),
                   ),
                 ],
               ),

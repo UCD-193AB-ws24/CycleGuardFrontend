@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../main.dart';
 import 'package:intl/intl.dart';
-import 'package:cycle_guard_app/data/user_stats_accessor.dart';
+import 'package:cycle_guard_app/data/user_stats_provider.dart';
 
 class SettingsPage extends StatefulWidget {
   @override
@@ -10,29 +10,19 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
-  int accountCreationTime = 0;
   @override
   void initState() {
     super.initState();
-    // Fetch owned themes when the settings page is initialized
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<MyAppState>(context, listen: false).fetchOwnedThemes();
     });
-    _getUserStats();
+    Future.microtask(() => Provider.of<UserStatsProvider>(context, listen: false).fetchUserStats());
   }
-
-  void _getUserStats() async {
-    final userStats = await UserStatsAccessor.getUserStats();
-    if (mounted) {
-      setState(() {
-        accountCreationTime = userStats.accountCreationTime;
-      });
-    }
-  }
-
 
   @override
   Widget build(BuildContext context) {
+    final userStats = Provider.of<UserStatsProvider>(context);
+
     return Scaffold(
       appBar: createAppBar(context, 'Settings'),
       body: SizedBox(
@@ -42,7 +32,6 @@ class _SettingsPageState extends State<SettingsPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Theme Selection
               Text(
                 'Select Theme Color:',
                 style: Theme.of(context).textTheme.headlineSmall,
@@ -114,10 +103,9 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
               ),
               SizedBox(height: 20),
-              // Display account creation time and duration since account creation
               Consumer<MyAppState>(
                 builder: (context, appState, child) {
-                  DateTime creationDate = DateTime.fromMillisecondsSinceEpoch(accountCreationTime * 1000);
+                  DateTime creationDate = DateTime.fromMillisecondsSinceEpoch(userStats.accountCreationTime * 1000);
                   Duration duration = DateTime.now().difference(creationDate);
 
                   String formattedCreationDate = DateFormat('yyyy-MM-dd').format(creationDate);

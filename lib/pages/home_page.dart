@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:cycle_guard_app/data/user_stats_accessor.dart';
+import 'package:cycle_guard_app/data/user_stats_provider.dart';
+import 'package:provider/provider.dart';
 
 class HomePage extends StatefulWidget {
   @override
@@ -8,28 +9,16 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  String username = 'Guest';
-  int rideStreak = 0;
-
   @override
   void initState() {
     super.initState();
-    _getUserStats();
+    Future.microtask(() => Provider.of<UserStatsProvider>(context, listen: false).fetchUserStats());
   }
 
-  void _getUserStats() async {
-    final userStats = await UserStatsAccessor.getUserStats();
-    if (mounted) {
-      setState(() {
-        username = userStats.username;
-        rideStreak = userStats.rideStreak;
-      });
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
-    _getUserStats();
+    final userStats = Provider.of<UserStatsProvider>(context);
 
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final selectedColor = Theme.of(context).colorScheme.primary;
@@ -44,7 +33,7 @@ class _HomePageState extends State<HomePage> {
                 children: [
                   TextSpan(text: 'Hi, '),
                   TextSpan(
-                    text: username,
+                    text: userStats.username,
                     style: TextStyle(fontWeight: FontWeight.bold),
                   ),
                 ],
@@ -115,7 +104,7 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
             SizedBox(height: 16),
-            _buildStatistic('Current Streak', '$rideStreak days'),
+            _buildStatistic('Current Streak', '${userStats.rideStreak} days'),
             SizedBox(height: 16),
             Center(
               child: Text(

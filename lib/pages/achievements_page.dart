@@ -1,7 +1,20 @@
 import 'package:flutter/material.dart';
 import '../main.dart';
+import 'package:cycle_guard_app/data/user_stats_accessor.dart';
+import 'package:provider/provider.dart';
+import 'package:cycle_guard_app/data/user_stats_provider.dart';
 
-class AchievementsPage extends StatelessWidget {
+class AchievementsPage extends StatefulWidget {
+  @override
+  _AchievementsPageState createState() => _AchievementsPageState();
+}
+
+class _AchievementsPageState extends State<AchievementsPage> {
+  /*double totalDistance = 0; 
+  double totalTime = 0;
+  int rideStreak = 0;
+  int bestStreak = 0;*/
+
   final List<Map<String, dynamic>> uniqueAchievements = [
     {'title': 'First Ride', 'description': 'Complete your first ride', 'icon': Icons.directions_bike},
     {'title': 'Achievement Hunter', 'description': 'Complete all achievements', 'icon': Icons.emoji_events},
@@ -32,7 +45,29 @@ class AchievementsPage extends StatelessWidget {
   int achievementIndex = 0; 
 
   @override
+  void initState() {
+    super.initState();
+    Future.microtask(() => Provider.of<UserStatsProvider>(context, listen: false).fetchUserStats());
+    //_getUserStats();
+  }
+
+    /*void _getUserStats() async {
+    final userStats = await UserStatsAccessor.getUserStats();
+    if (mounted) {
+      setState(() {
+        totalDistance = userStats.totalDistance;
+        totalTime = userStats.totalTime;
+        rideStreak = userStats.rideStreak;
+        bestStreak = userStats.bestStreak;
+      });
+    }
+  }*/
+
+  @override
   Widget build(BuildContext context) {
+    //_getUserStats(); 
+    final userStats = Provider.of<UserStatsProvider>(context);
+
     final selectedColor = Theme.of(context).colorScheme.primary;
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
@@ -44,9 +79,9 @@ class AchievementsPage extends StatelessWidget {
         padding: const EdgeInsets.all(8.0),
         children: [
           _buildSection('Unique', '', uniqueAchievements, selectedColor, isDarkMode),
-          _buildSection('Distance', 'Total Miles Traveled: 0', distanceAchievements, selectedColor, isDarkMode),
-          _buildSection('Time', 'Total Time Spent Riding: 0', timeAchievements, selectedColor, isDarkMode),
-          _buildSection('Consistency', 'Days in a Row: 0', consistencyAchievements, selectedColor, isDarkMode),
+          _buildSection('Distance', 'Total Miles Traveled : ${userStats.totalDistance} miles', distanceAchievements, selectedColor, isDarkMode),
+          _buildSection('Time', 'Total Time Spent Riding : ${userStats.totalTime} minutes', timeAchievements, selectedColor, isDarkMode),
+          _buildSection('Consistency', 'Current Days in a Row : ${userStats.rideStreak} \nBest : ${userStats.bestStreak}', consistencyAchievements, selectedColor, isDarkMode),
         ],
       ),
     );

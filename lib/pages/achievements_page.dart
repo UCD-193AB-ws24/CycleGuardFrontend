@@ -1,72 +1,122 @@
 import 'package:flutter/material.dart';
 import '../main.dart';
+import 'package:cycle_guard_app/data/user_stats_accessor.dart';
+import 'package:provider/provider.dart';
+import 'package:cycle_guard_app/data/user_stats_provider.dart';
 
-class AchievementsPage extends StatelessWidget {
-  final List<Map<String, dynamic>> achievements = [
+class AchievementsPage extends StatefulWidget {
+  @override
+  _AchievementsPageState createState() => _AchievementsPageState();
+}
+
+class _AchievementsPageState extends State<AchievementsPage> {
+  /*double totalDistance = 0; 
+  double totalTime = 0;
+  int rideStreak = 0;
+  int bestStreak = 0;*/
+
+  final List<Map<String, dynamic>> uniqueAchievements = [
     {'title': 'First Ride', 'description': 'Complete your first ride', 'icon': Icons.directions_bike},
-    {'title': 'Hill Climber', 'description': 'Climb 100 meters in elevation', 'icon': Icons.terrain},
-    {'title': 'Hill Champion', 'description': 'Climb 1000 meters in elevation', 'icon': Icons.terrain},
-    {'title': 'Hill Conqueror', 'description': 'Climb 10000 meters in elevation', 'icon': Icons.terrain},
-    {'title': 'Tour de City', 'description': 'Ride in 5 different cities/towns', 'icon': Icons.location_city},
-    {'title': 'Speedy Boy', 'description': 'Reach a speed of 15 mph', 'icon': Icons.speed},
-    {'title': 'Speed Demon', 'description': 'Reach a speed of 30 mph', 'icon': Icons.speed},
-    {'title': 'Speed-aholic', 'description': 'Reach a speed of 50 mph', 'icon': Icons.speed},
-    {'title': 'Endurance Master', 'description': 'Ride for 3 hours nonstop', 'icon': Icons.timer},
-    {'title': 'Daily Rider', 'description': 'Ride everyday for a week', 'icon': Icons.calendar_today},
-    {'title': 'Month of Miles', 'description': 'Ride everyday for a month', 'icon': Icons.calendar_today},
-    {'title': 'Year-Round Rider', 'description': 'Ride everyday for a year', 'icon': Icons.calendar_today},
+    {'title': 'Achievement Hunter', 'description': 'Complete all achievements', 'icon': Icons.emoji_events},
   ];
 
-  // Manually set which achievements are complete (True means complete)
-  final List<bool> achievementsCompleted = [
-    true, // First Ride
-    true, // Hill Climber
-    true, // Hill Champion
-    false, // Hill Conqueror
-    false, // Tour de City
-    true, // Speedy Boy
-    true, // Speed Demon
-    false, // Speed-aholic
-    true, // Endurance Master
-    true, // Daily Rider
-    true, // Month of Miles
-    false, // Year-Round Rider
+  final List<Map<String, dynamic>> distanceAchievements = [
+    {'title': 'Challenger', 'description': 'Bike 100 miles', 'icon': Icons.flag},
+    {'title': 'Champion', 'description': 'Bike 1000 miles', 'icon': Icons.flag},
+    {'title': 'Conqueror', 'description': 'Bike 10000 miles', 'icon': Icons.flag},
   ];
+
+  final List<Map<String, dynamic>> timeAchievements = [
+    {'title': 'Pedal Pusher', 'description': 'Ride for 10 hours', 'icon': Icons.timer},
+    {'title': 'Endurance Rider', 'description': 'Ride for 100 hours', 'icon': Icons.timer},
+    {'title': 'Iron Cyclist', 'description': 'Ride for 1000 hours', 'icon': Icons.timer},
+  ];
+
+  final List<Map<String, dynamic>> consistencyAchievements = [
+    {'title': 'Daily Rider', 'description': 'Ride every day for a week', 'icon': Icons.calendar_today},
+    {'title': 'Month of Miles', 'description': 'Ride every day for a month', 'icon': Icons.calendar_today},
+    {'title': 'Year-Round Rider', 'description': 'Ride every day for a year', 'icon': Icons.calendar_today},
+  ];
+
+  final List<bool> achievementsCompleted = [
+    true, false, true, false, false, true, true, false, true, false, false
+  ];
+
+  int achievementIndex = 0; 
+
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() => Provider.of<UserStatsProvider>(context, listen: false).fetchUserStats());
+    //_getUserStats();
+  }
+
+    /*void _getUserStats() async {
+    final userStats = await UserStatsAccessor.getUserStats();
+    if (mounted) {
+      setState(() {
+        totalDistance = userStats.totalDistance;
+        totalTime = userStats.totalTime;
+        rideStreak = userStats.rideStreak;
+        bestStreak = userStats.bestStreak;
+      });
+    }
+  }*/
 
   @override
   Widget build(BuildContext context) {
+    //_getUserStats(); 
+    final userStats = Provider.of<UserStatsProvider>(context);
+
     final selectedColor = Theme.of(context).colorScheme.primary;
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
+    achievementIndex = 0; 
+
     return Scaffold(
       appBar: createAppBar(context, 'Achievements'),
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          int columns = (constraints.maxWidth / 150).floor().clamp(1, 4);
-          return Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: GridView.builder(
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: columns,
-                crossAxisSpacing: 8,
-                mainAxisSpacing: 8,
-                childAspectRatio: 1.0,
+      body: ListView(
+        padding: const EdgeInsets.all(8.0),
+        children: [
+          _buildSection('Unique', '', uniqueAchievements, selectedColor, isDarkMode),
+          _buildSection('Distance', 'Total Miles Traveled : ${userStats.totalDistance} miles', distanceAchievements, selectedColor, isDarkMode),
+          _buildSection('Time', 'Total Time Spent Riding : ${userStats.totalTime} minutes', timeAchievements, selectedColor, isDarkMode),
+          _buildSection('Consistency', 'Current Days in a Row : ${userStats.rideStreak} \nBest : ${userStats.bestStreak}', consistencyAchievements, selectedColor, isDarkMode),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSection(String title, String subtitle, List<Map<String, dynamic>> achievements, Color selectedColor, bool isDarkMode) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+          ),
+          if (subtitle.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Text(
+                subtitle,
+                style: TextStyle(fontSize: 16, color: Colors.grey[700]),
               ),
-              itemCount: achievements.length,
-              itemBuilder: (context, index) {
-                bool isCompleted = achievementsCompleted[index];
-                return AchievementCard(
-                  title: achievements[index]['title']!,
-                  description: achievements[index]['description']!,
-                  icon: achievements[index]['icon'], 
-                  selectedColor: selectedColor,
-                  isDarkMode: isDarkMode,
-                  isCompleted: isCompleted, 
-                );
-              },
             ),
-          );
-        },
+          ...achievements.map((achievement) {
+            final index = achievementIndex++; // Assign and increment the global index
+            return AchievementCard(
+              title: achievement['title']!,
+              description: achievement['description']!,
+              icon: achievement['icon'],
+              selectedColor: selectedColor,
+              isDarkMode: isDarkMode,
+              isCompleted: achievementsCompleted[index],
+            );
+          }),
+        ],
       ),
     );
   }
@@ -95,59 +145,46 @@ class AchievementCard extends StatelessWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(
-          color: isCompleted ? Colors.amber : Colors.transparent, 
+          color: isCompleted ? Colors.amber : Colors.transparent,
           width: 2,
         ),
       ),
       elevation: 4,
-      color: isDarkMode ? Theme.of(context).colorScheme.onSecondaryFixedVariant : Colors.white, // Card color
-      child: Stack(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(12.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  icon,
-                  size: 40,
-                  color: isCompleted ? Colors.amber : Theme.of(context).colorScheme.onPrimaryFixed, // Icon color
-                ),
-                SizedBox(height: 8),
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: isDarkMode ? Colors.white : Colors.black,
-                  ),
-                ),
-                SizedBox(height: 4),
-                Text(
-                  description,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: isDarkMode ? Colors.white70 : Colors.black54,
-                  ),
-                ),
-              ],
+      color: isDarkMode ? Theme.of(context).colorScheme.onSecondaryFixedVariant : Colors.white,
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Row(
+          children: [
+            Icon(
+              icon,
+              size: 40,
+              color: isCompleted ? Colors.amber : Theme.of(context).colorScheme.onPrimaryFixed,
             ),
-          ),
-          if (isCompleted) 
-            Positioned(
-              top: 8,
-              right: 8,
-              child: CircleAvatar(
-                radius: 12,
-                backgroundColor: Colors.amber,
-                child: Icon(
-                  Icons.check,
-                  size: 16,
-                  color: Colors.white,
-                ),
+            SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    description,
+                    style: TextStyle(fontSize: 12, color: Colors.grey[700]),
+                  ),
+                ],
               ),
             ),
-        ],
+            if (isCompleted)
+              Icon(
+                Icons.check_circle,
+                color: Colors.amber,
+                size: 24,
+              ),
+          ],
+        ),
       ),
     );
   }

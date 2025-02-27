@@ -101,10 +101,12 @@ class TestingPage extends StatelessWidget {
 
   Future<void> _getAchievementInfo() async {
     final achievementInfo = await AchievementInfoAccessor.getAchievementInfo();
+    print(achievementInfo.getCompletedAchievements());
 
     print(achievementInfo);
-
     print("Successfully retrieved achievement info!");
+
+    print(achievementInfo.getCompletedAchievements());
   }
 
   Future<void> _getUserStats() async {

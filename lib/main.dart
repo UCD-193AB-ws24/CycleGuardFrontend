@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:provider/provider.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 // import pages 
 import 'pages/start_page.dart';
@@ -17,7 +18,9 @@ import 'pages/routes_page.dart';
 import 'pages/store_page.dart';
 import 'pages/settings_page.dart';
 
-void main() {
+void main() async {
+  await dotenv.load(fileName: '.env');
+  print(dotenv.env['API_KEY']);
   runApp(MyApp());
 }
 

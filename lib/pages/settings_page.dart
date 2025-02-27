@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../main.dart';
+import 'package:intl/intl.dart';
+import 'package:cycle_guard_app/data/user_stats_provider.dart';
 
 class SettingsPage extends StatefulWidget {
   @override
@@ -11,14 +13,16 @@ class _SettingsPageState extends State<SettingsPage> {
   @override
   void initState() {
     super.initState();
-    // Fetch owned themes when the settings page is initialized
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<MyAppState>(context, listen: false).fetchOwnedThemes();
     });
+    Future.microtask(() => Provider.of<UserStatsProvider>(context, listen: false).fetchUserStats());
   }
 
   @override
   Widget build(BuildContext context) {
+    final userStats = Provider.of<UserStatsProvider>(context);
+
     return Scaffold(
       appBar: createAppBar(context, 'Settings'),
       body: SizedBox(
@@ -28,7 +32,6 @@ class _SettingsPageState extends State<SettingsPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Theme Selection
               Text(
                 'Select Theme Color:',
                 style: Theme.of(context).textTheme.headlineSmall,
@@ -98,6 +101,31 @@ class _SettingsPageState extends State<SettingsPage> {
                   style: ElevatedButton.styleFrom(elevation: 10),
                   child: Text('Reset Default Settings'),
                 ),
+              ),
+              SizedBox(height: 20),
+              Consumer<MyAppState>(
+                builder: (context, appState, child) {
+                  DateTime creationDate = DateTime.fromMillisecondsSinceEpoch(userStats.accountCreationTime * 1000);
+                  Duration duration = DateTime.now().difference(creationDate);
+
+                  String formattedCreationDate = DateFormat('yyyy-MM-dd').format(creationDate);
+                  String durationString = '${duration.inDays} days, ${duration.inHours % 24} hours, ${duration.inMinutes % 60} minutes';
+
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Account Created On: $formattedCreationDate',
+                        ),
+                        Text(
+                          'Member for: $durationString',
+                        ),
+                      ],
+                    ),
+                  );
+                },
               ),
             ],
           ),

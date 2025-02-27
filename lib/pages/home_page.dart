@@ -1,9 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:cycle_guard_app/data/user_stats_provider.dart';
+import 'package:provider/provider.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
+  @override
+  _HomePageState createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() => Provider.of<UserStatsProvider>(context, listen: false).fetchUserStats());
+  }
+
+
   @override
   Widget build(BuildContext context) {
+    final userStats = Provider.of<UserStatsProvider>(context);
+
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final selectedColor = Theme.of(context).colorScheme.primary;
     return Scaffold(
@@ -17,7 +33,7 @@ class HomePage extends StatelessWidget {
                 children: [
                   TextSpan(text: 'Hi, '),
                   TextSpan(
-                    text: 'User',
+                    text: userStats.username,
                     style: TextStyle(fontWeight: FontWeight.bold),
                   ),
                 ],
@@ -29,8 +45,9 @@ class HomePage extends StatelessWidget {
             ),
           ],
         ),
+        backgroundColor: isDarkMode ? Colors.black12 : null, 
       ),
-      body: SingleChildScrollView( // Wrap the content in a SingleChildScrollView
+      body: SingleChildScrollView( 
         padding: const EdgeInsets.all(8.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -87,8 +104,7 @@ class HomePage extends StatelessWidget {
               ),
             ),
             SizedBox(height: 16),
-            // Move the Current Streak to its own line here
-            _buildStatistic('Current Streak', '103 days'),
+            _buildStatistic('Current Streak', '${userStats.rideStreak} days'),
             SizedBox(height: 16),
             Center(
               child: Text(
@@ -105,7 +121,6 @@ class HomePage extends StatelessWidget {
               ],
             ),
             SizedBox(height: 16),
-            // Add Daily Challenge Section
             _buildDailyChallenge(context),
             SizedBox(height: 16),
             Center(
@@ -115,7 +130,6 @@ class HomePage extends StatelessWidget {
               ),
             ),
             SizedBox(height: 16),
-            // Add Achievement Progress Section
             _buildAchievementProgress(context, isDarkMode),
           ],
         ),

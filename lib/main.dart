@@ -31,7 +31,6 @@ class OnBoardStart extends StatefulWidget{
   const OnBoardStart({Key?key}) : super(key:key);
   @override
   OnBoardStartState createState() => OnBoardStartState();
-
 }
 
 class OnBoardStartState extends State<OnBoardStart>{
@@ -131,11 +130,6 @@ class MyAppState extends ChangeNotifier {
     notifyListeners(); 
   }
 
-  void toggleDarkMode(bool isEnabled) {
-    isDarkMode = isEnabled;
-    notifyListeners();
-  }
-
   Future<bool> purchaseTheme(String themeName) async {
     final coins = await CycleCoinInfo.getCycleCoins();
     if (coins < 10) {
@@ -164,6 +158,11 @@ class MyAppState extends ChangeNotifier {
         Fluttertoast.showToast(msg: "Purchase failed. Try again later.");
         return false; // Return false for any other failure
     }
+  }
+
+  void toggleDarkMode(bool isEnabled) {
+    isDarkMode = isEnabled;
+    notifyListeners();
   }
 }
 
@@ -286,5 +285,8 @@ AppBar createAppBar(BuildContext context, String titleText) {
             : Colors.black,
       ),
     ),
+    backgroundColor: Theme.of(context).brightness == Brightness.dark
+        ? Colors.black12
+        : null,
   );
 }

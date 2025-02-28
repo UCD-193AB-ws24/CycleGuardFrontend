@@ -1,6 +1,6 @@
 // user_stats_provider.dart
 import 'package:flutter/material.dart';
-import 'package:cycle_guard_app/data/user_stats_accessor.dart'; // Assuming the accessor is here
+import 'package:cycle_guard_app/data/user_stats_accessor.dart';
 
 class UserStatsProvider with ChangeNotifier {
   String username = ""; 

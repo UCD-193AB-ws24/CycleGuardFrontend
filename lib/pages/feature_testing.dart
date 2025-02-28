@@ -12,6 +12,9 @@ class TestingPage extends StatelessWidget {
   final heightController = TextEditingController();
   final weightController = TextEditingController();
   final ageController = TextEditingController();
+  final distanceController = TextEditingController();
+  final caloriesController = TextEditingController();
+  final timeController = TextEditingController();
 
   Widget _numberField(TextEditingController controller, String hint) => TextField(
     decoration: InputDecoration(
@@ -90,37 +93,65 @@ class TestingPage extends StatelessWidget {
     );
   }
 
-  Future<void> _addRideInfo() async {
-    final distance = 1.0;
-    final calories = 1.0;
-    final time = 1.0;
-    SubmitRideService.addRideRaw(distance, calories, time);
-
+  Future<void> _addRideInfo(double distance, double calories, double time) async {
+    await SubmitRideService.addRideRaw(distance, calories, time);
     print("Successfully added ride info!");
   }
 
   Future<void> _getAchievementInfo() async {
     final achievementInfo = await AchievementInfoAccessor.getAchievementInfo();
     print(achievementInfo.getCompletedAchievements());
-
     print(achievementInfo);
     print("Successfully retrieved achievement info!");
-
-    print(achievementInfo.getCompletedAchievements());
   }
 
   Future<void> _getUserStats() async {
     final userStats = await UserStatsAccessor.getUserStats();
     print(userStats);
-
     print("Successfully retrieved user stats!");
   }
 
   Future<void> _getWeekHistory() async {
     final weekHistory = await WeekHistoryAccessor.getWeekHistory();
     print(weekHistory);
-
     print("Successfully retrieved week history!");
+  }
+
+  void _showRideInputPage(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text("Enter Ride Information"),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _numberField(distanceController, "Distance (miles)"),
+              const SizedBox(height: 12),
+              _numberField(caloriesController, "Calories burned"),
+              const SizedBox(height: 12),
+              _numberField(timeController, "Time (minutes)"),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: () {
+                  final distance = double.tryParse(distanceController.text) ?? 0.0;
+                  final calories = double.tryParse(caloriesController.text) ?? 0.0;
+                  final time = double.tryParse(timeController.text) ?? 0.0;
+
+                  _addRideInfo(distance, calories, time);
+                  Navigator.pop(context);
+                },
+                child: Text("Submit Ride Info"),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text("Cancel"),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -144,12 +175,12 @@ class TestingPage extends StatelessWidget {
                   child: Text("Set fitness info"),
                 ),
                 ElevatedButton(
-                  onPressed: () => _addRideInfo(),
+                  onPressed: () => _showRideInputPage(context),
                   style: ElevatedButton.styleFrom(
                     elevation: 5,
                     padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
                   ),
-                  child: Text("Add Ride Info: 1 mile, 1 minute, 1 calorie"),
+                  child: Text("Add Ride Info"),
                 ),
                 ElevatedButton(
                   onPressed: () => _getAchievementInfo(),

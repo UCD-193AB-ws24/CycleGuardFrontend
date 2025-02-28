@@ -85,7 +85,6 @@ class AchievementInfo {
 
       res[idx] = complete;
     }
-
     return res;
   }
 }

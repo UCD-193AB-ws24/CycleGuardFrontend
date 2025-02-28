@@ -19,6 +19,7 @@ class SteepEndCurve extends Curve {
 }
 
 class RocketExhaustPainter extends CustomPainter {
+  
   final double amplitude = 10;
   final double wavelength = 200;
   final double outerPhaseShift;
@@ -36,17 +37,17 @@ class RocketExhaustPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final canvasBgPaint = Paint()
-      ..color = Color.fromARGB(255, 200, 0, 0) // Bright Red
+      ..color = const Color.fromARGB(255, 248, 161, 145)
       ..style = PaintingStyle.fill;
     canvas.drawRect(
         Rect.fromLTWH(0, 0, size.width, size.height), canvasBgPaint);
 
     final paintFill = Paint()
-      ..color = Color.fromARGB(255, 200, 50, 50) // Darker Red
+      ..color = Color.fromARGB(255, 247, 117, 57) 
       ..style = PaintingStyle.fill;
 
     final paint1Fill = Paint()
-      ..color = Color.fromARGB(255, 150, 30, 30) // Dark Red
+      ..color =  Color.fromARGB(255, 226, 43, 43)
       ..style = PaintingStyle.fill;
 
     final completeWavePath = getCompleteWave(size, 20, outerPhaseShift);
@@ -61,10 +62,9 @@ class RocketExhaustPainter extends CustomPainter {
     final height = size.height;
     final centerX = width / 2;
     final path = Path();
-    final startY = height - launchProgress1; //(height * launchProgress);
+    final startY = height - launchProgress1;
 
-    // Calculate the bottom width based on the animation progress
-    final maxBottomWidth = width * 2; // Adjust this value as needed
+    final maxBottomWidth = width * 2;
     final currentBottomWidth = maxBottomWidth * bottomWidthProgress;
 
     final leftBottomX = centerX - (currentBottomWidth / 2);
@@ -72,7 +72,7 @@ class RocketExhaustPainter extends CustomPainter {
 
     {
       final startX = centerX - shiftX;
-      final endX = leftBottomX - shiftX; //-shiftX;
+      final endX = leftBottomX - shiftX;
       const direction = -1;
 
       path.moveTo(startX, startY);
@@ -97,10 +97,9 @@ class RocketExhaustPainter extends CustomPainter {
     }
     {
       final startX1 = centerX + shiftX;
-      final endX1 = rightBottomX; //width + shiftX;
+      final endX1 = rightBottomX;
       final direction1 = 1;
 
-      // Draw bottom connecting line
       path.lineTo(endX1, height);
 
       for (double t = 1; t >= 0; t -= 0.01) {
@@ -160,7 +159,7 @@ class _RocketExhaustWidgetState extends State<RocketExhaustWidget>
 
     _bottomWidthAnimation = CurvedAnimation(
       parent: _bottomWidthController,
-      curve: SteepEndCurve(steepness: 30.0),
+      curve: SteepEndCurve(steepness: 40.0),
     );
 
     _bottomWidthController.forward();

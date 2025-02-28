@@ -68,7 +68,7 @@ class MyApp extends StatelessWidget {
     return ChangeNotifierProvider(
       create: (context) => MyAppState(),
       child: ChangeNotifierProvider(
-        create: (context) => UserStatsProvider(), // Provide UserStatsProvider
+        create: (context) => UserStatsProvider(), 
         child: Consumer2<MyAppState, UserStatsProvider>(
           builder: (context, appState, userStats, child) {
             return MaterialApp(
@@ -83,7 +83,7 @@ class MyApp extends StatelessWidget {
                 brightness: Brightness.dark,
                 colorScheme: ColorScheme.fromSeed(seedColor: appState.selectedColor),
               ),
-              home: OnBoardStart(), // Replace with your starting page
+              home: OnBoardStart(), 
             );
           },
         ),
@@ -111,18 +111,18 @@ class MyAppState extends ChangeNotifier {
     'Pink': Colors.pink,
   };
 
-  final Map<String, Color> ownedThemes = {}; // Keeps track of owned themes
+  final Map<String, Color> ownedThemes = {};
 
   Future<void> fetchOwnedThemes() async {
-    final ownedThemeNames = await PurchaseInfo.getOwnedItems(); // Fetch owned theme names
+    final ownedThemeNames = await PurchaseInfo.getOwnedItems();
 
     for (var themeName in ownedThemeNames) {
       if (storeThemes.containsKey(themeName)) {
-        ownedThemes[themeName] = storeThemes[themeName]!; // Add only existing themes
+        ownedThemes[themeName] = storeThemes[themeName]!; 
       }
     }
 
-    notifyListeners(); // Notify UI of changes
+    notifyListeners(); 
   }
 
   void updateThemeColor(Color newColor) {
@@ -241,7 +241,6 @@ class _MyHomePageState extends State<MyHomePage> {
         return Scaffold(
           body: Row(
             children: [
-              // if (selectedIndex != 0) //comment out for navigation menu access
                 SizedBox(
                   height: double.infinity,
                   child: NavigationRail(

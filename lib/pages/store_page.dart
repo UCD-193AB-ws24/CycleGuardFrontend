@@ -8,7 +8,7 @@ import '../main.dart';
 class StorePage extends StatelessWidget {
   void _addCycleCoins() async {
     print("Adding...");
-    final newCoins = await CycleCoinInfo.addCycleCoins(100);
+    final newCoins = await CycleCoinInfo.addCycleCoins(5);
 
     Fluttertoast.cancel();
     Fluttertoast.showToast(
@@ -81,14 +81,21 @@ class StorePage extends StatelessWidget {
                   ),
                   child: Text("Buy"),
                 ),
+                SizedBox(height: 20), // Adds space between the two sections
+                Text(
+                  "Rocket Boost",
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+                Text("100 CycleCoins"),
                 ElevatedButton(
                   onPressed: () => _buyRocketBoost(context, appState),
                   style: ElevatedButton.styleFrom(
                     elevation: 5,
                     padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
                   ),
-                  child: Text("Buy Rocket Boost (100 CycleCoins)"),
+                  child: Text("Buy"),
                 ),
+                SizedBox(height: 20), 
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     elevation: 5,
@@ -157,17 +164,15 @@ class StorePage extends StatelessWidget {
 
   void _buyRocketBoost(BuildContext context, MyAppState appState) async {
     if (await appState.purchaseRocketBoost()) {
-          // Navigate to the rocket screen to show the animation
-      Navigator.push(
+      final result = await Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => const AnimatedButtonScreen()),
       );
 
-      // Wait for 3 seconds to let the animation play
-      await Future.delayed(const Duration(seconds: 3));
+      if (result == 'done') {
+        Navigator.pop(context);
+      }
 
-      // After the animation, return to the store page
-      Navigator.pop(context);
     }
   }
 }

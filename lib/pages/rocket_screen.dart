@@ -13,21 +13,24 @@ class _AnimatedButtonScreenState extends State<AnimatedButtonScreen>
   late AnimationController _controller;
   late Animation<double> _riseToLaunchStationAnimation;
   late Animation<double> _liftOffFromLaunchStationAnimation;
-  bool _isVisible = true;
 
   @override
   void initState() {
     super.initState();
+
     _controller = AnimationController(
-      duration: const Duration(milliseconds: 2000),
+      duration: const Duration(milliseconds: 3000),
       vsync: this,
     );
 
+    Future.delayed(const Duration(milliseconds: 500), () {
+      _controller.forward();
+    });
+
     _controller.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
-        setState(() {
-          _isVisible = false;
-        });
+        print("Animation finished! Closing screen...");
+        Navigator.pop(context); 
       }
     });
 
@@ -36,7 +39,7 @@ class _AnimatedButtonScreenState extends State<AnimatedButtonScreen>
       end: 1,
     ).animate(CurvedAnimation(
       parent: _controller,
-      curve: const Interval(0.0, 0.3, curve: Curves.easeOut),
+      curve: const Interval(0.0, 0.4, curve: Curves.easeOut),
     ));
 
     _liftOffFromLaunchStationAnimation = Tween<double>(
@@ -44,7 +47,7 @@ class _AnimatedButtonScreenState extends State<AnimatedButtonScreen>
       end: 1,
     ).animate(CurvedAnimation(
       parent: _controller,
-      curve: const Interval(0.5, 1.0, curve: Curves.easeInCirc),
+      curve: const Interval(0.4, 1.0, curve: Curves.easeInCirc),
     ));
   }
 
@@ -54,63 +57,44 @@ class _AnimatedButtonScreenState extends State<AnimatedButtonScreen>
     super.dispose();
   }
 
-  void _animateButton() {
-    setState(() {
-      _isVisible = true;
-    });
-    _controller.forward(from: 0);
-  }
-
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
-    // print("screenHieght : $screenHeight");
 
     return Scaffold(
       body: Stack(
         children: [
-          Positioned.fill(
-            child: Container(
-              color: Colors.red//fromARGB(255, 116, 4, 208),
-            ),
+          AnimatedBuilder(
+            animation: _controller,
+            builder: (context, child) {
+              return RocketExhaustWidget(
+                launchProgress: _liftOffFromLaunchStationAnimation.value > 0
+                    ? ((screenHeight * 2) * _liftOffFromLaunchStationAnimation.value +
+                        screenHeight / 4)
+                    : screenHeight / 4 * _riseToLaunchStationAnimation.value,
+              );
+            },
           ),
           AnimatedBuilder(
-              animation: _controller,
-              builder: (context, child) {
-                return RocketExhaustWidget(
-                    launchProgress: _liftOffFromLaunchStationAnimation.value > 0
-                        ? ((screenHeight * 2) *
-                                _liftOffFromLaunchStationAnimation.value +
-                            screenHeight / 4)
-                        : screenHeight /
-                            4 *
-                            _riseToLaunchStationAnimation.value);
-              }),
-          if (_isVisible)
-            AnimatedBuilder(
-              animation: _controller,
-              builder: (context, child) {
-                return Positioned(
-                  left: 0,
-                  right: 0,
-                  bottom: 100 /*_liftOffFromLaunchStationAnimation.value > 0
-                      ? ((screenHeight * 2) *
-                              _liftOffFromLaunchStationAnimation.value +
-                          screenHeight / 4)
-                      : screenHeight / 4 * _riseToLaunchStationAnimation.value*/,
-                  child: Center(
-                    child: ElevatedButton(
-                      onPressed: _animateButton,
-                      child: const Icon(Icons.rocket),
-                      style: ElevatedButton.styleFrom(
-                        shape: const CircleBorder(),
-                        padding: const EdgeInsets.all(24),
-                      ),
-                    ),
+            animation: _controller,
+            builder: (context, child) {
+              return Positioned(
+                left: 0,
+                right: 0,
+                bottom: _liftOffFromLaunchStationAnimation.value > 0
+                    ? ((screenHeight* 2) * _liftOffFromLaunchStationAnimation.value +
+                        screenHeight / 4)
+                    : screenHeight / 4 * _riseToLaunchStationAnimation.value,
+                child: Center(
+                  child: Icon(
+                    Icons.rocket,
+                    color: Color.fromARGB(255, 56, 15, 12),
+                    size: 100,
                   ),
-                );
-              },
-            ),
+                ),
+              );
+            },
+          ),
         ],
       ),
     );

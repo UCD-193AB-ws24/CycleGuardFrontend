@@ -2,12 +2,13 @@ import 'package:cycle_guard_app/data/purchase_info_accessor.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:provider/provider.dart';
+import 'package:cycle_guard_app/pages/rocket_screen.dart';
 import '../main.dart';
 
 class StorePage extends StatelessWidget {
   void _addCycleCoins() async {
     print("Adding...");
-    final newCoins = await CycleCoinInfo.addCycleCoins(5);
+    final newCoins = await CycleCoinInfo.addCycleCoins(100);
 
     Fluttertoast.cancel();
     Fluttertoast.showToast(
@@ -81,6 +82,14 @@ class StorePage extends StatelessWidget {
                   child: Text("Buy"),
                 ),
                 ElevatedButton(
+                  onPressed: () => _buyRocketBoost(context, appState),
+                  style: ElevatedButton.styleFrom(
+                    elevation: 5,
+                    padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
+                  ),
+                  child: Text("Buy Rocket Boost (100 CycleCoins)"),
+                ),
+                ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     elevation: 5,
                   ),
@@ -110,10 +119,8 @@ class StorePage extends StatelessWidget {
   }
 
   void _showThemeMenu(BuildContext context, MyAppState appState) async {
-    // Fetch the owned themes to ensure up-to-date data
     await appState.fetchOwnedThemes();
 
-    // Filter storeThemes dynamically instead of mutating it
     final purchasableThemes = Map.fromEntries(
       appState.storeThemes.entries.where((entry) => !appState.ownedThemes.containsKey(entry.key))
     );
@@ -136,7 +143,7 @@ class StorePage extends StatelessWidget {
                       onTap: () async {
                         final success = await appState.purchaseTheme(entry.key);
                         if (success) {
-                          Navigator.pop(context); // Close dialog on success
+                          Navigator.pop(context);
                         }
                       },
                     );
@@ -146,5 +153,21 @@ class StorePage extends StatelessWidget {
         );
       },
     );
+  }
+
+  void _buyRocketBoost(BuildContext context, MyAppState appState) async {
+    if (await appState.purchaseRocketBoost()) {
+          // Navigate to the rocket screen to show the animation
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const AnimatedButtonScreen()),
+      );
+
+      // Wait for 3 seconds to let the animation play
+      await Future.delayed(const Duration(seconds: 3));
+
+      // After the animation, return to the store page
+      Navigator.pop(context);
+    }
   }
 }

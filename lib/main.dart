@@ -160,6 +160,32 @@ class MyAppState extends ChangeNotifier {
     }
   }
 
+  Future<bool> purchaseRocketBoost() async {
+    final coins = await CycleCoinInfo.getCycleCoins();
+    if (coins < 100) {
+      Fluttertoast.showToast(
+        msg: "Not enough CycleCoins!",
+        backgroundColor: Colors.red,
+      );
+      return false; // Return false if not enough coins
+    }
+
+    final response = await PurchaseInfo.buyItem("Rocket Boost");
+    switch (response) {
+      case BuyResponse.success:
+        await CycleCoinInfo.addCycleCoins(-100);
+        Fluttertoast.showToast(msg: "Rocket Boost purchased!");
+        notifyListeners();
+        return true; // Return true if purchase is successful
+      case BuyResponse.notEnoughCoins:
+        Fluttertoast.showToast(msg: "Not enough CycleCoins!");
+        return false; // Return false if not enough coins
+      default:
+        Fluttertoast.showToast(msg: "Purchase failed. Try again later.");
+        return false; // Return false for any other failure
+    }
+  }
+
   void toggleDarkMode(bool isEnabled) {
     isDarkMode = isEnabled;
     notifyListeners();

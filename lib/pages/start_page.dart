@@ -1,6 +1,7 @@
 import 'package:cycle_guard_app/pages/login_page.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 // import '../main.dart'; 
 
 class StartPage extends StatelessWidget {
@@ -11,7 +12,7 @@ class StartPage extends StatelessWidget {
     final poppinsStyle = TextStyle(fontSize: 60,fontWeight: FontWeight.bold);
     return Scaffold(
       //backgroundColor: Color(0xFFD6D5C9),
-      backgroundColor: Color(0xFFD9D7C8),
+      backgroundColor: Color.fromARGB(255, 238, 152, 76),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -26,13 +27,13 @@ class StartPage extends StatelessWidget {
             SizedBox(height: 40),
             ClipRRect(
               borderRadius: BorderRadius.circular(200),
-              child: Image.asset(
-                'assets/cg_img_1.png',
+              child: SvgPicture.asset(
+                'assets/cg_logomark.svg',
                 width: 300,
                 height: 300,
               ),
             ),
-            SizedBox(height: 20),
+            SizedBox(height: 50),
             ElevatedButton(
               onPressed: () {
                 pageController.nextPage(

@@ -6,6 +6,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:provider/provider.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:cycle_guard_app/data/user_stats_provider.dart';
+import 'package:cycle_guard_app/data/achievements_progress_provider.dart';
 
 // import pages 
 import 'pages/start_page.dart';
@@ -68,24 +69,27 @@ class MyApp extends StatelessWidget {
     return ChangeNotifierProvider(
       create: (context) => MyAppState(),
       child: ChangeNotifierProvider(
-        create: (context) => UserStatsProvider(), 
-        child: Consumer2<MyAppState, UserStatsProvider>(
-          builder: (context, appState, userStats, child) {
-            return MaterialApp(
-              title: 'Cycle Guard App',
-              debugShowCheckedModeBanner: false,
-              themeMode: appState.isDarkMode ? ThemeMode.dark : ThemeMode.light,
-              theme: ThemeData(
-                useMaterial3: true,
-                colorScheme: ColorScheme.fromSeed(seedColor: appState.selectedColor),
-              ),
-              darkTheme: ThemeData.dark().copyWith(
-                brightness: Brightness.dark,
-                colorScheme: ColorScheme.fromSeed(seedColor: appState.selectedColor),
-              ),
-              home: OnBoardStart(), 
-            );
-          },
+        create: (context) => UserStatsProvider(), // Provide UserStatsProvider
+        child: ChangeNotifierProvider(
+          create: (context) => AchievementsProgressProvider(), // Provide AchievementsProgressProvider
+          child: Consumer3<MyAppState, UserStatsProvider, AchievementsProgressProvider>(
+            builder: (context, appState, userStats, achievementsProgress, child) {
+              return MaterialApp(
+                title: 'Cycle Guard App',
+                debugShowCheckedModeBanner: false,
+                themeMode: appState.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+                theme: ThemeData(
+                  useMaterial3: true,
+                  colorScheme: ColorScheme.fromSeed(seedColor: appState.selectedColor),
+                ),
+                darkTheme: ThemeData.dark().copyWith(
+                  brightness: Brightness.dark,
+                  colorScheme: ColorScheme.fromSeed(seedColor: appState.selectedColor),
+                ),
+                home: OnBoardStart(), // Replace with your starting page
+              );
+            },
+          ),
         ),
       ),
     );

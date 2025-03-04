@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:cycle_guard_app/data/user_stats_provider.dart';
 import 'package:cycle_guard_app/data/achievements_progress_provider.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 // import pages 
 import 'pages/start_page.dart';
@@ -19,7 +20,8 @@ import 'pages/routes_page.dart';
 import 'pages/store_page.dart';
 import 'pages/settings_page.dart';
 
-void main() {
+void main() async {
+  await dotenv.load(fileName: '.env');
   runApp(
     ChangeNotifierProvider(
       create: (context) => UserStatsProvider(),

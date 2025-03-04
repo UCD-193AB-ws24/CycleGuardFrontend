@@ -3,6 +3,9 @@ import 'package:provider/provider.dart';
 import '../main.dart';
 import 'package:intl/intl.dart';
 import 'package:cycle_guard_app/data/user_stats_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
+
+import 'ble.dart';
 
 class SettingsPage extends StatefulWidget {
   @override
@@ -13,10 +16,15 @@ class _SettingsPageState extends State<SettingsPage> {
   @override
   void initState() {
     super.initState();
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<MyAppState>(context, listen: false).fetchOwnedThemes();
     });
     Future.microtask(() => Provider.of<UserStatsProvider>(context, listen: false).fetchUserStats());
+  }
+
+  void _openPopup(BuildContext context) {
+    showCustomDialog(context);
   }
 
   @override
@@ -101,6 +109,13 @@ class _SettingsPageState extends State<SettingsPage> {
                   style: ElevatedButton.styleFrom(elevation: 10),
                   child: Text('Reset Default Settings'),
                 ),
+              ),
+              Center(
+                child:ElevatedButton(
+                  onPressed: () => _openPopup(context),  // Open popup screen on button press
+                  child: Text('Open Popup Screen'),
+                  style: ElevatedButton.styleFrom(elevation: 10),
+                )
               ),
               SizedBox(height: 20),
               Consumer<MyAppState>(

@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:cycle_guard_app/auth/requests_util.dart';
+import 'package:cycle_guard_app/data/single_trip_history.dart';
 import 'package:get_storage/get_storage.dart';
 class WeekHistoryAccessor {
   WeekHistoryAccessor._();
@@ -16,43 +17,17 @@ class WeekHistoryAccessor {
   }
 }
 
-class DayHistory {
-  final double distance, calories, time;
-
-  const DayHistory({required this.distance, required this.calories, required this.time});
-
-  factory DayHistory.fromJson(Map<String, dynamic> json) {
-    return switch (json) {
-      {
-      "distance": String distance,
-      "calories": String calories,
-      "time": String time,
-      } => DayHistory(
-        distance: double.parse(distance),
-        calories: double.parse(calories),
-        time: double.parse(time),
-      ),
-      _ => throw const FormatException("failed to load DayHistory"),
-    };
-  }
-
-  @override
-  String toString() {
-    return 'DayHistory{distance: $distance, calories: $calories, time: $time}';
-  }
-}
-
 class WeekHistory {
   // final String username;
-  final Map<int, DayHistory> dayHistoryMap;
+  final Map<int, SingleTripInfo> dayHistoryMap;
 
   const WeekHistory({required this.dayHistoryMap});
 
-  static Map<int, DayHistory> _parseDayHistoryMap(Map<String, dynamic> stringMap) {
-    Map<int, DayHistory> intMap = {};
+  static Map<int, SingleTripInfo> _parseDayHistoryMap(Map<String, dynamic> stringMap) {
+    Map<int, SingleTripInfo> intMap = {};
 
     for (var entry in stringMap.entries) {
-      intMap[int.parse(entry.key)] = DayHistory.fromJson(entry.value);
+      intMap[int.parse(entry.key)] = SingleTripInfo.fromJson(entry.value);
     }
 
     return intMap;

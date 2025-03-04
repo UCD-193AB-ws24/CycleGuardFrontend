@@ -45,7 +45,12 @@ class PurchaseInfo {
     switch (response.statusCode) {
       case 200: return BuyResponse.success;
       case 401: return BuyResponse.unauthorized;
-      case 409: return response.body == "ALREADY OWNED"?BuyResponse.alreadyOwned : BuyResponse.notEnoughCoins;
+      case 409: 
+        if (response.body == "ALREADY OWNED") {
+          return item == "Rocket Boost" ? BuyResponse.success : BuyResponse.alreadyOwned;
+        }
+        return BuyResponse.notEnoughCoins;
+        //return response.body == "ALREADY OWNED"?BuyResponse.alreadyOwned : BuyResponse.notEnoughCoins;
       default: return BuyResponse.serverError;
     }
   }

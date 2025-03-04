@@ -105,9 +105,10 @@ class TestingPage extends StatelessWidget {
     );
   }
 
-  Future<void> _addRideInfo(double distance, double calories, double time) async {
-    await SubmitRideService.addRideRaw(distance, calories, time);
-    print("Successfully added ride info!");
+  Future<int> _addRideInfo(double distance, double calories, double time) async {
+    final timestamp = await SubmitRideService.addRideRaw(distance, calories, time, [1, 2.5, 4, 5.5], [2, 3.5, 5, 6.5]);
+    print("Successfully added ride info! Timestamp: $timestamp");
+    return timestamp;
   }
 
   Future<void> _getAchievementInfo() async {

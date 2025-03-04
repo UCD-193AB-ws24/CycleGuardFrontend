@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:cycle_guard_app/data/user_stats_provider.dart';
+import 'package:cycle_guard_app/data/week_history_provider.dart';
 import 'package:provider/provider.dart';
+
 
 class HomePage extends StatefulWidget {
   @override
@@ -13,12 +15,28 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     Future.microtask(() => Provider.of<UserStatsProvider>(context, listen: false).fetchUserStats());
+    Future.microtask(() => Provider.of<WeekHistoryProvider>(context, listen: false).fetchWeekHistory());
   }
-
 
   @override
   Widget build(BuildContext context) {
     final userStats = Provider.of<UserStatsProvider>(context);
+    final weekHistory = Provider.of<WeekHistoryProvider>(context);
+
+    List<double> distancesForWeek = List.filled(7, 0.0);
+    for (int i = 0; i < weekHistory.days.length; i++) {
+      int day = weekHistory.days[i];
+      double dayDistance = weekHistory.dayDistances[i];
+
+      // Convert the day to the correct index (0-6, Monday-Sunday)
+      DateTime dateTime = DateTime.fromMillisecondsSinceEpoch(day * 1000);
+      int dayIndex = dateTime.weekday - 1;  // Adjust for Monday=0 to Sunday=6
+
+      // Assign the distance for that day
+      distancesForWeek[dayIndex] = dayDistance;
+    }
+
+    List<double>rotatedDistances = getRotatedArray(distancesForWeek, DateTime.now().weekday);
 
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final selectedColor = Theme.of(context).colorScheme.primary;
@@ -54,7 +72,7 @@ class _HomePageState extends State<HomePage> {
           children: [
             Center(
               child: Text(
-                'This Week',
+                'Past Week of Biking',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
             ),
@@ -64,25 +82,22 @@ class _HomePageState extends State<HomePage> {
               child: BarChart(
                 BarChartData(
                   alignment: BarChartAlignment.spaceAround,
-                  maxY: 20,
+                  maxY: 1.05 * rotatedDistances.reduce((a, b) => a > b ? a : b), // 1.05 * the max value in rotatedDistances
                   barGroups: [
-                    BarChartGroupData(x: 0, barRods: [BarChartRodData(fromY: 0, toY: 12, color: selectedColor)]),
-                    BarChartGroupData(x: 1, barRods: [BarChartRodData(fromY: 0, toY: 8, color: selectedColor)]),
-                    BarChartGroupData(x: 2, barRods: [BarChartRodData(fromY: 0, toY: 15, color: selectedColor)]),
-                    BarChartGroupData(x: 3, barRods: [BarChartRodData(fromY: 0, toY: 10, color: selectedColor)]),
-                    BarChartGroupData(x: 4, barRods: [BarChartRodData(fromY: 0, toY: 18, color: selectedColor)]),
-                    BarChartGroupData(x: 5, barRods: [BarChartRodData(fromY: 0, toY: 5, color: selectedColor)]),
-                    BarChartGroupData(x: 6, barRods: [BarChartRodData(fromY: 0, toY: 14, color: selectedColor)]),
+                    BarChartGroupData(x: 0, barRods: [BarChartRodData(fromY: 0, toY: rotatedDistances[0], color: selectedColor)]),
+                    BarChartGroupData(x: 1, barRods: [BarChartRodData(fromY: 0, toY: rotatedDistances[1], color: selectedColor)]),
+                    BarChartGroupData(x: 2, barRods: [BarChartRodData(fromY: 0, toY: rotatedDistances[2], color: selectedColor)]),
+                    BarChartGroupData(x: 3, barRods: [BarChartRodData(fromY: 0, toY: rotatedDistances[3], color: selectedColor)]),
+                    BarChartGroupData(x: 4, barRods: [BarChartRodData(fromY: 0, toY: rotatedDistances[4], color: selectedColor)]),
+                    BarChartGroupData(x: 5, barRods: [BarChartRodData(fromY: 0, toY: rotatedDistances[5], color: selectedColor)]),
+                    BarChartGroupData(x: 6, barRods: [BarChartRodData(fromY: 0, toY: rotatedDistances[6], color: selectedColor)]),
                   ],
                   titlesData: FlTitlesData(
                     leftTitles: AxisTitles(
-                      axisNameWidget: Padding(
-                        padding: const EdgeInsets.only(bottom: 2.0),
-                        child: Text('Miles', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-                      ),
+                      axisNameWidget: Text('Miles', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
                       sideTitles: SideTitles(
                         showTitles: true,
-                        reservedSize: 20,
+                        reservedSize: 24,
                         getTitlesWidget: (double value, TitleMeta meta) {
                           return Text(value.toInt().toString(), style: TextStyle(fontSize: 12));
                         },
@@ -93,7 +108,8 @@ class _HomePageState extends State<HomePage> {
                         showTitles: true,
                         getTitlesWidget: (double value, TitleMeta meta) {
                           const days = ['M', 'T', 'W', 'R', 'F', 'Sa', 'Su'];
-                          return Text(days[value.toInt()], style: TextStyle(fontSize: 12));
+                          List<String> rotatedDays = getRotatedArray(days, DateTime.now().weekday);  // Rotate days array
+                          return Text(rotatedDays[value.toInt()], style: TextStyle(fontSize: 12));
                         },
                       ),
                     ),
@@ -108,16 +124,16 @@ class _HomePageState extends State<HomePage> {
             SizedBox(height: 16),
             Center(
               child: Text(
-                'Weekly Statistics',
+                'Daily Averages',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
             ),
             SizedBox(height: 8),
             Column(
               children: [
-                _buildStatistic('Average Time Biking', '1 hour'),
-                _buildStatistic('Average Miles Biked', '12 miles'),
-                _buildStatistic('Elevation Climbed', '350 meters'),
+                _buildStatistic('Time Biking', '${weekHistory.averageTime.round()} minutes'),
+                _buildStatistic('Distance Biked', '${weekHistory.averageDistance.round()} miles'),
+                _buildStatistic('Calories Burned', '${weekHistory.averageCalories.round()} calories'),
               ],
             ),
             SizedBox(height: 16),
@@ -137,6 +153,24 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  List<T> getRotatedArray<T>(List<T> originalList, int x) {
+    int n = originalList.length;
+
+    // If x is greater than the length of the array
+    x = x % n;
+
+    // Get the first x elements
+    List<T> firstXElements = originalList.sublist(0, x);
+
+    // Get the remaining elements
+    List<T> remainingElements = originalList.sublist(x);
+
+    // Create the desired array by combining the remaining elements and first x elements
+    List<T> result = []..addAll(remainingElements)..addAll(firstXElements);
+
+    return result;
+  }
+
   Widget _buildStatistic(String title, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4.0),
@@ -144,7 +178,7 @@ class _HomePageState extends State<HomePage> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(title, style: TextStyle(fontSize: 16)),
-          Text(value, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          Text(value, style: TextStyle(fontSize: 16)),
         ],
       ),
     );

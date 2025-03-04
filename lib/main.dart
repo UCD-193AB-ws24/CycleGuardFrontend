@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:cycle_guard_app/data/user_stats_provider.dart';
 import 'package:cycle_guard_app/data/achievements_progress_provider.dart';
+import 'package:cycle_guard_app/data/week_history_provider.dart';
 
 // import pages 
 import 'pages/start_page.dart';
@@ -72,23 +73,26 @@ class MyApp extends StatelessWidget {
         create: (context) => UserStatsProvider(), // Provide UserStatsProvider
         child: ChangeNotifierProvider(
           create: (context) => AchievementsProgressProvider(), // Provide AchievementsProgressProvider
-          child: Consumer3<MyAppState, UserStatsProvider, AchievementsProgressProvider>(
-            builder: (context, appState, userStats, achievementsProgress, child) {
-              return MaterialApp(
-                title: 'Cycle Guard App',
-                debugShowCheckedModeBanner: false,
-                themeMode: appState.isDarkMode ? ThemeMode.dark : ThemeMode.light,
-                theme: ThemeData(
-                  useMaterial3: true,
-                  colorScheme: ColorScheme.fromSeed(seedColor: appState.selectedColor),
-                ),
-                darkTheme: ThemeData.dark().copyWith(
-                  brightness: Brightness.dark,
-                  colorScheme: ColorScheme.fromSeed(seedColor: appState.selectedColor),
-                ),
-                home: OnBoardStart(), // Replace with your starting page
-              );
-            },
+          child: ChangeNotifierProvider(
+            create: (context) => WeekHistoryProvider(), // Provide WeekHistoryProvider
+            child: Consumer4<MyAppState, UserStatsProvider, AchievementsProgressProvider, WeekHistoryProvider>(
+              builder: (context, appState, userStats, achievementsProgress, weekHistory, child) {
+                return MaterialApp(
+                  title: 'Cycle Guard App',
+                  debugShowCheckedModeBanner: false,
+                  themeMode: appState.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+                  theme: ThemeData(
+                    useMaterial3: true,
+                    colorScheme: ColorScheme.fromSeed(seedColor: appState.selectedColor),
+                  ),
+                  darkTheme: ThemeData.dark().copyWith(
+                    brightness: Brightness.dark,
+                    colorScheme: ColorScheme.fromSeed(seedColor: appState.selectedColor),
+                  ),
+                  home: OnBoardStart(),
+                );
+              },
+            ),
           ),
         ),
       ),
@@ -247,6 +251,7 @@ class _MyHomePageState extends State<MyHomePage> {
             children: [
                 SizedBox(
                   height: double.infinity,
+                  width: 60.0,
                   child: NavigationRail(
                     backgroundColor: getNavRailBackgroundColor(context),
                     extended: constraints.maxWidth >= 600,

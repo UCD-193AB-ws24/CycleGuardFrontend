@@ -1,6 +1,8 @@
 import 'package:cycle_guard_app/data/achievements_accessor.dart';
+import 'package:cycle_guard_app/data/coordinates_accessor.dart';
 import 'package:cycle_guard_app/data/health_info_accessor.dart';
 import 'package:cycle_guard_app/data/submit_ride_service.dart';
+import 'package:cycle_guard_app/data/trip_history_accessor.dart';
 import 'package:cycle_guard_app/data/user_stats_accessor.dart';
 import 'package:cycle_guard_app/data/week_history_accessor.dart';
 import 'package:flutter/material.dart';
@@ -51,6 +53,16 @@ class TestingPage extends StatelessWidget {
     ageController.text = "$age";
   }
 
+  Future<void> _getTripHistory() async {
+    final tripHistory = await TripHistoryAccessor.getTripHistory();
+    print(tripHistory);
+  }
+
+  Future<void> _getCoordinates(int timestamp) async {
+    final coordinates = await CoordinatesAccessor.getCoordinates(timestamp);
+    print(coordinates);
+  }
+
   void _showEnterHealthInfoMenu(BuildContext context, MyAppState appState) async {
     await _getHealthData();
     showDialog(
@@ -93,9 +105,10 @@ class TestingPage extends StatelessWidget {
     );
   }
 
-  Future<void> _addRideInfo(double distance, double calories, double time) async {
-    await SubmitRideService.addRideRaw(distance, calories, time);
-    print("Successfully added ride info!");
+  Future<int> _addRideInfo(double distance, double calories, double time) async {
+    final timestamp = await SubmitRideService.addRideRaw(distance, calories, time, [1, 2.5, 4, 5.5], [2, 3.5, 5, 6.5]);
+    print("Successfully added ride info! Timestamp: $timestamp");
+    return timestamp;
   }
 
   Future<void> _getAchievementInfo() async {
@@ -205,6 +218,22 @@ class TestingPage extends StatelessWidget {
                     padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
                   ),
                   child: Text("Get User Stats"),
+                ),
+                ElevatedButton(
+                  onPressed: () => _getTripHistory(),
+                  style: ElevatedButton.styleFrom(
+                    elevation: 5,
+                    padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
+                  ),
+                  child: Text("Get All Trip History"),
+                ),
+                ElevatedButton(
+                  onPressed: () => _getCoordinates(1741060234),
+                  style: ElevatedButton.styleFrom(
+                    elevation: 5,
+                    padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
+                  ),
+                  child: Text("Get Timestamp (edit value in code)"),
                 ),
               ],
             ),

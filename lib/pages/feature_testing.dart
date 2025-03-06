@@ -126,8 +126,42 @@ class TestingPage extends StatelessWidget {
 
   Future<void> _getWeekHistory() async {
     final weekHistory = await WeekHistoryAccessor.getWeekHistory();
-    print(weekHistory);
-    print("Successfully retrieved week history!");
+
+    // Extract individual days
+    final Map<int, DayHistory> dayHistoryMap = weekHistory.dayHistoryMap;
+
+    // Variables to hold sum of values
+    double totalDistance = 0.0, totalCalories = 0.0, totalTime = 0.0;
+    int numberOfDays = dayHistoryMap.length;
+    List<double> dayDistances = [];
+    List<int> days = [];
+      
+    // Iterate through each day's history
+    dayHistoryMap.forEach((day, history) {
+      DateTime dateTime = DateTime.fromMillisecondsSinceEpoch(day * 1000);
+      print("Day: $day");
+      print("Day: ${["M", "T", "W", "R", "F", "Sa", "Su"][dateTime.weekday - 1]}");
+      print("Distance: ${history.distance}");
+      print("Calories: ${history.calories}");
+      print("Time: ${history.time}\n");
+
+      totalDistance += history.distance;
+      totalCalories += history.calories;
+      totalTime += history.time;
+      dayDistances.add(history.distance);
+      days.add(day);
+    });
+
+    // Compute averages
+    double avgDistance = numberOfDays > 0 ? totalDistance / numberOfDays : 0.0;
+    double avgCalories = numberOfDays > 0 ? totalCalories / numberOfDays : 0.0;
+    double avgTime = numberOfDays > 0 ? totalTime / numberOfDays : 0.0;
+
+    print("Average Distance: $avgDistance");
+    print("Average Calories: $avgCalories");
+    print("Average Time: $avgTime");
+    print("DayDistances : $dayDistances");
+    print("days: $days");
   }
 
   void _showRideInputPage(BuildContext context) {

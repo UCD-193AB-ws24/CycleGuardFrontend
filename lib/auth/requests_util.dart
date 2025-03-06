@@ -10,11 +10,11 @@ class RequestsUtil {
   // static final _host = "immortal-hot-cat.ngrok-free.app";
   static final _scheme = "https";
 
-  static Future<http.Response> postWithToken(String endpoint, Map<String, String> body) async {
+  static Future<http.Response> postWithToken(String endpoint, Map<String, dynamic> body) async {
     return await _post(endpoint, body, true);
   }
 
-  static Future<http.Response> postWithoutToken(String endpoint, Map<String, String> body) async {
+  static Future<http.Response> postWithoutToken(String endpoint, Map<String, dynamic> body) async {
     return await _post(endpoint, body, false);
   }
 
@@ -43,11 +43,13 @@ class RequestsUtil {
     return headers;
   }
 
-  static Future<http.Response> _post(String endpoint, Map<String, String> body, bool useToken) async {
+  static Future<http.Response> _post(String endpoint, Map<String, dynamic> body, bool useToken) async {
     return await http.post(_getUri(endpoint), body: jsonEncode(body), headers: _getHeaders(useToken));
   }
 
   static Future<http.Response> _get(String endpoint, bool useToken) async {
     return await http.get(_getUri(endpoint), headers: _getHeaders(useToken));
   }
+
+
 }

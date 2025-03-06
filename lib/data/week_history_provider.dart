@@ -1,8 +1,9 @@
+import 'package:cycle_guard_app/data/single_trip_history.dart';
 import 'package:flutter/material.dart';
 import 'package:cycle_guard_app/data/week_history_accessor.dart';
 
 class WeekHistoryProvider with ChangeNotifier {
-  Map<int, DayHistory> dayHistoryMap = {};
+  Map<int, SingleTripInfo> dayHistoryMap = {};
   double averageDistance = 0.0;
   double averageCalories = 0.0;
   double averageTime = 0.0;

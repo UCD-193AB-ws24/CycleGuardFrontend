@@ -1,6 +1,7 @@
 import 'package:cycle_guard_app/data/achievements_accessor.dart';
 import 'package:cycle_guard_app/data/coordinates_accessor.dart';
 import 'package:cycle_guard_app/data/health_info_accessor.dart';
+import 'package:cycle_guard_app/data/single_trip_history.dart';
 import 'package:cycle_guard_app/data/submit_ride_service.dart';
 import 'package:cycle_guard_app/data/trip_history_accessor.dart';
 import 'package:cycle_guard_app/data/user_stats_accessor.dart';
@@ -128,7 +129,7 @@ class TestingPage extends StatelessWidget {
     final weekHistory = await WeekHistoryAccessor.getWeekHistory();
 
     // Extract individual days
-    final Map<int, DayHistory> dayHistoryMap = weekHistory.dayHistoryMap;
+    final Map<int, SingleTripInfo> dayHistoryMap = weekHistory.dayHistoryMap;
 
     // Variables to hold sum of values
     double totalDistance = 0.0, totalCalories = 0.0, totalTime = 0.0;

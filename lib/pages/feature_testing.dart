@@ -1,9 +1,12 @@
 import 'package:cycle_guard_app/data/achievements_accessor.dart';
 import 'package:cycle_guard_app/data/coordinates_accessor.dart';
+import 'package:cycle_guard_app/data/global_leaderboards_accessor.dart';
 import 'package:cycle_guard_app/data/health_info_accessor.dart';
 import 'package:cycle_guard_app/data/single_trip_history.dart';
 import 'package:cycle_guard_app/data/submit_ride_service.dart';
 import 'package:cycle_guard_app/data/trip_history_accessor.dart';
+import 'package:cycle_guard_app/data/user_profile_accessor.dart';
+import 'package:cycle_guard_app/data/user_settings_accessor.dart';
 import 'package:cycle_guard_app/data/user_stats_accessor.dart';
 import 'package:cycle_guard_app/data/week_history_accessor.dart';
 import 'package:flutter/material.dart';
@@ -123,6 +126,25 @@ class TestingPage extends StatelessWidget {
     final userStats = await UserStatsAccessor.getUserStats();
     print(userStats);
     print("Successfully retrieved user stats!");
+  }
+
+  Future<void> _testUserProfile() async {
+    // print("Previous profile: ${await UserProfileAccessor.getOwnProfile()}");
+    await UserProfileAccessor.updateOwnProfile(UserProfile(displayName: "Jason Feng", bio: "God of Java", isPublic: true));
+    print(await UserProfileAccessor.getOwnProfile());
+    print(await UserProfileAccessor.getPublicProfile("javagod123"));
+  }
+
+  Future<void> _testUserSettings() async {
+    print("Previous settings: ${await UserSettingsAccessor.getUserSettings()}");
+    await UserSettingsAccessor.updateUserSettings(UserSettings(darkModeEnabled: true, currentTheme: "blue"));
+    print("New settings: ${await UserSettingsAccessor.getUserSettings()}");
+  }
+
+  Future<void> _testDistanceTimeLeaderboards() async {
+    print("Note: leaderboards only update when a new ride is uploaded. If your account isn't on the leaderboard, try to submit a new ride");
+    print("Distance: ${await GlobalLeaderboardsAccessor.getDistanceLeaderboards()}");
+    print("Time: ${await GlobalLeaderboardsAccessor.getTimeLeaderboards()}");
   }
 
   Future<void> _getWeekHistory() async {
@@ -269,6 +291,30 @@ class TestingPage extends StatelessWidget {
                     padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
                   ),
                   child: Text("Get Timestamp (edit value in code)"),
+                ),
+                ElevatedButton(
+                  onPressed: () => _testUserProfile(),
+                  style: ElevatedButton.styleFrom(
+                    elevation: 5,
+                    padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
+                  ),
+                  child: Text("User Profile tests"),
+                ),
+                ElevatedButton(
+                  onPressed: () => _testUserSettings(),
+                  style: ElevatedButton.styleFrom(
+                    elevation: 5,
+                    padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
+                  ),
+                  child: Text("User Settings tests"),
+                ),
+                ElevatedButton(
+                  onPressed: () => _testDistanceTimeLeaderboards(),
+                  style: ElevatedButton.styleFrom(
+                    elevation: 5,
+                    padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
+                  ),
+                  child: Text("Leaderboards tests"),
                 ),
               ],
             ),

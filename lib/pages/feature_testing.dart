@@ -1,5 +1,7 @@
 import 'package:cycle_guard_app/data/achievements_accessor.dart';
 import 'package:cycle_guard_app/data/coordinates_accessor.dart';
+import 'package:cycle_guard_app/data/friend_requests_accessor.dart';
+import 'package:cycle_guard_app/data/friends_list_accessor.dart';
 import 'package:cycle_guard_app/data/global_leaderboards_accessor.dart';
 import 'package:cycle_guard_app/data/health_info_accessor.dart';
 import 'package:cycle_guard_app/data/single_trip_history.dart';
@@ -145,6 +147,19 @@ class TestingPage extends StatelessWidget {
     print("Note: leaderboards only update when a new ride is uploaded. If your account isn't on the leaderboard, try to submit a new ride");
     print("Distance: ${await GlobalLeaderboardsAccessor.getDistanceLeaderboards()}");
     print("Time: ${await GlobalLeaderboardsAccessor.getTimeLeaderboards()}");
+  }
+
+  Future<void> _testFriendsList() async {
+    print("Note: other user must login to send friend request");
+    print("Current friend list: ${await FriendsListAccessor.getFriendsList()}");
+    await FriendRequestsListAccessor.sendFriendRequest("javagod123");
+    print("Current friend requests: ${await FriendRequestsListAccessor.getFriendRequestList()}");
+
+
+    // FriendsListAccessor.removeFriend("javagod123")
+    // FriendRequestsListAccessor.acceptFriendRequest("javagod123");
+    // FriendRequestsListAccessor.rejectFriendRequest("javagod123");
+    // FriendRequestsListAccessor.cancelFriendRequest("javagod123");
   }
 
   Future<void> _getWeekHistory() async {
@@ -315,6 +330,14 @@ class TestingPage extends StatelessWidget {
                     padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
                   ),
                   child: Text("Leaderboards tests"),
+                ),
+                ElevatedButton(
+                  onPressed: () => _testFriendsList(),
+                  style: ElevatedButton.styleFrom(
+                    elevation: 5,
+                    padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
+                  ),
+                  child: Text("Friend List tests"),
                 ),
               ],
             ),

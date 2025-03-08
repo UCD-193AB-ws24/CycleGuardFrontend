@@ -8,6 +8,7 @@ import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:cycle_guard_app/data/user_stats_provider.dart';
 import 'package:cycle_guard_app/data/achievements_progress_provider.dart';
 import 'package:cycle_guard_app/data/week_history_provider.dart';
+import 'package:cycle_guard_app/data/trip_history_provider.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 // import pages 
@@ -24,8 +25,13 @@ import 'pages/settings_page.dart';
 void main() async {
   await dotenv.load(fileName: '.env');
   runApp(
-    ChangeNotifierProvider(
-      create: (context) => UserStatsProvider(),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (context) => UserStatsProvider()),
+        ChangeNotifierProvider(create: (context) => AchievementsProgressProvider()),
+        ChangeNotifierProvider(create: (context) => WeekHistoryProvider()),
+        ChangeNotifierProvider(create: (context) => TripHistoryProvider()), 
+      ],
       child: MyApp(),
     ),
   );
@@ -71,32 +77,23 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (context) => MyAppState(),
-      child: ChangeNotifierProvider(
-        create: (context) => UserStatsProvider(), // Provide UserStatsProvider
-        child: ChangeNotifierProvider(
-          create: (context) => AchievementsProgressProvider(), // Provide AchievementsProgressProvider
-          child: ChangeNotifierProvider(
-            create: (context) => WeekHistoryProvider(), // Provide WeekHistoryProvider
-            child: Consumer4<MyAppState, UserStatsProvider, AchievementsProgressProvider, WeekHistoryProvider>(
-              builder: (context, appState, userStats, achievementsProgress, weekHistory, child) {
-                return MaterialApp(
-                  title: 'Cycle Guard App',
-                  debugShowCheckedModeBanner: false,
-                  themeMode: appState.isDarkMode ? ThemeMode.dark : ThemeMode.light,
-                  theme: ThemeData(
-                    useMaterial3: true,
-                    colorScheme: ColorScheme.fromSeed(seedColor: appState.selectedColor),
-                  ),
-                  darkTheme: ThemeData.dark().copyWith(
-                    brightness: Brightness.dark,
-                    colorScheme: ColorScheme.fromSeed(seedColor: appState.selectedColor),
-                  ),
-                  home: OnBoardStart(),
-                );
-              },
+      child: Consumer5<MyAppState, UserStatsProvider, AchievementsProgressProvider, WeekHistoryProvider, TripHistoryProvider>(
+        builder: (context, appState, userStats, achievementsProgress, weekHistory, tripHistory, child) {
+          return MaterialApp(
+            title: 'Cycle Guard App',
+            debugShowCheckedModeBanner: false,
+            themeMode: appState.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+            theme: ThemeData(
+              useMaterial3: true,
+              colorScheme: ColorScheme.fromSeed(seedColor: appState.selectedColor),
             ),
-          ),
-        ),
+            darkTheme: ThemeData.dark().copyWith(
+              brightness: Brightness.dark,
+              colorScheme: ColorScheme.fromSeed(seedColor: appState.selectedColor),
+            ),
+            home: OnBoardStart(),
+          );
+        },
       ),
     );
   }

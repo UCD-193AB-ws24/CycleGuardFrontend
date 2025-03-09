@@ -13,9 +13,6 @@ class _SettingsPageState extends State<SettingsPage> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<MyAppState>(context, listen: false).fetchOwnedThemes();
-    });
     Future.microtask(() => Provider.of<UserStatsProvider>(context, listen: false).fetchUserStats());
   }
 
@@ -37,7 +34,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 style: Theme.of(context).textTheme.headlineSmall,
               ),
               SizedBox(height: 10),
-              Consumer<MyAppState>(
+              Consumer<MyAppState>( 
                 builder: (context, appState, child) {
                   return DropdownButton<Color>(
                     value: appState.selectedColor,
@@ -76,7 +73,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 },
               ),
               SizedBox(height: 10),
-              Consumer<MyAppState>(
+              Consumer<MyAppState>( 
                 builder: (context, appState, child) {
                   return SwitchListTile(
                     title: Text(
@@ -103,7 +100,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
               ),
               SizedBox(height: 20),
-              Consumer<MyAppState>(
+              Consumer<MyAppState>( 
                 builder: (context, appState, child) {
                   DateTime creationDate = DateTime.fromMillisecondsSinceEpoch(userStats.accountCreationTime * 1000);
                   Duration duration = DateTime.now().difference(creationDate);

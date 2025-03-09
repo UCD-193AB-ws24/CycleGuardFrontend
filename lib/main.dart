@@ -9,6 +9,7 @@ import 'package:cycle_guard_app/data/user_stats_provider.dart';
 import 'package:cycle_guard_app/data/achievements_progress_provider.dart';
 import 'package:cycle_guard_app/data/week_history_provider.dart';
 import 'package:cycle_guard_app/data/trip_history_provider.dart';
+import 'package:cycle_guard_app/data/user_settings_accessor.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 // import pages 
@@ -132,9 +133,74 @@ class MyAppState extends ChangeNotifier {
     notifyListeners(); 
   }
 
-  void updateThemeColor(Color newColor) {
+  void toggleDarkMode(bool isEnabled) async {
+    isDarkMode = isEnabled;
+    String themeName = _getThemeNameFromColor(selectedColor);
+    
+    UserSettings updatedSettings = UserSettings(
+      darkModeEnabled: isDarkMode,
+      currentTheme: themeName,
+    );
+    
+
+    try {
+      await UserSettingsAccessor.updateUserSettings(updatedSettings);
+      print("updated user settings: ${await UserSettingsAccessor.getUserSettings()}");
+      notifyListeners();
+    } catch (e) {
+      print("Error updating user settings: $e");
+    }
+  }
+
+    void updateThemeColor(Color newColor) async {
     selectedColor = newColor;
-    notifyListeners(); 
+    String themeName = _getThemeNameFromColor(selectedColor);
+    UserSettings updatedSettings = UserSettings(
+      darkModeEnabled: isDarkMode,
+      currentTheme: themeName,
+    );
+    try {
+      await UserSettingsAccessor.updateUserSettings(updatedSettings);
+      print("updated user settings: ${await UserSettingsAccessor.getUserSettings()}");
+      notifyListeners();
+    } catch (e) {
+      print("Error updating user settings: $e");
+    }
+  }
+
+  String _getThemeNameFromColor(Color color) {
+    for (String themeName in availableThemes.keys) {
+      if (availableThemes[themeName] == color) {
+        return themeName;
+      }
+    }
+
+    for (String themeName in storeThemes.keys) {
+      if (storeThemes[themeName] == color) {
+        return themeName;
+      }
+    }
+
+    return 'Orange';
+  }
+
+  Future<void> loadUserSettings() async {
+    try {
+      UserSettings settings = await UserSettingsAccessor.getUserSettings();
+      print("Retrieved Settings: $settings");
+
+      selectedColor = _getColorFromTheme(settings.currentTheme);
+      isDarkMode = settings.darkModeEnabled;
+
+      notifyListeners();
+    } catch (e, stackTrace) {
+      print("Error loading user settings: $e");
+      print(stackTrace);
+    }
+  }
+
+  Color _getColorFromTheme(String theme) {
+    return availableThemes[theme] ?? storeThemes[theme] ?? Colors.orange;
   }
 
   Future<bool> purchaseTheme(String themeName) async {
@@ -191,11 +257,6 @@ class MyAppState extends ChangeNotifier {
         Fluttertoast.showToast(msg: "Purchase failed. Try again later.");
         return false; // Return false for any other failure
     }
-  }
-
-  void toggleDarkMode(bool isEnabled) {
-    isDarkMode = isEnabled;
-    notifyListeners();
   }
 }
 

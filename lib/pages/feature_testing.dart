@@ -1,8 +1,14 @@
 import 'package:cycle_guard_app/data/achievements_accessor.dart';
 import 'package:cycle_guard_app/data/coordinates_accessor.dart';
+import 'package:cycle_guard_app/data/friend_requests_accessor.dart';
+import 'package:cycle_guard_app/data/friends_list_accessor.dart';
+import 'package:cycle_guard_app/data/global_leaderboards_accessor.dart';
 import 'package:cycle_guard_app/data/health_info_accessor.dart';
+import 'package:cycle_guard_app/data/single_trip_history.dart';
 import 'package:cycle_guard_app/data/submit_ride_service.dart';
 import 'package:cycle_guard_app/data/trip_history_accessor.dart';
+import 'package:cycle_guard_app/data/user_profile_accessor.dart';
+import 'package:cycle_guard_app/data/user_settings_accessor.dart';
 import 'package:cycle_guard_app/data/user_stats_accessor.dart';
 import 'package:cycle_guard_app/data/week_history_accessor.dart';
 import 'package:flutter/material.dart';
@@ -124,10 +130,76 @@ class TestingPage extends StatelessWidget {
     print("Successfully retrieved user stats!");
   }
 
+  Future<void> _testUserProfile() async {
+    // print("Previous profile: ${await UserProfileAccessor.getOwnProfile()}");
+    await UserProfileAccessor.updateOwnProfile(UserProfile(displayName: "Jason Feng", bio: "God of Java", isPublic: true));
+    print(await UserProfileAccessor.getOwnProfile());
+    print(await UserProfileAccessor.getPublicProfile("javagod123"));
+  }
+
+  Future<void> _testUserSettings() async {
+    print("Previous settings: ${await UserSettingsAccessor.getUserSettings()}");
+    await UserSettingsAccessor.updateUserSettings(UserSettings(darkModeEnabled: true, currentTheme: "blue"));
+    print("New settings: ${await UserSettingsAccessor.getUserSettings()}");
+  }
+
+  Future<void> _testDistanceTimeLeaderboards() async {
+    print("Note: leaderboards only update when a new ride is uploaded. If your account isn't on the leaderboard, try to submit a new ride");
+    print("Distance: ${await GlobalLeaderboardsAccessor.getDistanceLeaderboards()}");
+    print("Time: ${await GlobalLeaderboardsAccessor.getTimeLeaderboards()}");
+  }
+
+  Future<void> _testFriendsList() async {
+    print("Note: other user must login to send friend request");
+    print("Current friend list: ${await FriendsListAccessor.getFriendsList()}");
+    await FriendRequestsListAccessor.sendFriendRequest("javagod123");
+    print("Current friend requests: ${await FriendRequestsListAccessor.getFriendRequestList()}");
+
+
+    // FriendsListAccessor.removeFriend("javagod123")
+    // FriendRequestsListAccessor.acceptFriendRequest("javagod123");
+    // FriendRequestsListAccessor.rejectFriendRequest("javagod123");
+    // FriendRequestsListAccessor.cancelFriendRequest("javagod123");
+  }
+
   Future<void> _getWeekHistory() async {
     final weekHistory = await WeekHistoryAccessor.getWeekHistory();
-    print(weekHistory);
-    print("Successfully retrieved week history!");
+
+    // Extract individual days
+    final Map<int, SingleTripInfo> dayHistoryMap = weekHistory.dayHistoryMap;
+
+    // Variables to hold sum of values
+    double totalDistance = 0.0, totalCalories = 0.0, totalTime = 0.0;
+    int numberOfDays = dayHistoryMap.length;
+    List<double> dayDistances = [];
+    List<int> days = [];
+      
+    // Iterate through each day's history
+    dayHistoryMap.forEach((day, history) {
+      DateTime dateTime = DateTime.fromMillisecondsSinceEpoch(day * 1000);
+      print("Day: $day");
+      print("Day: ${["M", "T", "W", "R", "F", "Sa", "Su"][dateTime.weekday - 1]}");
+      print("Distance: ${history.distance}");
+      print("Calories: ${history.calories}");
+      print("Time: ${history.time}\n");
+
+      totalDistance += history.distance;
+      totalCalories += history.calories;
+      totalTime += history.time;
+      dayDistances.add(history.distance);
+      days.add(day);
+    });
+
+    // Compute averages
+    double avgDistance = numberOfDays > 0 ? totalDistance / numberOfDays : 0.0;
+    double avgCalories = numberOfDays > 0 ? totalCalories / numberOfDays : 0.0;
+    double avgTime = numberOfDays > 0 ? totalTime / numberOfDays : 0.0;
+
+    print("Average Distance: $avgDistance");
+    print("Average Calories: $avgCalories");
+    print("Average Time: $avgTime");
+    print("DayDistances : $dayDistances");
+    print("days: $days");
   }
 
   void _showRideInputPage(BuildContext context) {
@@ -234,6 +306,38 @@ class TestingPage extends StatelessWidget {
                     padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
                   ),
                   child: Text("Get Timestamp (edit value in code)"),
+                ),
+                ElevatedButton(
+                  onPressed: () => _testUserProfile(),
+                  style: ElevatedButton.styleFrom(
+                    elevation: 5,
+                    padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
+                  ),
+                  child: Text("User Profile tests"),
+                ),
+                ElevatedButton(
+                  onPressed: () => _testUserSettings(),
+                  style: ElevatedButton.styleFrom(
+                    elevation: 5,
+                    padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
+                  ),
+                  child: Text("User Settings tests"),
+                ),
+                ElevatedButton(
+                  onPressed: () => _testDistanceTimeLeaderboards(),
+                  style: ElevatedButton.styleFrom(
+                    elevation: 5,
+                    padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
+                  ),
+                  child: Text("Leaderboards tests"),
+                ),
+                ElevatedButton(
+                  onPressed: () => _testFriendsList(),
+                  style: ElevatedButton.styleFrom(
+                    elevation: 5,
+                    padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
+                  ),
+                  child: Text("Friend List tests"),
                 ),
               ],
             ),

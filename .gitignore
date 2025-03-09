@@ -1,3 +1,9 @@
+# Maps API token and key, for testing
+.env
+android/gradle.properties
+pubspec.lock
+
+
 # Miscellaneous
 *.class
 *.log

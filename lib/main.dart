@@ -8,7 +8,9 @@ import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:cycle_guard_app/data/user_stats_provider.dart';
 import 'package:cycle_guard_app/data/achievements_progress_provider.dart';
 import 'package:cycle_guard_app/data/week_history_provider.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'constants.dart';
 
 // import pages 
 import 'pages/start_page.dart';
@@ -19,10 +21,36 @@ import 'pages/history_page.dart';
 import 'pages/achievements_page.dart';
 import 'pages/routes_page.dart';
 import 'pages/store_page.dart';
+import 'pages/leader_page.dart';
 import 'pages/settings_page.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+
+
+//const MethodChannel platform = MethodChannel('com.cycleguard.channel'); // Must match iOS
 
 void main() async {
-  await dotenv.load(fileName: '.env');
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await dotenv.load(fileName: ".env");
+
+  String? apiKey = dotenv.env['API_KEY'];
+
+  if (apiKey == null || apiKey.isEmpty) {
+    throw Exception("Google Maps API Key is missing in .env file.");
+  }
+
+  print("Google Maps API Key: $apiKey");
+  try {
+    // Send API Key to iOS
+    //await platform.invokeMethod('setApiKey', {"apiKey": apiKey});
+    // print("Google Maps API Key sent to iOS successfully");
+
+    // Request Location Permission from iOS
+    // await platform.invokeMethod('requestLocationPermission');
+    print("Location permission requested");
+  } catch (e) {
+    print("Error: $e");
+  }
   runApp(
     ChangeNotifierProvider(
       create: (context) => UserStatsProvider(),
@@ -241,6 +269,8 @@ class _MyHomePageState extends State<MyHomePage> {
       case 6:
         page = SettingsPage();
       case 7:
+        page = LeaderPage();
+      case 8:
         page = TestingPage();
       default:
         throw UnimplementedError('no widget for $selectedIndex');
@@ -285,6 +315,10 @@ class _MyHomePageState extends State<MyHomePage> {
                       NavigationRailDestination(
                         icon: Icon(Icons.settings_outlined, color: getIconColor(context),),
                         label: Text('Settings'),
+                      ),
+                      NavigationRailDestination(
+                        icon: Icon(Icons.leaderboard_sharp, color: getIconColor(context),),
+                        label: Text('Leaders'),
                       ),
                       NavigationRailDestination(
                         icon: Icon(Icons.perm_device_info_rounded, color: getIconColor(context),),

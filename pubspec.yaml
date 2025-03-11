@@ -44,7 +44,7 @@ dependencies:
   get_storage: ^2.1.1
   google_fonts: ^6.1.0
   fluttertoast: ^8.2.11
-  google_maps_flutter: ^2.10.0
+  google_maps_flutter: ^2.10.1
   google_places_flutter: ^2.0.9
   geocoding: ^3.0.0
   permission_handler: ^10.0.0

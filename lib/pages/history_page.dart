@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import '../main.dart';
 import 'package:cycle_guard_app/data/trip_history_provider.dart';
 import 'package:cycle_guard_app/data/user_stats_provider.dart';
 
@@ -23,6 +24,7 @@ class _HistoryPageState extends State<HistoryPage> {
   }
 
 Future<void> _pickDateRange(BuildContext context) async {
+  
   final DateTimeRange? picked = await showDateRangePicker(
     context: context,
     firstDate: DateTime(2025), 
@@ -56,6 +58,7 @@ Future<void> _pickDateRange(BuildContext context) async {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final tripHistoryProvider = Provider.of<TripHistoryProvider>(context);
     final userStatsProvider = Provider.of<UserStatsProvider>(context);
     final tripHistory = tripHistoryProvider.tripHistory;
@@ -83,8 +86,8 @@ Future<void> _pickDateRange(BuildContext context) async {
     });
 
     // Sort dates in descending order by timestamp first (default behavior)
-    final sortedDates = groupedTrips.keys.toList()..sort((a, b) => b.compareTo(a));
-
+    final sortedDates = groupedTrips.keys.toList()
+      ..sort((a, b) => DateFormat('M-d-yyyy').parse(b).compareTo(DateFormat('M-d-yyyy').parse(a)));
     // Function to sort trips based on the selected option (distance, time, or calories)
     List<int> getSortedTimestamps(List<int> timestamps) {
       if (_selectedFilterIndex == 0) { 
@@ -113,13 +116,14 @@ Future<void> _pickDateRange(BuildContext context) async {
     }
 
     return Scaffold(
-      appBar: AppBar(title: Text('Trip History')),
+      appBar: createAppBar(context, 'Trip History'),
       body: Column(
         children: [
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
             child: Card(
               elevation: 4,
+              color: isDarkMode ? Theme.of(context).colorScheme.onSecondaryFixedVariant : Theme.of(context).colorScheme.surfaceContainerLow,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -131,7 +135,7 @@ Future<void> _pickDateRange(BuildContext context) async {
                     Center(
                       child: Text(
                         'All Time Trip Summary',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: isDarkMode ? Theme.of(context).colorScheme.surfaceContainerLow : Colors.black),
                       ),
                     ),
                     SizedBox(height: 8),
@@ -143,11 +147,11 @@ Future<void> _pickDateRange(BuildContext context) async {
                           children: [
                             Text(
                               'Distance:',
-                              style: TextStyle(fontSize: 16, color: Theme.of(context).colorScheme.onPrimaryFixed),
+                              style: TextStyle(fontSize: 16, color: isDarkMode ? Theme.of(context).colorScheme.surfaceContainerLow : Theme.of(context).colorScheme.onPrimaryFixed),
                             ),
                             Text(
                               '${userStatsProvider.totalDistance} km',
-                              style: TextStyle(fontSize: 16, color: Theme.of(context).colorScheme.onPrimaryFixed),
+                              style: TextStyle(fontSize: 16, color: isDarkMode ? Theme.of(context).colorScheme.surfaceContainerLow : Theme.of(context).colorScheme.onPrimaryFixed),
                             ),
                           ],
                         ),
@@ -157,11 +161,11 @@ Future<void> _pickDateRange(BuildContext context) async {
                           children: [
                             Text(
                               'Calories:',
-                              style: TextStyle(fontSize: 16, color: Theme.of(context).colorScheme.onPrimaryFixed),
+                              style: TextStyle(fontSize: 16, color: isDarkMode ? Theme.of(context).colorScheme.surfaceContainerLow : Theme.of(context).colorScheme.onPrimaryFixed),
                             ),
                             Text(
                               '$totalCalories cal',
-                              style: TextStyle(fontSize: 16, color: Theme.of(context).colorScheme.onPrimaryFixed),
+                              style: TextStyle(fontSize: 16, color: isDarkMode ? Theme.of(context).colorScheme.surfaceContainerLow : Theme.of(context).colorScheme.onPrimaryFixed),
                             ),
                           ],
                         ),
@@ -171,11 +175,11 @@ Future<void> _pickDateRange(BuildContext context) async {
                           children: [
                             Text(
                               'Time:',
-                              style: TextStyle(fontSize: 16, color: Theme.of(context).colorScheme.onPrimaryFixed),
+                              style: TextStyle(fontSize: 16, color: isDarkMode ? Theme.of(context).colorScheme.surfaceContainerLow : Theme.of(context).colorScheme.onPrimaryFixed),
                             ),
                             Text(
                               '${userStatsProvider.totalTime} min',
-                              style: TextStyle(fontSize: 16, color: Theme.of(context).colorScheme.onPrimaryFixed),
+                              style: TextStyle(fontSize: 16, color: isDarkMode ? Theme.of(context).colorScheme.surfaceContainerLow : Theme.of(context).colorScheme.onPrimaryFixed),
                             ),
                           ],
                         ),
@@ -185,11 +189,11 @@ Future<void> _pickDateRange(BuildContext context) async {
                           children: [
                             Text(
                               'Trips:',
-                              style: TextStyle(fontSize: 16, color: Theme.of(context).colorScheme.onPrimaryFixed),
+                              style: TextStyle(fontSize: 16, color: isDarkMode ? Theme.of(context).colorScheme.surfaceContainerLow : Theme.of(context).colorScheme.onPrimaryFixed),
                             ),
                             Text(
                               '$totalTrips',
-                              style: TextStyle(fontSize: 16, color: Theme.of(context).colorScheme.onPrimaryFixed),
+                              style: TextStyle(fontSize: 16, color: isDarkMode ? Theme.of(context).colorScheme.surfaceContainerLow : Theme.of(context).colorScheme.onPrimaryFixed),
                             ),
                           ],
                         ),
@@ -226,15 +230,15 @@ Future<void> _pickDateRange(BuildContext context) async {
                 children: [
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                    child: Text('Time', style: TextStyle(fontSize: 16)),
+                    child: Text('Time', style: TextStyle(fontSize: 16, color: isDarkMode ? Colors.grey[300] : Colors.black)),
                   ),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 12.0), 
-                    child: Text('Distance', style: TextStyle(fontSize: 16)),
+                    child: Text('Distance', style: TextStyle(fontSize: 16, color: isDarkMode ? Colors.grey[300] : Colors.black)),
                   ),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 12.0), 
-                    child: Text('Calories', style: TextStyle(fontSize: 16)),
+                    child: Text('Calories', style: TextStyle(fontSize: 16, color: isDarkMode ? Colors.grey[300] : Colors.black)),
                   ),
                 ],
               ),
@@ -249,7 +253,7 @@ Future<void> _pickDateRange(BuildContext context) async {
                 borderRadius: BorderRadius.circular(8), 
                 child: Container(
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surfaceContainerLow,
+                    color: isDarkMode ? Theme.of(context).colorScheme.onSecondaryFixedVariant : Theme.of(context).colorScheme.surfaceContainerLow,
                     borderRadius: BorderRadius.circular(8),
                     border: _selectedDateRange != null
                         ? Border.all(color: Theme.of(context).colorScheme.outline, width: 2)
@@ -267,13 +271,13 @@ Future<void> _pickDateRange(BuildContext context) async {
                       _selectedDateRange == null
                           ? 'Sort Date Range'
                           : '${DateFormat('M/d/yyyy').format(_selectedDateRange!.start)} - ${DateFormat('M/d/yyyy').format(_selectedDateRange!.end)}',
-                      style: TextStyle(fontSize: 16),
+                      style: TextStyle(fontSize: 16, color: isDarkMode ? Theme.of(context).colorScheme.surfaceContainerLow : Theme.of(context).colorScheme.onSecondaryFixedVariant,),
                     ),
                   ),
                 ),
               ),
               IconButton(
-                icon: Icon(Icons.delete, color: Theme.of(context).colorScheme.onPrimaryFixed),
+                icon: Icon(Icons.delete, color: isDarkMode ? Theme.of(context).colorScheme.surfaceContainerLow : Theme.of(context).colorScheme.onSecondaryFixedVariant,),
                 onPressed: () {
                   setState(() {
                     _selectedDateRange = null;  
@@ -300,6 +304,7 @@ Future<void> _pickDateRange(BuildContext context) async {
                           borderRadius: BorderRadius.circular(12),
                         ),
                         elevation: 4,
+                        color: isDarkMode ? Theme.of(context).colorScheme.onSecondaryFixedVariant : Theme.of(context).colorScheme.surfaceContainerLow,
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -312,15 +317,19 @@ Future<void> _pickDateRange(BuildContext context) async {
                                     SizedBox(width: 8),
                                     Text(
                                       'Date: $date',
-                                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18,
+                                        color: isDarkMode ? Theme.of(context).colorScheme.surfaceContainerLow : Colors.black,),
                                     ),
                                     Spacer(),
                                     Text(
                                       '${sortedTimestamps.length} ride${sortedTimestamps.length > 1 ? 's' : ''}',
-                                      style: TextStyle(fontSize: 16, color: Theme.of(context).colorScheme.onPrimaryFixed),
+                                      style: TextStyle(fontSize: 16, 
+                                        color: isDarkMode ? Theme.of(context).colorScheme.surfaceContainerLow : Theme.of(context).colorScheme.onPrimaryFixed),
                                     ),
                                   ],
                                 ),
+                                collapsedIconColor: isDarkMode ? Theme.of(context).colorScheme.surfaceContainerLow : Theme.of(context).colorScheme.onPrimaryFixed,  
+                                iconColor: isDarkMode ? Theme.of(context).colorScheme.surfaceContainerLow : Theme.of(context).colorScheme.onPrimaryFixed, 
                                 children: [
                                   ...sortedTimestamps.map((timestamp) {
                                     final trip = tripHistoryProvider.getTripByTimestamp(timestamp);
@@ -337,12 +346,13 @@ Future<void> _pickDateRange(BuildContext context) async {
                                         borderRadius: BorderRadius.circular(12),
                                       ),
                                       elevation: 4,
-                                      color: Theme.of(context).colorScheme.onTertiary,
+                                      color: isDarkMode ? Theme.of(context).colorScheme.secondary : Theme.of(context).colorScheme.onTertiary,
                                       child: ListTile(
                                         contentPadding: EdgeInsets.all(16),
                                         title: Text(
+                                          // Theme.of(context).colorScheme.onPrimaryFixed
                                           'Trip ${sortedTimestamps.indexOf(timestamp) + 1}',
-                                          style: TextStyle(fontSize: 16),
+                                          style: TextStyle(fontSize: 16, color : isDarkMode ? Colors.grey[300] : Theme.of(context).colorScheme.onPrimaryFixed),
                                         ),
                                         subtitle: Column(
                                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -351,28 +361,28 @@ Future<void> _pickDateRange(BuildContext context) async {
                                               children: [
                                                 Icon(Icons.access_time, color: Colors.green, size: 18),
                                                 SizedBox(width: 8),
-                                                Text('Time: $formattedTime', style: TextStyle(fontSize: 16)),
+                                                Text('Time: $formattedTime', style: TextStyle(fontSize: 16, color : isDarkMode ? Colors.grey[300] : Theme.of(context).colorScheme.onPrimaryFixed)),
                                               ],
                                             ),
                                             Row(
                                               children: [
                                                 Icon(Icons.directions_bike, color: Colors.blueAccent, size: 18),
                                                 SizedBox(width: 8),
-                                                Text('${trip.distance} km', style: TextStyle(fontSize: 16)),
+                                                Text('${trip.distance} km', style: TextStyle(fontSize: 16, color : isDarkMode ? Colors.grey[300] : Theme.of(context).colorScheme.onPrimaryFixed)),
                                               ],
                                             ),
                                             Row(
                                               children: [
                                                 Icon(Icons.timer, color: Colors.orange, size: 18),
                                                 SizedBox(width: 8),
-                                                Text('${trip.time} min', style: TextStyle(fontSize: 16)),
+                                                Text('${trip.time} min', style: TextStyle(fontSize: 16, color : isDarkMode ? Colors.grey[300] : Theme.of(context).colorScheme.onPrimaryFixed)),
                                               ],
                                             ),
                                             Row(
                                               children: [
                                                 Icon(Icons.local_fire_department, color: Colors.red, size: 18),
                                                 SizedBox(width: 8),
-                                                Text('${trip.calories} cal', style: TextStyle(fontSize: 16)),
+                                                Text('${trip.calories} cal', style: TextStyle(fontSize: 16, color : isDarkMode ? Colors.grey[300] : Theme.of(context).colorScheme.onPrimaryFixed)),
                                               ],
                                             ),
                                           ],

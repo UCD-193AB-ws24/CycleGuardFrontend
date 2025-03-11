@@ -10,7 +10,9 @@ import 'package:cycle_guard_app/data/achievements_progress_provider.dart';
 import 'package:cycle_guard_app/data/week_history_provider.dart';
 import 'package:cycle_guard_app/data/trip_history_provider.dart';
 import 'package:cycle_guard_app/data/user_settings_accessor.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'constants.dart';
 
 // import pages 
 import 'pages/start_page.dart';
@@ -21,10 +23,35 @@ import 'pages/history_page.dart';
 import 'pages/achievements_page.dart';
 import 'pages/routes_page.dart';
 import 'pages/store_page.dart';
+import 'pages/leader_page.dart';
 import 'pages/settings_page.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+
+//const MethodChannel platform = MethodChannel('com.cycleguard.channel'); // Must match iOS
 
 void main() async {
-  await dotenv.load(fileName: '.env');
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await dotenv.load(fileName: ".env");
+
+  String? apiKey = dotenv.env['API_KEY'];
+
+  if (apiKey == null || apiKey.isEmpty) {
+    throw Exception("Google Maps API Key is missing in .env file.");
+  }
+
+  print("Google Maps API Key: $apiKey");
+  try {
+    // Send API Key to iOS
+    //await platform.invokeMethod('setApiKey', {"apiKey": apiKey});
+    // print("Google Maps API Key sent to iOS successfully");
+
+    // Request Location Permission from iOS
+    // await platform.invokeMethod('requestLocationPermission');
+    print("Location permission requested");
+  } catch (e) {
+    print("Error: $e");
+  }
   runApp(
     MultiProvider(
       providers: [
@@ -282,89 +309,107 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    Widget page;
-    switch (selectedIndex) {
-      case 0:
-        page = HomePage();
-      case 1:
-        page = SocialPage();
-      case 2:
-        page = HistoryPage();
-      case 3:
-        page = AchievementsPage();
-      case 4:
-        page = RoutesPage();
-      case 5:
-        page = StorePage();
-      case 6:
-        page = SettingsPage();
-      case 7:
-        page = TestingPage();
-      default:
-        throw UnimplementedError('no widget for $selectedIndex');
-    }
-
     return LayoutBuilder(
       builder: (context, constraints) {
         return Scaffold(
           body: Row(
             children: [
-                SizedBox(
-                  height: double.infinity,
-                  width: 60.0,
-                  child: NavigationRail(
-                    backgroundColor: getNavRailBackgroundColor(context),
-                    extended: constraints.maxWidth >= 600,
-                    destinations: [
-                      NavigationRailDestination(
-                        icon: Icon(Icons.home, color: getIconColor(context),),
-                        label: Text('Home'),
-                      ),
-                      NavigationRailDestination(
-                        icon: Icon(Icons.person_outline, color: getIconColor(context),),
-                        label: Text('Social'),
-                      ),
-                      NavigationRailDestination(
-                        icon: Icon(Icons.calendar_month_outlined, color: getIconColor(context),),
-                        label: Text('History'),
-                      ),
-                      NavigationRailDestination(
-                        icon: Icon(Icons.emoji_events_outlined, color: getIconColor(context),),
-                        label: Text('Achievements'),
-                      ),
-                      NavigationRailDestination(
-                        icon: Icon(Icons.pedal_bike, color: getIconColor(context),),
-                        label: Text('Routes'),
-                      ),
-                      NavigationRailDestination(
-                        icon: Icon(Icons.monetization_on_outlined, color: getIconColor(context),),
-                        label: Text('Store'),
-                      ),
-                      NavigationRailDestination(
-                        icon: Icon(Icons.settings_outlined, color: getIconColor(context),),
-                        label: Text('Settings'),
-                      ),
-                      NavigationRailDestination(
-                        icon: Icon(Icons.perm_device_info_rounded, color: getIconColor(context),),
-                        label: Text('Feature Testing'),
-                      ),
-                    ],
-                    selectedIndex: selectedIndex,
-                    onDestinationSelected: (value) {
-                      setState(() {
-                        selectedIndex = value;
-                      });
-                    },
-                  ),
+              SizedBox(
+                height: double.infinity,
+                width: 60.0,
+                child: NavigationRail(
+                  backgroundColor: getNavRailBackgroundColor(context),
+                  extended: constraints.maxWidth >= 600,
+                  destinations: [
+                    NavigationRailDestination(
+                      icon: Icon(Icons.home, color: getIconColor(context)),
+                      label: Text('Home'),
+                    ),
+                    NavigationRailDestination(
+                      icon: Icon(Icons.person_outline,
+                          color: getIconColor(context)),
+                      label: Text('Social'),
+                    ),
+                    NavigationRailDestination(
+                      icon: Icon(Icons.calendar_month_outlined,
+                          color: getIconColor(context)),
+                      label: Text('History'),
+                    ),
+                    NavigationRailDestination(
+                      icon: Icon(Icons.emoji_events_outlined,
+                          color: getIconColor(context)),
+                      label: Text('Achievements'),
+                    ),
+                    NavigationRailDestination(
+                      icon:
+                          Icon(Icons.pedal_bike, color: getIconColor(context)),
+                      label: Text('Routes'),
+                    ),
+                    NavigationRailDestination(
+                      icon: Icon(Icons.monetization_on_outlined,
+                          color: getIconColor(context)),
+                      label: Text('Store'),
+                    ),
+                    NavigationRailDestination(
+                      icon: Icon(Icons.settings_outlined,
+                          color: getIconColor(context)),
+                      label: Text('Settings'),
+                    ),
+                    NavigationRailDestination(
+                      icon: Icon(Icons.leaderboard_sharp,
+                          color: getIconColor(context)),
+                      label: Text('Leaders'),
+                    ),
+                    NavigationRailDestination(
+                      icon: Icon(Icons.perm_device_info_rounded,
+                          color: getIconColor(context)),
+                      label: Text('Feature Testing'),
+                    ),
+                  ],
+                  selectedIndex: selectedIndex,
+                  onDestinationSelected: (value) {
+                    setState(() {
+                      selectedIndex = value;
+                    });
+                  },
                 ),
+              ),
               Expanded(
-                child: page,
+                child:
+                    _getSelectedPage(selectedIndex), // Call the switch function
               ),
             ],
           ),
         );
       },
     );
+  }
+
+  /// **Refactored switch logic into a separate function**
+  Widget _getSelectedPage(int index) {
+    switch (index) {
+      case 0:
+        return HomePage();
+      case 1:
+        return SocialPage();
+      case 2:
+        return HistoryPage();
+      case 3:
+        return AchievementsPage();
+      case 4:
+        return RoutesPage();
+      case 5:
+        return StorePage();
+      case 6:
+        return SettingsPage();
+      case 7:
+        return LeaderPage();
+      case 8:
+        return TestingPage();
+      default:
+        return Center(
+            child: Text("Page not found")); // Handles unexpected cases
+    }
   }
 }
 

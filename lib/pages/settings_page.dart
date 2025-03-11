@@ -113,7 +113,7 @@ class _SettingsPageState extends State<SettingsPage> {
               Center(
                 child:ElevatedButton(
                   onPressed: () => _openPopup(context),  // Open popup screen on button press
-                  child: Text('Open Popup Screen'),
+                  child: Text('Scan BLE devices'),
                   style: ElevatedButton.styleFrom(elevation: 10),
                 )
               ),

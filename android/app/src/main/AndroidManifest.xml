@@ -13,7 +13,6 @@
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT"/>
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN"/>
 
-
     <application
         android:label="cycle_guard_app"
         android:name="${applicationName}"

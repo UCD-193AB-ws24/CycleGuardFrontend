@@ -130,6 +130,12 @@ class TestingPage extends StatelessWidget {
     print("Successfully retrieved user stats!");
   }
 
+  Future<void> _getAllUsers() async {
+    final users = await UserProfileAccessor.fetchAllUsernames();
+    print(users);
+    print("Successfully retrieved user list!");
+  }
+
   Future<void> _testUserProfile() async {
     // print("Previous profile: ${await UserProfileAccessor.getOwnProfile()}");
     await UserProfileAccessor.updateOwnProfile(UserProfile(displayName: "Jason Feng", bio: "God of Java", isPublic: true));
@@ -282,6 +288,14 @@ class TestingPage extends StatelessWidget {
                     padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
                   ),
                   child: Text("Get Week History"),
+                ),
+                ElevatedButton(
+                  onPressed: () => _getAllUsers(),
+                  style: ElevatedButton.styleFrom(
+                    elevation: 5,
+                    padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
+                  ),
+                  child: Text("Get All Users"),
                 ),
                 ElevatedButton(
                   onPressed: () => _getUserStats(),

@@ -1,0 +1,1 @@
+const String methodChannelName = 'com.cycleguard.channel';

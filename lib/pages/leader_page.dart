@@ -6,10 +6,29 @@ import 'package:http/http.dart' as http;
 
 /// Function to get an appropriate user icon based on rank
 IconData getUserIcon(int rank) {
-  if (rank == 1) return Icons.emoji_events; // 🏆 Trophy for the 1st place leader
-  if (rank <= 3) return Icons.star; // ⭐ Star for top 3
-  if (rank <= 10) return Icons.person; // 👤 Generic person icon for top 10
-  return Icons.account_circle; // Default icon for others
+  switch (rank) {
+    case 1:
+      return Icons.emoji_events; // 🏆 Trophy for the 1st place leader
+    case 2:
+      return Icons.shield_sharp;  // Shield for 2nd
+    case 3:
+      return Icons.anchor_sharp; // Anchor for 3rd
+    default:
+      return Icons.person; // 👤 Generic person icon for top 10
+  }
+}
+
+Color _getIconColor(int rank) {
+  switch(rank) {
+    case 1:
+      return Colors.orange.shade600;
+    case 2:
+      return Colors.grey.shade700;
+    case 3:
+      return const Color.fromARGB(255, 205, 76, 203);
+    default:
+      return Colors.blue;
+  }
 }
 
 /// API call to fetch leader rankings from the backend.
@@ -111,7 +130,7 @@ class _LeaderPageState extends State<LeaderPage> with SingleTickerProviderStateM
                       child: Icon(
                         getUserIcon(leader.rank),
                         size: 30, // Increase icon size
-                        color: Colors.blueAccent, // Set a visible icon color
+                        color: _getIconColor(leader.rank), // Set a visible icon color
                       ),
                     ),
                     title: Text(leader.username),

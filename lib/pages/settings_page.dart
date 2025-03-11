@@ -3,9 +3,6 @@ import 'package:provider/provider.dart';
 import '../main.dart';
 import 'package:intl/intl.dart';
 import 'package:cycle_guard_app/data/user_stats_provider.dart';
-import 'package:permission_handler/permission_handler.dart';
-
-import 'ble.dart';
 
 class SettingsPage extends StatefulWidget {
   @override
@@ -16,15 +13,7 @@ class _SettingsPageState extends State<SettingsPage> {
   @override
   void initState() {
     super.initState();
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<MyAppState>(context, listen: false).fetchOwnedThemes();
-    });
     Future.microtask(() => Provider.of<UserStatsProvider>(context, listen: false).fetchUserStats());
-  }
-
-  void _openPopup(BuildContext context) {
-    showCustomDialog(context);
   }
 
   @override
@@ -45,7 +34,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 style: Theme.of(context).textTheme.headlineSmall,
               ),
               SizedBox(height: 10),
-              Consumer<MyAppState>(
+              Consumer<MyAppState>( 
                 builder: (context, appState, child) {
                   return DropdownButton<Color>(
                     value: appState.selectedColor,
@@ -84,7 +73,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 },
               ),
               SizedBox(height: 10),
-              Consumer<MyAppState>(
+              Consumer<MyAppState>( 
                 builder: (context, appState, child) {
                   return SwitchListTile(
                     title: Text(
@@ -110,15 +99,8 @@ class _SettingsPageState extends State<SettingsPage> {
                   child: Text('Reset Default Settings'),
                 ),
               ),
-              Center(
-                child:ElevatedButton(
-                  onPressed: () => _openPopup(context),  // Open popup screen on button press
-                  child: Text('Scan BLE devices'),
-                  style: ElevatedButton.styleFrom(elevation: 10),
-                )
-              ),
               SizedBox(height: 20),
-              Consumer<MyAppState>(
+              Consumer<MyAppState>( 
                 builder: (context, appState, child) {
                   DateTime creationDate = DateTime.fromMillisecondsSinceEpoch(userStats.accountCreationTime * 1000);
                   Duration duration = DateTime.now().difference(creationDate);

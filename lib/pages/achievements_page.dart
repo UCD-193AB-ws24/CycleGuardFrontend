@@ -3,7 +3,6 @@ import '../main.dart';
 import 'package:provider/provider.dart';
 import 'package:cycle_guard_app/data/user_stats_provider.dart';
 import 'package:cycle_guard_app/data/achievements_progress_provider.dart';
-//import 'package:cycle_guard_app/data/achievements_accessor.dart';
 
 class AchievementsPage extends StatefulWidget {
   @override
@@ -11,30 +10,6 @@ class AchievementsPage extends StatefulWidget {
 }
 
 class _AchievementsPageState extends State<AchievementsPage> {
-
-  final List<Map<String, dynamic>> uniqueAchievements = [
-    {'title': 'First Ride', 'description': 'Complete your first ride', 'icon': Icons.directions_bike},
-    {'title': 'Achievement Hunter', 'description': 'Complete all achievements', 'icon': Icons.emoji_events},
-  ];
-
-  final List<Map<String, dynamic>> distanceAchievements = [
-    {'title': 'Challenger', 'description': 'Bike 100 miles', 'icon': Icons.flag},
-    {'title': 'Champion', 'description': 'Bike 1000 miles', 'icon': Icons.flag},
-    {'title': 'Conqueror', 'description': 'Bike 10000 miles', 'icon': Icons.flag},
-  ];
-
-  final List<Map<String, dynamic>> timeAchievements = [
-    {'title': 'Pedal Pusher', 'description': 'Ride for 10 hours', 'icon': Icons.timer},
-    {'title': 'Endurance Rider', 'description': 'Ride for 100 hours', 'icon': Icons.timer},
-    {'title': 'Iron Cyclist', 'description': 'Ride for 1000 hours', 'icon': Icons.timer},
-  ];
-
-  final List<Map<String, dynamic>> consistencyAchievements = [
-    {'title': 'Daily Rider', 'description': 'Ride every day for a week', 'icon': Icons.calendar_today},
-    {'title': 'Month of Miles', 'description': 'Ride every day for a month', 'icon': Icons.calendar_today},
-    {'title': 'Year-Round Rider', 'description': 'Ride every day for a year', 'icon': Icons.calendar_today},
-  ];
-
   int achievementIndex = 0; 
 
   @override
@@ -46,6 +21,7 @@ class _AchievementsPageState extends State<AchievementsPage> {
 
   @override
   Widget build(BuildContext context) { 
+    final achievementsProgress = Provider.of<AchievementsProgressProvider>(context);
     final userStats = Provider.of<UserStatsProvider>(context);
     final selectedColor = Theme.of(context).colorScheme.primary;
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
@@ -57,10 +33,10 @@ class _AchievementsPageState extends State<AchievementsPage> {
       body: ListView(
         padding: const EdgeInsets.all(8.0),
         children: [
-          _buildSection('Unique', '', uniqueAchievements, selectedColor, isDarkMode),
-          _buildSection('Distance', 'Total Miles Traveled : \n\t${userStats.totalDistance} miles', distanceAchievements, selectedColor, isDarkMode),
-          _buildSection('Time', 'Total Time Spent Riding : \n\t${userStats.totalTime ~/ 60} hours\n\t${userStats.totalTime % 60} minutes', timeAchievements, selectedColor, isDarkMode),
-          _buildSection('Consistency', 'Current Days in a Row : ${userStats.rideStreak} \nBest : ${userStats.bestStreak}', consistencyAchievements, selectedColor, isDarkMode),
+          _buildSection('Unique', '', achievementsProgress.uniqueAchievements, selectedColor, isDarkMode),
+          _buildSection('Distance', 'Total Miles Traveled : \n\t${userStats.totalDistance} miles', achievementsProgress.distanceAchievements, selectedColor, isDarkMode),
+          _buildSection('Time', 'Total Time Spent Riding : \n\t${userStats.totalTime ~/ 60} hours\n\t${userStats.totalTime % 60} minutes', achievementsProgress.timeAchievements, selectedColor, isDarkMode),
+          _buildSection('Consistency', 'Current Days in a Row : ${userStats.rideStreak} \nBest : ${userStats.bestStreak}', achievementsProgress.consistencyAchievements, selectedColor, isDarkMode),
         ],
       ),
     );
@@ -68,6 +44,8 @@ class _AchievementsPageState extends State<AchievementsPage> {
 
   Widget _buildSection(String title, String subtitle, List<Map<String, dynamic>> achievements, Color selectedColor, bool isDarkMode) {
     final achievementsProgress = Provider.of<AchievementsProgressProvider>(context);
+    List<bool> achievementsProgressList = achievementsProgress.achievementsCompleted;
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
       child: Column(
@@ -96,7 +74,7 @@ class _AchievementsPageState extends State<AchievementsPage> {
               icon: achievement['icon'],
               selectedColor: selectedColor,
               isDarkMode: isDarkMode,
-              isCompleted: achievementsProgress.achievementsCompleted[index],
+              isCompleted: achievementsProgressList.isEmpty ? false : achievementsProgress.achievementsCompleted[index],
             );
           }),
         ],

@@ -46,8 +46,6 @@ class _AchievementsPageState extends State<AchievementsPage> {
     final achievementsProgress = Provider.of<AchievementsProgressProvider>(context);
     List<bool> achievementsProgressList = achievementsProgress.achievementsCompleted;
 
-    
-
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
       child: Column(

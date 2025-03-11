@@ -4,6 +4,8 @@ import 'package:cycle_guard_app/auth/auth_util.dart';
 import 'package:cycle_guard_app/pages/create_account.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
+import 'package:cycle_guard_app/main.dart';
 
 import 'package:fluttertoast/fluttertoast.dart';
 
@@ -48,6 +50,9 @@ class LoginFormState extends State<LoginPage> {
 
     if (loginSuccess) {
       Fluttertoast.cancel();
+      final appState = Provider.of<MyAppState>(context, listen: false);
+      await appState.loadUserSettings();
+      await appState.fetchOwnedThemes();
       setState(() {
         Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => MyHomePage()));
       });

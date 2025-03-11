@@ -60,8 +60,8 @@ void showCustomDialog(BuildContext context) async {
       return AlertDialog(
         title: Text('Select Your Helmet'),
         content: Container(
-          height: 300, // Fixed height for the container
-          width: 300, // Fixed width for the container
+          height: 300,
+          width: 300,
           child: StreamBuilder<List<ScanResult>>(
             stream: Get.put(BluetoothController()).scanResults,
             builder: (context, snapshot) {

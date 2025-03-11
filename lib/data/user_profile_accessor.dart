@@ -44,7 +44,7 @@ class UserProfileAccessor {
 
   /// **Fetches all users from the system**
   static Future<UsersList> getAllUsers() async {
-    final response = await RequestsUtil.getWithToken("/users/all");
+    final response = await RequestsUtil.getWithToken("/user/all");
 
     if (response.statusCode == 200) {
       return UsersList.fromJson(jsonDecode(response.body) as Map<String, dynamic>);

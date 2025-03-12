@@ -98,7 +98,7 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
       setState(() {});
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Failed to accept friend request: $e")),
+        SnackBar(content: Text("Error while accepting friend request: $e")),
       );
     }
   }
@@ -141,7 +141,7 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
           children: [
             _buildProfileTab(),
             _buildSearchTab(),
-            _buildRequestsTab(),
+            RequestsTab(),
           ],
         ),
       ),
@@ -307,49 +307,108 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
       ],
     );
   }
+}
 
-  /// **3️⃣ Requests Tab - Manage Friend Requests**
-  Widget _buildRequestsTab() {
-    return FutureBuilder<List<String>>(
-      future: _fetchFriendRequests(), // Fetch friend requests from the backend
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator()); // Show loading indicator
-        } else if (snapshot.hasError) {
-          return Center(child: Text("Error loading friend requests"));
-        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return Center(child: Text("No pending friend requests."));
-        } else {
-          final requests = snapshot.data!;
-          return ListView.builder(
-            itemCount: requests.length,
-            itemBuilder: (context, index) {
-              String requester = requests[index];
+class RequestsTab extends StatefulWidget {
+  @override
+  _RequestsTabState createState() => _RequestsTabState();
+}
 
-              return Card(
-                margin: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                child: ListTile(
-                  leading: CircleAvatar(child: Text(requester[0].toUpperCase())),
-                  title: Text(requester),
-                  subtitle: Text("Sent you a friend request"),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        icon: Icon(Icons.check, color: Colors.green),
-                        onPressed: () => _acceptFriendRequest(requester),
-                      ),
-                      IconButton(
-                        icon: Icon(Icons.close, color: Colors.red),
-                        onPressed: () => _rejectFriendRequest(requester),
-                      ),
-                    ],
-                  ),
+class _RequestsTabState extends State<RequestsTab> {
+  List<String> _requests = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadFriendRequests(); // Fetch friend requests on init
+  }
+
+  /// **Fetch pending friend requests from backend**
+  Future<void> _loadFriendRequests() async {
+    try {
+      final FriendRequestList friendRequestList =
+          await FriendRequestsListAccessor.getFriendRequestList();
+      setState(() {
+        _requests = friendRequestList.receivedFriendRequests; // Only show received requests
+        _isLoading = false;
+      });
+    } catch (e) {
+      print("Error loading friend requests: $e");
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  /// **Accept a friend request and remove from UI**
+  Future<void> _acceptFriendRequest(String username) async {
+    try {
+      await FriendRequestsListAccessor.acceptFriendRequest(username);
+      setState(() {
+        _requests.remove(username); // Remove from UI without re-fetching
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("$username is now your friend!")),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to accept: $e")),
+      );
+    }
+  }
+
+  /// **Reject a friend request and remove from UI**
+  Future<void> _rejectFriendRequest(String username) async {
+    try {
+      await FriendRequestsListAccessor.rejectFriendRequest(username);
+      setState(() {
+        _requests.remove(username); // Remove from UI without re-fetching
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Friend request from $username rejected.")),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to reject: $e")),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Center(child: CircularProgressIndicator());
+    } else if (_requests.isEmpty) {
+      return Center(child: Text("No pending friend requests."));
+    }
+
+    return ListView.builder(
+      itemCount: _requests.length,
+      itemBuilder: (context, index) {
+        String requester = _requests[index];
+
+        return Card(
+          margin: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          child: ListTile(
+            leading: CircleAvatar(child: Text(requester[0].toUpperCase())),
+            title: Text(requester),
+            subtitle: Text("Sent you a friend request"),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: Icon(Icons.check, color: Colors.green),
+                  onPressed: () => _acceptFriendRequest(requester),
                 ),
-              );
-            },
-          );
-        }
+                IconButton(
+                  icon: Icon(Icons.close, color: Colors.red),
+                  onPressed: () => _rejectFriendRequest(requester),
+                ),
+              ],
+            ),
+          ),
+        );
       },
     );
   }

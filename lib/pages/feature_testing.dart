@@ -138,7 +138,7 @@ class TestingPage extends StatelessWidget {
 
   Future<void> _testUserProfile() async {
     // print("Previous profile: ${await UserProfileAccessor.getOwnProfile()}");
-    await UserProfileAccessor.updateOwnProfile(UserProfile(displayName: "Jason Feng", bio: "God of Java", isPublic: true));
+    await UserProfileAccessor.updateOwnProfile(UserProfile(username: "", displayName: "Jason Feng", bio: "God of Java", isPublic: true));
     print(await UserProfileAccessor.getOwnProfile());
     print(await UserProfileAccessor.getPublicProfile("javagod123"));
   }
@@ -166,6 +166,12 @@ class TestingPage extends StatelessWidget {
     // FriendRequestsListAccessor.acceptFriendRequest("javagod123");
     // FriendRequestsListAccessor.rejectFriendRequest("javagod123");
     // FriendRequestsListAccessor.cancelFriendRequest("javagod123");
+  }
+
+  Future<void> _testAllUsers() async {
+    print("Testing user/all");
+    final res = await UserProfileAccessor.getAllUsers();
+    print(res);
   }
 
   Future<void> _getWeekHistory() async {
@@ -352,6 +358,14 @@ class TestingPage extends StatelessWidget {
                     padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
                   ),
                   child: Text("Friend List tests"),
+                ),
+                ElevatedButton(
+                  onPressed: () => _testAllUsers(),
+                  style: ElevatedButton.styleFrom(
+                    elevation: 5,
+                    padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
+                  ),
+                  child: Text("user/all"),
                 ),
               ],
             ),

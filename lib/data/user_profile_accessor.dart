@@ -39,12 +39,15 @@ class UserProfileAccessor {
 
   static Future<List<String>> fetchAllUsernames() async {
     final UsersList allUsers = await UserProfileAccessor.getAllUsers();
-    return allUsers.users; // Directly return the List<String>
+    print(allUsers);
+    return [];
+    // return allUsers.users; // Directly return the List<String>
   }
 
   /// **Fetches all users from the system**
   static Future<UsersList> getAllUsers() async {
     final response = await RequestsUtil.getWithToken("/user/all");
+    print(response.body);
 
     if (response.statusCode == 200) {
       return UsersList.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
@@ -55,10 +58,11 @@ class UserProfileAccessor {
 }
 
 class UserProfile {
-  final String displayName, bio;
+  final String username, displayName, bio;
   final bool isPublic;
 
   const UserProfile({
+    required this.username,
     required this.displayName,
     required this.bio,
     required this.isPublic,
@@ -67,10 +71,12 @@ class UserProfile {
   factory UserProfile.fromJson(Map<String, dynamic> json) {
     return switch (json) {
       {
-      "displayName": String displayName,
-      "bio": String bio,
-      "isPublic": bool isPublic
+        "username": String username,
+        "displayName": String displayName,
+        "bio": String bio,
+        "isPublic": bool isPublic
       } => UserProfile(
+          username: username,
           displayName: displayName,
           bio: bio,
           isPublic: isPublic
@@ -80,6 +86,7 @@ class UserProfile {
   }
 
   Map<String, dynamic> toJson() => {
+    'username': username,
     'displayName': displayName,
     'bio': bio,
     'isPublic': isPublic
@@ -103,12 +110,13 @@ class UserProfile {
 
 class UsersList {
   final String username;
-  final List<String> users;
+  final List<UserProfile> users;
 
   const UsersList({required this.username, required this.users});
 
-  static List<String> _parseUsernameList(List<dynamic> list) {
-    return List<String>.from(list);
+  static List<UserProfile> _parseUsersList(List<dynamic> list) {
+    print(list);
+    return list.map((user) => UserProfile.fromJson(user)).toList();
   }
 
   factory UsersList.fromJson(Map<String, dynamic> jsonInit) {
@@ -119,7 +127,7 @@ class UsersList {
       } => UsersList(
         // username: username,
         username: username,
-        users: _parseUsernameList(users)
+        users: _parseUsersList(users)
       ),
       _ => throw const FormatException("failed to load UsersList"),
     };
@@ -128,5 +136,13 @@ class UsersList {
   @override
   String toString() {
     return 'UsersList{username: $username, users: $users}';
+  }
+
+  List<String> getUsernames() {
+    return this.users.map((user) => user.username).toList();
+  }
+
+  List<String> getDisplayNames() {
+    return this.users.map((user) => user.displayName).toList();
   }
 }

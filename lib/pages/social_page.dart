@@ -41,7 +41,7 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
     try {
       // Fetch all users
       final UsersList allUsersList = await UserProfileAccessor.getAllUsers();
-      final List<String> allUsers = allUsersList.users; // Get all usernames
+      final List<String> allUsers = allUsersList.getUsernames(); // Get all usernames
 
       // Fetch friend list separately
       final FriendsList friendsList = await FriendsListAccessor.getFriendsList();
@@ -210,6 +210,7 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
                 onPressed: () async {
                   try {
                     UserProfile updatedProfile = UserProfile(
+                      username: "", // The backend handles this, but I'll find a way on the frontend too
                       displayName: nameController.text.trim(),
                       bio: bioController.text.trim(),
                       isPublic: isPublic, // Save public/private status

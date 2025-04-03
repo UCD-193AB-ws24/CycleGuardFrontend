@@ -18,12 +18,12 @@ class StartPage extends StatelessWidget {
       body: Stack(
         children: [
           Positioned(
-            left: screenWidth * (-0.9), // Shift the logo 20% to the left
-            top: screenHeight * 0.05, // Adjust this to set the top position
+            left: screenWidth * (-0.9), 
+            top: screenHeight * 0.05,
             child: SvgPicture.asset(
               'assets/cg_logomark.svg',
-              width: screenWidth * 0.4,  // Logo width based on screen width (60% of screen width)
-              height: screenHeight * 0.95,  // Logo height based on screen height (30% of screen height)
+              width: screenWidth * 0.4, 
+              height: screenHeight * 0.95, 
               colorFilter: ColorFilter.mode(
                 Color(0xFFFFCC80), 
                 BlendMode.srcIn,

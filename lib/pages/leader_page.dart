@@ -136,7 +136,7 @@ class _LeaderPageState extends State<LeaderPage> with SingleTickerProviderStateM
                     title: Text(leader.username),
                     subtitle: Text(
                       isDistanceMode
-                          ? 'Distance: ${leader.distance.toStringAsFixed(2)} km'
+                          ? 'Distance: ${leader.distance.toStringAsFixed(2)} miles'
                           : 'Time: ${leader.distance.toStringAsFixed(2)} hrs',
                     ),
                   ),

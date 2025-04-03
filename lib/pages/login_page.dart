@@ -119,14 +119,14 @@ class LoginFormState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color.fromARGB(255, 236, 177, 125),
+      backgroundColor: Color(0xFFF5E7C4),
       appBar: AppBar(
         title: Text(
                     'Login',
                     style: GoogleFonts.poppins(
                       textStyle: poppinsStyle
                     )),
-        backgroundColor: Color.fromARGB(255, 236, 177, 125),
+        backgroundColor: Color(0xFFF5E7C4),
       ),
       body: Center(
           child: ListView(
@@ -152,7 +152,7 @@ class LoginFormState extends State<LoginPage> {
                   'Create account',
                   style: TextStyle(
                     fontSize: 12,
-                    color: Colors.white,
+                    color: Color(0xFF555555), 
                     decoration: TextDecoration.underline,
                   ),
                 ),

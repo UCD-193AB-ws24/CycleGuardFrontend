@@ -37,7 +37,7 @@ class _HomePageState extends State<HomePage> {
 
       // Convert the day to the correct index (0-6, Monday-Sunday)
       DateTime dateTime = DateTime.fromMillisecondsSinceEpoch(day * 1000);
-      int dayIndex = dateTime.weekday - 1;  // Adjust for Monday=0 to Sunday=6
+      int dayIndex = dateTime.weekday;  // Adjust for Monday=0 to Sunday=6
 
       // Assign the distance for that day
       distancesForWeek[dayIndex] = dayDistance;
@@ -115,7 +115,7 @@ class _HomePageState extends State<HomePage> {
                         showTitles: true,
                         getTitlesWidget: (double value, TitleMeta meta) {
                           const days = ['M', 'T', 'W', 'R', 'F', 'Sa', 'Su'];
-                          List<String> rotatedDays = getRotatedArray(days, DateTime.now().weekday);  // Rotate days array
+                          List<String> rotatedDays = getRotatedArray(days, DateTime.now().weekday); 
                           return Text(rotatedDays[value.toInt()], style: TextStyle(fontSize: 12));
                         },
                       ),

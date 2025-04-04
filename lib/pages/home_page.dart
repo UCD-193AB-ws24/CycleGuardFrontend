@@ -88,13 +88,13 @@ class _HomePageState extends State<HomePage> {
                   alignment: BarChartAlignment.spaceAround,
                   maxY: 1.2 * rotatedDistances.reduce((a, b) => a > b ? a : b), // 1.2 * the max value in rotatedDistances
                   barGroups: [
-                    BarChartGroupData(x: 0, barRods: [BarChartRodData(fromY: 0, toY: rotatedDistances[0], color: selectedColor)]),
-                    BarChartGroupData(x: 1, barRods: [BarChartRodData(fromY: 0, toY: rotatedDistances[1], color: selectedColor)]),
-                    BarChartGroupData(x: 2, barRods: [BarChartRodData(fromY: 0, toY: rotatedDistances[2], color: selectedColor)]),
-                    BarChartGroupData(x: 3, barRods: [BarChartRodData(fromY: 0, toY: rotatedDistances[3], color: selectedColor)]),
-                    BarChartGroupData(x: 4, barRods: [BarChartRodData(fromY: 0, toY: rotatedDistances[4], color: selectedColor)]),
-                    BarChartGroupData(x: 5, barRods: [BarChartRodData(fromY: 0, toY: rotatedDistances[5], color: selectedColor)]),
-                    BarChartGroupData(x: 6, barRods: [BarChartRodData(fromY: 0, toY: rotatedDistances[6], color: selectedColor)]),
+                    BarChartGroupData(x: 0, barRods: [BarChartRodData(fromY: 0, toY: rotatedDistances[0], color: selectedColor, width: 25.0)]),
+                    BarChartGroupData(x: 1, barRods: [BarChartRodData(fromY: 0, toY: rotatedDistances[1], color: selectedColor, width: 25.0)]),
+                    BarChartGroupData(x: 2, barRods: [BarChartRodData(fromY: 0, toY: rotatedDistances[2], color: selectedColor, width: 25.0)]),
+                    BarChartGroupData(x: 3, barRods: [BarChartRodData(fromY: 0, toY: rotatedDistances[3], color: selectedColor, width: 25.0)]),
+                    BarChartGroupData(x: 4, barRods: [BarChartRodData(fromY: 0, toY: rotatedDistances[4], color: selectedColor, width: 25.0)]),
+                    BarChartGroupData(x: 5, barRods: [BarChartRodData(fromY: 0, toY: rotatedDistances[5], color: selectedColor, width: 25.0)]),
+                    BarChartGroupData(x: 6, barRods: [BarChartRodData(fromY: 0, toY: rotatedDistances[6], color: selectedColor, width: 25.0)]),
                   ],
                   titlesData: FlTitlesData(
                     leftTitles: AxisTitles(
@@ -119,6 +119,27 @@ class _HomePageState extends State<HomePage> {
                     ),
                     rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
                     topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  ),
+                  gridData: FlGridData(
+                    drawHorizontalLine: false,
+                    drawVerticalLine: false,
+                  ),
+                  barTouchData: BarTouchData(
+                    touchTooltipData: BarTouchTooltipData(
+                      getTooltipColor: (group) => Theme.of(context).brightness == Brightness.dark
+                        ? Theme.of(context).colorScheme.secondary
+                        : Theme.of(context).colorScheme.secondaryFixed,
+                      getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                        return BarTooltipItem(
+                          '${rod.toY.toStringAsFixed(1)}', // Keep default formatting
+                          TextStyle(color: Theme.of(context).brightness == Brightness.dark
+                            ? Colors.white
+                            : selectedColor,
+                          ), // Only change text color
+                        );
+                      },
+                    ),
+                    
                   ),
                 ),
               ),

@@ -52,7 +52,12 @@ void main() async {
   } catch (e) {
     print("Error: $e");
   }
-  runApp(
+
+  SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]).then((_) {
+    runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (context) => UserStatsProvider()),
@@ -63,6 +68,8 @@ void main() async {
       child: MyApp(),
     ),
   );
+  });
+
 }
 
 class OnBoardStart extends StatefulWidget{

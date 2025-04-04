@@ -5,53 +5,77 @@ import 'package:flutter_svg/flutter_svg.dart';
 // import '../main.dart'; 
 
 class StartPage extends StatelessWidget {
-  @override
   final PageController pageController;
   StartPage(this.pageController);
-  Widget build(BuildContext context) {
-    final poppinsStyle = TextStyle(fontSize: 60,fontWeight: FontWeight.bold);
-    return Scaffold(
-      //backgroundColor: Color(0xFFD6D5C9),
-      backgroundColor: Color.fromARGB(255, 236, 177, 125),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
 
-            Text(
-              "CycleGuard",
-              style: GoogleFonts.poppins(
-                textStyle: poppinsStyle,
+  @override
+  Widget build(BuildContext context) {
+    double screenWidth = MediaQuery.of(context).size.width;
+    double screenHeight = MediaQuery.of(context).size.height;
+
+    return Scaffold(
+      backgroundColor: Color(0xFFF5E7C4),
+      body: Stack(
+        children: [
+          Positioned(
+            left: screenWidth * (-0.9), 
+            top: screenHeight * 0.05,
+            child: SvgPicture.asset(
+              'assets/cg_logomark.svg',
+              width: screenWidth * 0.4, 
+              height: screenHeight * 0.95, 
+              colorFilter: ColorFilter.mode(
+                Color(0xFFFFCC80), 
+                BlendMode.srcIn,
               ),
             ),
-            SizedBox(height: 40),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(200),
-              child: SvgPicture.asset(
-                'assets/cg_logomark.svg',
-                width: 300,
-                height: 300,
-              ),
-            ),
-            SizedBox(height: 50),
-            ElevatedButton(
-              onPressed: () {
-                pageController.nextPage(
-                  duration: Duration(milliseconds: 300),
-                  curve: Curves.easeInOut,
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                elevation: 10,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30),
+          ),
+          Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  "CycleGuard",
+                  style: GoogleFonts.poppins(
+                    textStyle: TextStyle(
+                      fontSize: 60,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF555555), 
+                    ),
+                  ),
                 ),
-                padding: EdgeInsets.symmetric(horizontal: 40, vertical: 15),
-              ),
-              child: Text('Get Started', style: TextStyle(fontSize: 18)),
+                Text(
+                  "Ready to Ride?",
+                  style: GoogleFonts.poppins(
+                    textStyle: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w500,
+                      color: Color(0xFF555555), 
+                    ),
+                  ),
+                ),
+                SizedBox(height: 75),
+
+                ElevatedButton(
+                  onPressed: () {
+                    pageController.nextPage(
+                      duration: Duration(milliseconds: 300),
+                      curve: Curves.easeInOut,
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    elevation: 10,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                    padding: EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                  ),
+                  child: Text('Get Started', style: TextStyle(fontSize: 18)),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

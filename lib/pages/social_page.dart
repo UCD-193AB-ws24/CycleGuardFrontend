@@ -7,6 +7,7 @@ import 'package:cycle_guard_app/data/user_profile_accessor.dart';
 import 'package:cycle_guard_app/data/friends_list_accessor.dart';
 import 'package:cycle_guard_app/data/friend_requests_accessor.dart';
 import 'package:cycle_guard_app/data/health_info_accessor.dart';
+import 'package:cycle_guard_app/pages/settings_page.dart';
 
 class SocialPage extends StatefulWidget {
   @override
@@ -174,15 +175,47 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start, // Align checkbox to the left
             children: [
-              CircleAvatar(
-                radius: 50,
-                backgroundImage: NetworkImage(profileImageUrl),
-              ),
-              TextButton(
-                onPressed: () {
-                  // Implement image picker logic
-                },
-                child: Text("Change Profile Picture"),
+              Stack(
+                clipBehavior: Clip.none, // Allow the button to overflow
+                children: [
+                  CircleAvatar(
+                    radius: 50,
+                    backgroundImage: NetworkImage(profileImageUrl),
+                  ),
+                  Align(
+                    alignment: Alignment.topRight, 
+                    child: TextButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => SettingsPage()),
+                        );
+                      },
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min, 
+                        children: [
+                          Icon(
+                            Icons.settings,
+                            size: 40,
+                            color: Theme.of(context).brightness == Brightness.dark
+                              ? Theme.of(context).colorScheme.secondaryFixedDim
+                              : Theme.of(context).colorScheme.secondary, 
+                          ),
+                          SizedBox(height: 2), 
+                          Text(
+                            'Settings',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Theme.of(context).brightness == Brightness.dark
+                                ? Theme.of(context).colorScheme.secondaryFixedDim
+                                : Theme.of(context).colorScheme.secondary, 
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
               TextField(
                 controller: nameController,

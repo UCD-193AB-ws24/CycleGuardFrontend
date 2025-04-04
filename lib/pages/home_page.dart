@@ -3,6 +3,9 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:cycle_guard_app/data/user_stats_provider.dart';
 import 'package:cycle_guard_app/data/week_history_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:cycle_guard_app/pages/store_page.dart';
+import 'package:cycle_guard_app/pages/history_page.dart';
+import 'package:cycle_guard_app/pages/achievements_page.dart';
 import 'package:cycle_guard_app/data/achievements_progress_provider.dart';
 
 
@@ -88,20 +91,20 @@ class _HomePageState extends State<HomePage> {
                   alignment: BarChartAlignment.spaceAround,
                   maxY: 1.2 * rotatedDistances.reduce((a, b) => a > b ? a : b), // 1.2 * the max value in rotatedDistances
                   barGroups: [
-                    BarChartGroupData(x: 0, barRods: [BarChartRodData(fromY: 0, toY: rotatedDistances[0], color: selectedColor, width: 25.0)]),
-                    BarChartGroupData(x: 1, barRods: [BarChartRodData(fromY: 0, toY: rotatedDistances[1], color: selectedColor, width: 25.0)]),
-                    BarChartGroupData(x: 2, barRods: [BarChartRodData(fromY: 0, toY: rotatedDistances[2], color: selectedColor, width: 25.0)]),
-                    BarChartGroupData(x: 3, barRods: [BarChartRodData(fromY: 0, toY: rotatedDistances[3], color: selectedColor, width: 25.0)]),
-                    BarChartGroupData(x: 4, barRods: [BarChartRodData(fromY: 0, toY: rotatedDistances[4], color: selectedColor, width: 25.0)]),
-                    BarChartGroupData(x: 5, barRods: [BarChartRodData(fromY: 0, toY: rotatedDistances[5], color: selectedColor, width: 25.0)]),
-                    BarChartGroupData(x: 6, barRods: [BarChartRodData(fromY: 0, toY: rotatedDistances[6], color: selectedColor, width: 25.0)]),
+                    BarChartGroupData(x: 0, barRods: [BarChartRodData(fromY: 0, toY: rotatedDistances[0], color: selectedColor, width: 30.0)]),
+                    BarChartGroupData(x: 1, barRods: [BarChartRodData(fromY: 0, toY: rotatedDistances[1], color: selectedColor, width: 30.0)]),
+                    BarChartGroupData(x: 2, barRods: [BarChartRodData(fromY: 0, toY: rotatedDistances[2], color: selectedColor, width: 30.0)]),
+                    BarChartGroupData(x: 3, barRods: [BarChartRodData(fromY: 0, toY: rotatedDistances[3], color: selectedColor, width: 30.0)]),
+                    BarChartGroupData(x: 4, barRods: [BarChartRodData(fromY: 0, toY: rotatedDistances[4], color: selectedColor, width: 30.0)]),
+                    BarChartGroupData(x: 5, barRods: [BarChartRodData(fromY: 0, toY: rotatedDistances[5], color: selectedColor, width: 30.0)]),
+                    BarChartGroupData(x: 6, barRods: [BarChartRodData(fromY: 0, toY: rotatedDistances[6], color: selectedColor, width: 30.0)]),
                   ],
                   titlesData: FlTitlesData(
                     leftTitles: AxisTitles(
                       axisNameWidget: Text('Miles', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
                       sideTitles: SideTitles(
                         showTitles: true,
-                        reservedSize: 24,
+                        reservedSize: 20,
                         getTitlesWidget: (double value, TitleMeta meta) {
                           return Text(value.toInt().toString(), style: TextStyle(fontSize: 12));
                         },
@@ -139,7 +142,6 @@ class _HomePageState extends State<HomePage> {
                         );
                       },
                     ),
-                    
                   ),
                 ),
               ),
@@ -161,9 +163,39 @@ class _HomePageState extends State<HomePage> {
                 _buildStatistic('Calories Burned', '${weekHistory.averageCalories.round()} calories'),
               ],
             ),
-            SizedBox(height: 16),
+            SizedBox(height: 8),
             _buildDailyChallenge(context),
-            SizedBox(height: 16),
+            SizedBox(height: 8),
+            Align(
+              alignment: Alignment.bottomCenter,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 2.0),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      elevation: 6,
+                      backgroundColor: Theme.of(context).brightness == Brightness.dark
+                          ? Theme.of(context).colorScheme.secondary
+                          : Theme.of(context).colorScheme.onInverseSurface,
+                      foregroundColor: Theme.of(context).brightness == Brightness.dark
+                          ? Colors.white
+                          : Theme.of(context).colorScheme.primary,
+                      padding: EdgeInsets.symmetric(vertical: 8.0),
+                      textStyle: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    ),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => HistoryPage()),
+                      );
+                    },
+                    child: Text('Your Trip History'),
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(height: 8),
             Center(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -179,10 +211,62 @@ class _HomePageState extends State<HomePage> {
                 ],
               ),
             ),
-            SizedBox(height: 16),
+            SizedBox(height: 8),
             _buildAchievementProgress(context, isDarkMode),
+            SizedBox(height: 8),
+            Align(
+              alignment: Alignment.bottomCenter,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16.0),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      elevation: 6,
+                      backgroundColor: Theme.of(context).brightness == Brightness.dark
+                          ? Theme.of(context).colorScheme.secondary
+                          : Theme.of(context).colorScheme.onInverseSurface,
+                      foregroundColor: Theme.of(context).brightness == Brightness.dark
+                          ? Colors.white
+                          : Theme.of(context).colorScheme.primary,
+                      padding: EdgeInsets.symmetric(vertical: 8.0),
+                      textStyle: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    ),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => AchievementsPage()),
+                      );
+                    },
+                    child: Text('Your Achievements'),
+                  ),
+                ),
+              ),
+            ),
           ],
         ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => StorePage()),
+          );
+        },
+        child: Column(
+          mainAxisSize: MainAxisSize.min, 
+          children: [
+            Icon(
+              Icons.store,
+            ),
+            Text(
+              'Store',
+              style: TextStyle(
+                fontSize: 14,
+              ),
+            ),
+          ],
+        ),  
       ),
     );
   }

@@ -247,7 +247,7 @@ class _HomePageState extends State<HomePage> {
   Widget _buildAchievementProgress(BuildContext context, bool isDarkMode) {
     final achievementsProgress = Provider.of<AchievementsProgressProvider>(context);
     List<bool> achievementsProgressList = achievementsProgress.achievementsCompleted;
-    List<int> priorityOrder = [0, 2, 5, 8, 3, 6, 9, 4, 7, 10, 1];
+    List<int> priorityOrder = [0, 3, 6, 9, 1, 4, 7, 10, 5, 8, 11, 2];
 
     var result = findFirstTwoFalse(achievementsProgressList, priorityOrder);
     var selectedAchievements = getSelectedAchievements(result.first, result.second);
@@ -321,17 +321,17 @@ class _HomePageState extends State<HomePage> {
 
   ({int first, int second}) findFirstTwoFalse(List<bool> achievementsProgress, List<int> priorityOrder) {
     Map<int, int> groupMapping = {
-      0: 0, 1: 0,     // Group 1 (0-1)
-      2: 1, 3: 1, 4: 1, // Group 2 (2-4)
-      5: 2, 6: 2, 7: 2, // Group 3 (5-7)
-      8: 3, 9: 3, 10: 3 // Group 4 (8-10)
+      0: 0, 1: 0, 2: 0,  // Group 1 (0-2)
+      3: 1, 4: 1, 5: 1, // Group 2 (3-5)
+      6: 2, 7: 2, 8: 2, // Group 3 (6-8)
+      9: 3, 10: 3, 11: 3 // Group 4 (9-11)
     };
 
     Set<int> selectedGroups = {};
     List<int> falseIndices = [];
 
     if (achievementsProgress.isEmpty) {
-      return (first: 0, second: 2);  // Return default values if achievementsProgress is empty
+      return (first: 0, second: 3); 
     }
 
     for (int index in priorityOrder) {
@@ -366,16 +366,16 @@ class _HomePageState extends State<HomePage> {
     final achievementsProgress = Provider.of<AchievementsProgressProvider>(context);
     final userStats = Provider.of<UserStatsProvider>(context);
     if (index < 2) {
-      achievement = achievementsProgress.uniqueAchievements[index]; // 0-1
+      achievement = achievementsProgress.uniqueAchievements[index]; // 0-2
       achievement['progress'] = 0;
-    } else if (index < 5) {
-      achievement = achievementsProgress.distanceAchievements[index - 2]; // 2-4
+    } else if (index < 6) {
+      achievement = achievementsProgress.distanceAchievements[index - 3]; // 3-5
       achievement['progress'] = userStats.totalDistance;
-    } else if (index < 8) {
-      achievement = achievementsProgress.timeAchievements[index - 5]; // 5-7
+    } else if (index < 9) {
+      achievement = achievementsProgress.timeAchievements[index - 6]; // 6-8
       achievement['progress'] = userStats.totalTime / 60;
     } else {
-      achievement = achievementsProgress.consistencyAchievements[index - 8]; // 8-10
+      achievement = achievementsProgress.consistencyAchievements[index - 9]; // 9-11
       achievement['progress'] = userStats.rideStreak;
     }
 

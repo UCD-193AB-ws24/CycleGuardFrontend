@@ -3,7 +3,7 @@ import 'package:cycle_guard_app/data/achievements_accessor.dart';
 
 
 class AchievementsProgressProvider with ChangeNotifier {
-  List<bool> achievementsCompleted = [false, false, false, false, false, false, false, false, false, false, false];
+  List<bool> achievementsCompleted = [false, false, false, false, false, false, false, false, false, false, false, false];
 
   // Method to fetch user stats and update the state
   Future<void> fetchAchievementProgress() async {
@@ -16,7 +16,8 @@ class AchievementsProgressProvider with ChangeNotifier {
 
   final List<Map<String, dynamic>> uniqueAchievements = [
     {'title': 'First Ride', 'description': 'Complete your first ride', 'icon': Icons.directions_bike, 'goalValue': 1},
-    {'title': 'Achievement Hunter', 'description': 'Complete all achievements', 'icon': Icons.emoji_events, 'goalValue': 10}, // Example: Reaching 10 achievements
+    {'title': 'Rocket Boost', 'description': 'Unlock the rocket boost', 'icon': Icons.rocket, 'goalValue': 1},
+    {'title': 'Achievement Hunter', 'description': 'Complete all achievements', 'icon': Icons.emoji_events, 'goalValue': 11},
   ];
 
   final List<Map<String, dynamic>> distanceAchievements = [

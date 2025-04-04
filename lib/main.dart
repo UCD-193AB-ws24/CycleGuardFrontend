@@ -93,13 +93,6 @@ class OnBoardStartState extends State<OnBoardStart>{
               LoginPage()
             ],
           ),
-          Container(
-             alignment: const Alignment(0, .75),
-              child: SmoothPageIndicator(
-                  controller:pageController,
-                  count:2
-              ),
-          )
         ],
       )
     );

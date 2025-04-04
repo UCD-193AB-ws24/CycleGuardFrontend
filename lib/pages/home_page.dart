@@ -193,7 +193,7 @@ class _HomePageState extends State<HomePage> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text('Your Trip History'),
+                        Text('Your Ride History'),
                         SizedBox(width: 16),
                         Icon(Icons.calendar_month_outlined, color: isDarkMode
                           ? Colors.white

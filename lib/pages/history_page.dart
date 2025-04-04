@@ -119,7 +119,7 @@ Future<void> _pickDateRange(BuildContext context) async {
     }
 
     return Scaffold(
-      appBar: createAppBar(context, 'Trip History'),
+      appBar: createAppBar(context, 'Ride History'),
       body: Column(
         children: [
           Padding(
@@ -137,7 +137,7 @@ Future<void> _pickDateRange(BuildContext context) async {
                   children: [
                     Center(
                       child: Text(
-                        'All Time Trip Summary',
+                        'All Time Ride Summary',
                         style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: isDarkMode ? Theme.of(context).colorScheme.surfaceContainerLow : Colors.black),
                       ),
                     ),
@@ -191,7 +191,7 @@ Future<void> _pickDateRange(BuildContext context) async {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              'Trips:',
+                              'Rides:',
                               style: TextStyle(fontSize: 16, color: isDarkMode ? Theme.of(context).colorScheme.surfaceContainerLow : Theme.of(context).colorScheme.onPrimaryFixed),
                             ),
                             Text(
@@ -211,7 +211,7 @@ Future<void> _pickDateRange(BuildContext context) async {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Text(
-                'Filter days by:',
+                'Filter rides by:',
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               SizedBox(height: 8), 
@@ -233,7 +233,7 @@ Future<void> _pickDateRange(BuildContext context) async {
                 children: [
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                    child: Text('Time', style: TextStyle(fontSize: 16, color: isDarkMode ? Colors.grey[300] : Colors.black)),
+                    child: Text('Duration', style: TextStyle(fontSize: 16, color: isDarkMode ? Colors.grey[300] : Colors.black)),
                   ),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 12.0), 
@@ -357,7 +357,7 @@ Future<void> _pickDateRange(BuildContext context) async {
                                     child: ListTile(
                                       contentPadding: EdgeInsets.all(16),
                                       title: Text(
-                                        'Trip ${sortedTimestamps.indexOf(timestamp) + 1}',
+                                        'Ride ${sortedTimestamps.indexOf(timestamp) + 1}',
                                         style: TextStyle(fontSize: 16, color : isDarkMode ? Colors.grey[300] : Theme.of(context).colorScheme.onPrimaryFixed),
                                       ),
                                       subtitle: Column(

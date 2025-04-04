@@ -1,4 +1,5 @@
 //import 'package:english_words/english_words.dart';
+import 'package:curved_navigation_bar/curved_navigation_bar.dart';
 import 'package:cycle_guard_app/data/purchase_info_accessor.dart';
 import 'package:cycle_guard_app/pages/feature_testing.dart';
 import 'package:flutter/material.dart';
@@ -302,16 +303,16 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   var selectedIndex = 1;
 
-  Color? getIconColor(BuildContext context) {
+  Color getNavBarColor(BuildContext context) {
     return Theme.of(context).brightness == Brightness.dark
-        ? Colors.white70 
-        : Colors.black; 
+        ? Theme.of(context).colorScheme.onSecondaryFixedVariant
+        : Theme.of(context).colorScheme.primary; 
   }
 
-  Color? getNavRailBackgroundColor(BuildContext context) {
+  Color getNavBarBackgroundColor(BuildContext context) {
     return Theme.of(context).brightness == Brightness.dark
-        ? Theme.of(context).colorScheme.secondary
-        : Theme.of(context).colorScheme.secondaryFixedDim; 
+        ? Colors.black12
+        : Colors.white; 
   }
 
 @override
@@ -320,32 +321,22 @@ class _MyHomePageState extends State<MyHomePage> {
       builder: (context, constraints) {
         return Scaffold(
           body: _getSelectedPage(selectedIndex),
-          bottomNavigationBar: BottomNavigationBar(
-            currentIndex: selectedIndex,
+          bottomNavigationBar: CurvedNavigationBar(
+            backgroundColor: getNavBarBackgroundColor(context),
+            color: getNavBarColor(context),
+            animationDuration: Duration(milliseconds: 270),
             onTap: (int index) {
               setState(() {
                 selectedIndex = index;
               });
             },
             items: [
-              BottomNavigationBarItem(
-                icon: Icon(Icons.pedal_bike, color: getIconColor(context)),
-                label: 'Routes',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.home, color: getIconColor(context)),
-                label: 'Home',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.person_outline, color: getIconColor(context)),
-                label: 'Social',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.perm_device_info_rounded, color: getIconColor(context)),
-                label: 'Testing',
-              ),
-            ],
-            type: BottomNavigationBarType.fixed,
+              Icon(Icons.pedal_bike, color: Theme.of(context).colorScheme.onPrimary),
+              Icon(Icons.home, color: Theme.of(context).colorScheme.onPrimary),
+              Icon(Icons.person_outline, color: Theme.of(context).colorScheme.onPrimary),
+              Icon(Icons.perm_device_info_rounded, color: Theme.of(context).colorScheme.onPrimary),
+            ]
+
           ),
         );
       },

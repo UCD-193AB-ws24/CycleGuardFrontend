@@ -134,11 +134,11 @@ class _HomePageState extends State<HomePage> {
                         : Theme.of(context).colorScheme.secondaryFixed,
                       getTooltipItem: (group, groupIndex, rod, rodIndex) {
                         return BarTooltipItem(
-                          '${rod.toY.toStringAsFixed(1)}', // Keep default formatting
+                          '${rod.toY.toStringAsFixed(1)}', 
                           TextStyle(color: Theme.of(context).brightness == Brightness.dark
                             ? Colors.white
                             : selectedColor,
-                          ), // Only change text color
+                          ), 
                         );
                       },
                     ),

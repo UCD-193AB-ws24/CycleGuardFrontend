@@ -129,13 +129,13 @@ class _HomePageState extends State<HomePage> {
                   ),
                   barTouchData: BarTouchData(
                     touchTooltipData: BarTouchTooltipData(
-                      getTooltipColor: (group) => Theme.of(context).brightness == Brightness.dark
+                      getTooltipColor: (group) => isDarkMode
                         ? Theme.of(context).colorScheme.secondary
                         : Theme.of(context).colorScheme.secondaryFixed,
                       getTooltipItem: (group, groupIndex, rod, rodIndex) {
                         return BarTooltipItem(
                           '${rod.toY.toStringAsFixed(1)}', 
-                          TextStyle(color: Theme.of(context).brightness == Brightness.dark
+                          TextStyle(color: isDarkMode
                             ? Colors.white
                             : selectedColor,
                           ), 
@@ -170,15 +170,15 @@ class _HomePageState extends State<HomePage> {
               alignment: Alignment.bottomCenter,
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 2.0),
-                child: SizedBox(
-                  width: double.infinity,
+                child: FractionallySizedBox(
+                  widthFactor: 0.8,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       elevation: 6,
-                      backgroundColor: Theme.of(context).brightness == Brightness.dark
+                      backgroundColor: isDarkMode
                           ? Theme.of(context).colorScheme.secondary
                           : Theme.of(context).colorScheme.onInverseSurface,
-                      foregroundColor: Theme.of(context).brightness == Brightness.dark
+                      foregroundColor: isDarkMode
                           ? Colors.white
                           : Theme.of(context).colorScheme.primary,
                       padding: EdgeInsets.symmetric(vertical: 8.0),
@@ -190,7 +190,16 @@ class _HomePageState extends State<HomePage> {
                         MaterialPageRoute(builder: (context) => HistoryPage()),
                       );
                     },
-                    child: Text('Your Trip History'),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text('Your Trip History'),
+                        SizedBox(width: 16),
+                        Icon(Icons.calendar_month_outlined, color: isDarkMode
+                          ? Colors.white
+                          : Theme.of(context).colorScheme.primary),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -218,15 +227,15 @@ class _HomePageState extends State<HomePage> {
               alignment: Alignment.bottomCenter,
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 16.0),
-                child: SizedBox(
-                  width: double.infinity,
+                child: FractionallySizedBox(
+                  widthFactor: 0.8,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       elevation: 6,
-                      backgroundColor: Theme.of(context).brightness == Brightness.dark
+                      backgroundColor: isDarkMode
                           ? Theme.of(context).colorScheme.secondary
                           : Theme.of(context).colorScheme.onInverseSurface,
-                      foregroundColor: Theme.of(context).brightness == Brightness.dark
+                      foregroundColor: isDarkMode
                           ? Colors.white
                           : Theme.of(context).colorScheme.primary,
                       padding: EdgeInsets.symmetric(vertical: 8.0),
@@ -238,7 +247,16 @@ class _HomePageState extends State<HomePage> {
                         MaterialPageRoute(builder: (context) => AchievementsPage()),
                       );
                     },
-                    child: Text('Your Achievements'),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text('Your Achievements'),
+                        SizedBox(width: 16),
+                        Icon(Icons.emoji_events, color: isDarkMode
+                          ? Colors.white
+                          : Theme.of(context).colorScheme.primary),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -387,7 +405,7 @@ class _HomePageState extends State<HomePage> {
               SizedBox(height: 8),
               LinearProgressIndicator(
                 value: progressPercentage,
-                color: Theme.of(context).colorScheme.secondary,
+                color: isDarkMode ? Theme.of(context).colorScheme.onSecondaryFixedVariant : Theme.of(context).colorScheme.primary,
                 minHeight: 8,
                 borderRadius: BorderRadius.circular(8),
               ),

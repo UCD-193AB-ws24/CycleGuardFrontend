@@ -325,6 +325,7 @@ class _MyHomePageState extends State<MyHomePage> {
             backgroundColor: getNavBarBackgroundColor(context),
             color: getNavBarColor(context),
             animationDuration: Duration(milliseconds: 270),
+            index: selectedIndex,
             onTap: (int index) {
               setState(() {
                 selectedIndex = index;

@@ -44,6 +44,7 @@ class _HomePageState extends State<HomePage> {
     }
 
     List<double>rotatedDistances = getRotatedArray(distancesForWeek, DateTime.now().weekday);
+    bool isDailyChallengeComplete = rotatedDistances[6] > 5;
 
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final selectedColor = Theme.of(context).colorScheme.primary;
@@ -164,7 +165,7 @@ class _HomePageState extends State<HomePage> {
               ],
             ),
             SizedBox(height: 8),
-            _buildDailyChallenge(context),
+            _buildDailyChallenge(context, isDailyChallengeComplete),
             SizedBox(height: 8),
             Align(
               alignment: Alignment.bottomCenter,
@@ -311,7 +312,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildDailyChallenge(BuildContext context) {
+  Widget _buildDailyChallenge(BuildContext context, bool isDailyChallengeComplete) {
     return Container(
       padding: EdgeInsets.all(16.0),
       decoration: BoxDecoration(
@@ -320,10 +321,15 @@ class _HomePageState extends State<HomePage> {
         boxShadow: [
           BoxShadow(color: Colors.black26, blurRadius: 6, offset: Offset(0, 4)),
         ],
+        border: isDailyChallengeComplete ? Border.all(color: Colors.amber, width: 3) : null,
       ),
       child: Row(
         children: [
-          Icon(Icons.directions_bike, color: Colors.white, size: 40), // Bike Icon
+          Icon( 
+            isDailyChallengeComplete ? Icons.check_circle : Icons.directions_bike, 
+            color: isDailyChallengeComplete ? Colors.amber : Colors.white, 
+            size: 40,
+          ), // Bike Icon
           SizedBox(width: 16),
           Expanded(
             child: Column(

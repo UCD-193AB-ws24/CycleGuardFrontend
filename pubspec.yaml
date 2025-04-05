@@ -55,6 +55,7 @@ dependencies:
   flutter_blue_plus: ^1.35.3
   curved_navigation_bar: ^1.0.6
   draggable_scrollbar: ^0.1.0
+  flutter_markdown: ^0.7.7
 
 dev_dependencies:
   flutter_test:
@@ -83,6 +84,7 @@ flutter:
     - assets/cg_img_1.png
     - .env
     - assets/cg_logomark.svg
+    - assets/terms_of_service.txt
   # assets:
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg

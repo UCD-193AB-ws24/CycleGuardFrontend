@@ -190,7 +190,7 @@ class TestingPage extends StatelessWidget {
     dayHistoryMap.forEach((day, history) {
       DateTime dateTime = DateTime.fromMillisecondsSinceEpoch(day * 1000);
       print("Day: $day");
-      print("Day: ${["M", "T", "W", "R", "F", "Sa", "Su"][dateTime.weekday - 1]}");
+      print("Day: ${["M", "T", "W", "R", "F", "Sa", "Su"][dateTime.weekday]}");
       print("Distance: ${history.distance}");
       print("Calories: ${history.calories}");
       print("Time: ${history.time}\n");

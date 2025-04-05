@@ -1,4 +1,5 @@
 //import 'package:english_words/english_words.dart';
+import 'package:curved_navigation_bar/curved_navigation_bar.dart';
 import 'package:cycle_guard_app/data/purchase_info_accessor.dart';
 import 'package:cycle_guard_app/pages/feature_testing.dart';
 import 'package:flutter/material.dart';
@@ -92,13 +93,6 @@ class OnBoardStartState extends State<OnBoardStart>{
               LoginPage()
             ],
           ),
-          Container(
-             alignment: const Alignment(0, .75),
-              child: SmoothPageIndicator(
-                  controller:pageController,
-                  count:2
-              ),
-          )
         ],
       )
     );
@@ -300,122 +294,62 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  var selectedIndex = 0;
+  var selectedIndex = 1;
 
-  Color? getIconColor(BuildContext context) {
+  Color getNavBarColor(BuildContext context) {
     return Theme.of(context).brightness == Brightness.dark
-        ? Colors.white70 
-        : Colors.black; 
+        ? Theme.of(context).colorScheme.onSecondaryFixedVariant
+        : Theme.of(context).colorScheme.primary; 
   }
 
-  Color? getNavRailBackgroundColor(BuildContext context) {
+  Color getNavBarBackgroundColor(BuildContext context) {
     return Theme.of(context).brightness == Brightness.dark
-        ? Theme.of(context).colorScheme.secondary
-        : Theme.of(context).colorScheme.secondaryFixedDim; 
+        ? Colors.black12
+        : Colors.white; 
   }
 
-  @override
+@override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
         return Scaffold(
-          body: Row(
-            children: [
-              SizedBox(
-                height: double.infinity,
-                width: 60.0,
-                child: NavigationRail(
-                  backgroundColor: getNavRailBackgroundColor(context),
-                  extended: constraints.maxWidth >= 600,
-                  destinations: [
-                    NavigationRailDestination(
-                      icon: Icon(Icons.home, color: getIconColor(context)),
-                      label: Text('Home'),
-                    ),
-                    NavigationRailDestination(
-                      icon: Icon(Icons.person_outline,
-                          color: getIconColor(context)),
-                      label: Text('Social'),
-                    ),
-                    NavigationRailDestination(
-                      icon: Icon(Icons.calendar_month_outlined,
-                          color: getIconColor(context)),
-                      label: Text('History'),
-                    ),
-                    NavigationRailDestination(
-                      icon: Icon(Icons.emoji_events_outlined,
-                          color: getIconColor(context)),
-                      label: Text('Achievements'),
-                    ),
-                    NavigationRailDestination(
-                      icon:
-                          Icon(Icons.pedal_bike, color: getIconColor(context)),
-                      label: Text('Routes'),
-                    ),
-                    NavigationRailDestination(
-                      icon: Icon(Icons.monetization_on_outlined,
-                          color: getIconColor(context)),
-                      label: Text('Store'),
-                    ),
-                    NavigationRailDestination(
-                      icon: Icon(Icons.settings_outlined,
-                          color: getIconColor(context)),
-                      label: Text('Settings'),
-                    ),
-                    NavigationRailDestination(
-                      icon: Icon(Icons.leaderboard_sharp,
-                          color: getIconColor(context)),
-                      label: Text('Leaders'),
-                    ),
-                    NavigationRailDestination(
-                      icon: Icon(Icons.perm_device_info_rounded,
-                          color: getIconColor(context)),
-                      label: Text('Feature Testing'),
-                    ),
-                  ],
-                  selectedIndex: selectedIndex,
-                  onDestinationSelected: (value) {
-                    setState(() {
-                      selectedIndex = value;
-                    });
-                  },
-                ),
-              ),
-              Expanded(
-                child:
-                    _getSelectedPage(selectedIndex), // Call the switch function
-              ),
-            ],
+          body: _getSelectedPage(selectedIndex),
+          bottomNavigationBar: CurvedNavigationBar(
+            backgroundColor: getNavBarBackgroundColor(context),
+            color: getNavBarColor(context),
+            animationDuration: Duration(milliseconds: 270),
+            index: selectedIndex,
+            onTap: (int index) {
+              setState(() {
+                selectedIndex = index;
+              });
+            },
+            items: [
+              Icon(Icons.pedal_bike, color: Theme.of(context).colorScheme.onPrimary),
+              Icon(Icons.home, color: Theme.of(context).colorScheme.onPrimary),
+              Icon(Icons.person_outline, color: Theme.of(context).colorScheme.onPrimary),
+              Icon(Icons.perm_device_info_rounded, color: Theme.of(context).colorScheme.onPrimary),
+            ]
+
           ),
         );
       },
     );
   }
 
-  /// **Refactored switch logic into a separate function**
   Widget _getSelectedPage(int index) {
     switch (index) {
       case 0:
-        return HomePage();
-      case 1:
-        return SocialPage();
-      case 2:
-        return HistoryPage();
-      case 3:
-        return AchievementsPage();
-      case 4:
         return RoutesPage();
-      case 5:
-        return StorePage();
-      case 6:
-        return SettingsPage();
-      case 7:
-        return LeaderPage();
-      case 8:
+      case 1:
+        return HomePage();
+      case 2:
+        return SocialPage();
+      case 3: 
         return TestingPage();
       default:
         return Center(
-            child: Text("Page not found")); // Handles unexpected cases
+          child: Text("Page not found"));
     }
   }
 }

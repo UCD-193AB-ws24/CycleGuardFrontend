@@ -53,6 +53,8 @@ dependencies:
   flutter_dotenv: ^5.2.1
   flutter_polyline_points: ^2.1.0
   flutter_blue_plus: ^1.35.3
+  curved_navigation_bar: ^1.0.6
+  draggable_scrollbar: ^0.1.0
 
 dev_dependencies:
   flutter_test:

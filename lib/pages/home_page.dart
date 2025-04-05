@@ -3,6 +3,9 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:cycle_guard_app/data/user_stats_provider.dart';
 import 'package:cycle_guard_app/data/week_history_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:cycle_guard_app/pages/store_page.dart';
+import 'package:cycle_guard_app/pages/history_page.dart';
+import 'package:cycle_guard_app/pages/achievements_page.dart';
 import 'package:cycle_guard_app/data/achievements_progress_provider.dart';
 
 
@@ -34,13 +37,14 @@ class _HomePageState extends State<HomePage> {
 
       // Convert the day to the correct index (0-6, Monday-Sunday)
       DateTime dateTime = DateTime.fromMillisecondsSinceEpoch(day * 1000);
-      int dayIndex = dateTime.weekday - 1;  // Adjust for Monday=0 to Sunday=6
+      int dayIndex = dateTime.weekday;  // Adjust for Monday=0 to Sunday=6
 
       // Assign the distance for that day
       distancesForWeek[dayIndex] = dayDistance;
     }
 
     List<double>rotatedDistances = getRotatedArray(distancesForWeek, DateTime.now().weekday);
+    bool isDailyChallengeComplete = rotatedDistances[6] > 5;
 
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final selectedColor = Theme.of(context).colorScheme.primary;
@@ -88,20 +92,20 @@ class _HomePageState extends State<HomePage> {
                   alignment: BarChartAlignment.spaceAround,
                   maxY: 1.2 * rotatedDistances.reduce((a, b) => a > b ? a : b), // 1.2 * the max value in rotatedDistances
                   barGroups: [
-                    BarChartGroupData(x: 0, barRods: [BarChartRodData(fromY: 0, toY: rotatedDistances[0], color: selectedColor, width: 25.0)]),
-                    BarChartGroupData(x: 1, barRods: [BarChartRodData(fromY: 0, toY: rotatedDistances[1], color: selectedColor, width: 25.0)]),
-                    BarChartGroupData(x: 2, barRods: [BarChartRodData(fromY: 0, toY: rotatedDistances[2], color: selectedColor, width: 25.0)]),
-                    BarChartGroupData(x: 3, barRods: [BarChartRodData(fromY: 0, toY: rotatedDistances[3], color: selectedColor, width: 25.0)]),
-                    BarChartGroupData(x: 4, barRods: [BarChartRodData(fromY: 0, toY: rotatedDistances[4], color: selectedColor, width: 25.0)]),
-                    BarChartGroupData(x: 5, barRods: [BarChartRodData(fromY: 0, toY: rotatedDistances[5], color: selectedColor, width: 25.0)]),
-                    BarChartGroupData(x: 6, barRods: [BarChartRodData(fromY: 0, toY: rotatedDistances[6], color: selectedColor, width: 25.0)]),
+                    BarChartGroupData(x: 0, barRods: [BarChartRodData(fromY: 0, toY: rotatedDistances[0], color: selectedColor, width: 30.0)]),
+                    BarChartGroupData(x: 1, barRods: [BarChartRodData(fromY: 0, toY: rotatedDistances[1], color: selectedColor, width: 30.0)]),
+                    BarChartGroupData(x: 2, barRods: [BarChartRodData(fromY: 0, toY: rotatedDistances[2], color: selectedColor, width: 30.0)]),
+                    BarChartGroupData(x: 3, barRods: [BarChartRodData(fromY: 0, toY: rotatedDistances[3], color: selectedColor, width: 30.0)]),
+                    BarChartGroupData(x: 4, barRods: [BarChartRodData(fromY: 0, toY: rotatedDistances[4], color: selectedColor, width: 30.0)]),
+                    BarChartGroupData(x: 5, barRods: [BarChartRodData(fromY: 0, toY: rotatedDistances[5], color: selectedColor, width: 30.0)]),
+                    BarChartGroupData(x: 6, barRods: [BarChartRodData(fromY: 0, toY: rotatedDistances[6], color: selectedColor, width: 30.0)]),
                   ],
                   titlesData: FlTitlesData(
                     leftTitles: AxisTitles(
                       axisNameWidget: Text('Miles', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
                       sideTitles: SideTitles(
                         showTitles: true,
-                        reservedSize: 24,
+                        reservedSize: 20,
                         getTitlesWidget: (double value, TitleMeta meta) {
                           return Text(value.toInt().toString(), style: TextStyle(fontSize: 12));
                         },
@@ -112,7 +116,7 @@ class _HomePageState extends State<HomePage> {
                         showTitles: true,
                         getTitlesWidget: (double value, TitleMeta meta) {
                           const days = ['M', 'T', 'W', 'R', 'F', 'Sa', 'Su'];
-                          List<String> rotatedDays = getRotatedArray(days, DateTime.now().weekday);  // Rotate days array
+                          List<String> rotatedDays = getRotatedArray(days, DateTime.now().weekday); 
                           return Text(rotatedDays[value.toInt()], style: TextStyle(fontSize: 12));
                         },
                       ),
@@ -126,20 +130,19 @@ class _HomePageState extends State<HomePage> {
                   ),
                   barTouchData: BarTouchData(
                     touchTooltipData: BarTouchTooltipData(
-                      getTooltipColor: (group) => Theme.of(context).brightness == Brightness.dark
+                      getTooltipColor: (group) => isDarkMode
                         ? Theme.of(context).colorScheme.secondary
                         : Theme.of(context).colorScheme.secondaryFixed,
                       getTooltipItem: (group, groupIndex, rod, rodIndex) {
                         return BarTooltipItem(
-                          '${rod.toY.toStringAsFixed(1)}', // Keep default formatting
-                          TextStyle(color: Theme.of(context).brightness == Brightness.dark
+                          '${rod.toY.toStringAsFixed(1)}', 
+                          TextStyle(color: isDarkMode
                             ? Colors.white
                             : selectedColor,
-                          ), // Only change text color
+                          ), 
                         );
                       },
                     ),
-                    
                   ),
                 ),
               ),
@@ -161,9 +164,48 @@ class _HomePageState extends State<HomePage> {
                 _buildStatistic('Calories Burned', '${weekHistory.averageCalories.round()} calories'),
               ],
             ),
-            SizedBox(height: 16),
-            _buildDailyChallenge(context),
-            SizedBox(height: 16),
+            SizedBox(height: 8),
+            _buildDailyChallenge(context, isDailyChallengeComplete),
+            SizedBox(height: 8),
+            Align(
+              alignment: Alignment.bottomCenter,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 2.0),
+                child: FractionallySizedBox(
+                  widthFactor: 0.8,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      elevation: 6,
+                      backgroundColor: isDarkMode
+                          ? Theme.of(context).colorScheme.secondary
+                          : Theme.of(context).colorScheme.onInverseSurface,
+                      foregroundColor: isDarkMode
+                          ? Colors.white
+                          : Theme.of(context).colorScheme.primary,
+                      padding: EdgeInsets.symmetric(vertical: 8.0),
+                      textStyle: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    ),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => HistoryPage()),
+                      );
+                    },
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text('Your Ride History'),
+                        SizedBox(width: 16),
+                        Icon(Icons.calendar_month_outlined, color: isDarkMode
+                          ? Colors.white
+                          : Theme.of(context).colorScheme.primary),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(height: 8),
             Center(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -179,10 +221,71 @@ class _HomePageState extends State<HomePage> {
                 ],
               ),
             ),
-            SizedBox(height: 16),
+            SizedBox(height: 8),
             _buildAchievementProgress(context, isDarkMode),
+            SizedBox(height: 8),
+            Align(
+              alignment: Alignment.bottomCenter,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16.0),
+                child: FractionallySizedBox(
+                  widthFactor: 0.8,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      elevation: 6,
+                      backgroundColor: isDarkMode
+                          ? Theme.of(context).colorScheme.secondary
+                          : Theme.of(context).colorScheme.onInverseSurface,
+                      foregroundColor: isDarkMode
+                          ? Colors.white
+                          : Theme.of(context).colorScheme.primary,
+                      padding: EdgeInsets.symmetric(vertical: 8.0),
+                      textStyle: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    ),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => AchievementsPage()),
+                      );
+                    },
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text('Your Achievements'),
+                        SizedBox(width: 16),
+                        Icon(Icons.emoji_events, color: isDarkMode
+                          ? Colors.white
+                          : Theme.of(context).colorScheme.primary),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ],
         ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => StorePage()),
+          );
+        },
+        child: Column(
+          mainAxisSize: MainAxisSize.min, 
+          children: [
+            Icon(
+              Icons.store,
+            ),
+            Text(
+              'Store',
+              style: TextStyle(
+                fontSize: 14,
+              ),
+            ),
+          ],
+        ),  
       ),
     );
   }
@@ -209,7 +312,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildDailyChallenge(BuildContext context) {
+  Widget _buildDailyChallenge(BuildContext context, bool isDailyChallengeComplete) {
     return Container(
       padding: EdgeInsets.all(16.0),
       decoration: BoxDecoration(
@@ -218,10 +321,15 @@ class _HomePageState extends State<HomePage> {
         boxShadow: [
           BoxShadow(color: Colors.black26, blurRadius: 6, offset: Offset(0, 4)),
         ],
+        border: isDailyChallengeComplete ? Border.all(color: Colors.amber, width: 3) : null,
       ),
       child: Row(
         children: [
-          Icon(Icons.directions_bike, color: Colors.white, size: 40), // Bike Icon
+          Icon( 
+            isDailyChallengeComplete ? Icons.check_circle : Icons.directions_bike, 
+            color: isDailyChallengeComplete ? Colors.amber : Colors.white, 
+            size: 40,
+          ), // Bike Icon
           SizedBox(width: 16),
           Expanded(
             child: Column(
@@ -303,7 +411,7 @@ class _HomePageState extends State<HomePage> {
               SizedBox(height: 8),
               LinearProgressIndicator(
                 value: progressPercentage,
-                color: Theme.of(context).colorScheme.secondary,
+                color: isDarkMode ? Theme.of(context).colorScheme.onSecondaryFixedVariant : Theme.of(context).colorScheme.primary,
                 minHeight: 8,
                 borderRadius: BorderRadius.circular(8),
               ),

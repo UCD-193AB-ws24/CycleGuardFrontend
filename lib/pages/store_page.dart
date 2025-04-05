@@ -22,19 +22,8 @@ class StorePage extends StatelessWidget {
     );
   }
 
-  void _getCycleCoins() async {
-    final newCoins = await CycleCoinInfo.getCycleCoins();
-
-    Fluttertoast.cancel();
-    Fluttertoast.showToast(
-        msg: "You have $newCoins CycleCoins!",
-        toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.CENTER,
-        timeInSecForIosWeb: 5,
-        backgroundColor: Colors.blueAccent,
-        textColor: Colors.white,
-        fontSize: 16.0
-    );
+  Future<int> _getCycleCoins(BuildContext context) async {
+    return await CycleCoinInfo.getCycleCoins();
   }
 
   void _getOwnedItems() async {
@@ -59,65 +48,108 @@ class StorePage extends StatelessWidget {
 
     return Scaffold(
       appBar: createAppBar(context, 'Store'),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
+      body: Stack(
         children: [
-          SizedBox(height: 20),
-          Center(
-            child: Column(
-              children: [
-                Text(
-                  "New Color Themes",
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              SizedBox(height: 60),
+              Center(
+                child: Column(
+                  children: [
+                    Text(
+                      "New Color Themes",
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    ),
+                    Text("10 CycleCoins"),
+                    ElevatedButton(
+                      onPressed: appState.storeThemes.isNotEmpty
+                          ? () => _showThemeMenu(context, appState)
+                          : null, // Disable if no themes left
+                      style: ElevatedButton.styleFrom(
+                        elevation: 5,
+                        padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
+                      ),
+                      child: Text("Buy"),
+                    ),
+                    SizedBox(height: 20), // Adds space between the two sections
+                    Text(
+                      "Rocket Boost",
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    ),
+                    Text("100 CycleCoins"),
+                    ElevatedButton(
+                      onPressed: () => _buyRocketBoost(context, appState),
+                      style: ElevatedButton.styleFrom(
+                        elevation: 5,
+                        padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
+                      ),
+                      child: Text("Buy"),
+                    ),
+                    SizedBox(height: 20), 
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        elevation: 5,
+                      ),
+                      onPressed: _addCycleCoins,
+                      child: Text("Temp: Add 5 CycleCoins to account"),
+                    ),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        elevation: 5,
+                      ),
+                      onPressed: _getOwnedItems,
+                      child: Text("Temp: Show owned items"),
+                    ),
+                  ],
                 ),
-                Text("10 CycleCoins"),
-                ElevatedButton(
-                  onPressed: appState.storeThemes.isNotEmpty
-                      ? () => _showThemeMenu(context, appState)
-                      : null, // Disable if no themes left
-                  style: ElevatedButton.styleFrom(
-                    elevation: 5,
-                    padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
-                  ),
-                  child: Text("Buy"),
-                ),
-                SizedBox(height: 20), // Adds space between the two sections
-                Text(
-                  "Rocket Boost",
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                ),
-                Text("100 CycleCoins"),
-                ElevatedButton(
-                  onPressed: () => _buyRocketBoost(context, appState),
-                  style: ElevatedButton.styleFrom(
-                    elevation: 5,
-                    padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
-                  ),
-                  child: Text("Buy"),
-                ),
-                SizedBox(height: 20), 
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    elevation: 5,
-                  ),
-                  onPressed: _getCycleCoins,
-                  child: Text("Temp: Display current CycleCoin count"),
-                ),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    elevation: 5,
-                  ),
-                  onPressed: _addCycleCoins,
-                  child: Text("Temp: Add 5 CycleCoins to account"),
-                ),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    elevation: 5,
-                  ),
-                  onPressed: _getOwnedItems,
-                  child: Text("Temp: Show owned items"),
-                ),
-              ],
+              ),
+            ],
+          ),
+          Positioned(
+            top: 10,
+            right: 10,
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              child: FutureBuilder<int>(
+                future: _getCycleCoins(context),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return Row(
+                      children: [
+                        Icon(Icons.monetization_on, color: Colors.amber),
+                        SizedBox(width: 5),
+                        Text(
+                          'Loading...',
+                          style: TextStyle(fontWeight: FontWeight.bold, color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black),
+                        ),
+                      ],
+                    );
+                  } else if (snapshot.hasError) {
+                    return Row(
+                      children: [
+                        Icon(Icons.error, color: Colors.red),
+                        SizedBox(width: 5),
+                        Text(
+                          'Error!',
+                          style: TextStyle(fontWeight: FontWeight.bold, color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black),
+                        ),
+                      ],
+                    );
+                  } else {
+                    return Row(
+                      children: [
+                        Icon(Icons.monetization_on, color: Colors.amber),
+                        SizedBox(width: 5),
+                        Text(
+                          '${snapshot.data} CycleCoins',
+                          style: TextStyle(fontWeight: FontWeight.bold, color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black),
+                        ),
+                      ],
+                    );
+                  }
+                },
+              ),
             ),
           ),
         ],

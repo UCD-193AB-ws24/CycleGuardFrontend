@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../main.dart';
 import 'package:cycle_guard_app/data/trip_history_provider.dart';
 import 'package:cycle_guard_app/data/user_stats_provider.dart';
+import 'package:draggable_scrollbar/draggable_scrollbar.dart';
 
 class HistoryPage extends StatefulWidget {
   @override
@@ -13,6 +14,8 @@ class HistoryPage extends StatefulWidget {
 class _HistoryPageState extends State<HistoryPage> {
   int _selectedFilterIndex = -1; 
   DateTimeRange? _selectedDateRange;
+
+  ScrollController _controller = ScrollController();
 
   @override
   void initState() {
@@ -116,7 +119,7 @@ Future<void> _pickDateRange(BuildContext context) async {
     }
 
     return Scaffold(
-      appBar: createAppBar(context, 'Trip History'),
+      appBar: createAppBar(context, 'Ride History'),
       body: Column(
         children: [
           Padding(
@@ -134,7 +137,7 @@ Future<void> _pickDateRange(BuildContext context) async {
                   children: [
                     Center(
                       child: Text(
-                        'All Time Trip Summary',
+                        'All Time Ride Summary',
                         style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: isDarkMode ? Theme.of(context).colorScheme.surfaceContainerLow : Colors.black),
                       ),
                     ),
@@ -188,7 +191,7 @@ Future<void> _pickDateRange(BuildContext context) async {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              'Trips:',
+                              'Rides:',
                               style: TextStyle(fontSize: 16, color: isDarkMode ? Theme.of(context).colorScheme.surfaceContainerLow : Theme.of(context).colorScheme.onPrimaryFixed),
                             ),
                             Text(
@@ -208,7 +211,7 @@ Future<void> _pickDateRange(BuildContext context) async {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Text(
-                'Filter days by:',
+                'Filter rides by:',
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               SizedBox(height: 8), 
@@ -230,7 +233,7 @@ Future<void> _pickDateRange(BuildContext context) async {
                 children: [
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                    child: Text('Time', style: TextStyle(fontSize: 16, color: isDarkMode ? Colors.grey[300] : Colors.black)),
+                    child: Text('Duration', style: TextStyle(fontSize: 16, color: isDarkMode ? Colors.grey[300] : Colors.black)),
                   ),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 12.0), 
@@ -288,117 +291,121 @@ Future<void> _pickDateRange(BuildContext context) async {
           ),
           SizedBox(height: 12),
           groupedTrips.isEmpty
-              ? Center(child: Text('No trips recorded for the selected range.', style: TextStyle(fontSize: 18, color: Colors.grey)))
-              : Expanded(
-                  child: ListView.builder(
-                    itemCount: groupedTrips.length,
-                    itemBuilder: (context, index) {
-                      final date = sortedDates[index];
-                      final timestamps = groupedTrips[date]!;
+            ? Center(child: Text('No trips recorded for the selected range.', style: TextStyle(fontSize: 18, color: Colors.grey)))
+            : Expanded(
+              child: DraggableScrollbar.arrows (
+                controller: _controller,
+                backgroundColor: isDarkMode ? Theme.of(context).colorScheme.surfaceContainerLow : Theme.of(context).colorScheme.onSecondaryFixedVariant,
+                child: ListView.builder(
+                  controller: _controller,
+                  itemCount: groupedTrips.length,
+                  itemBuilder: (context, index) {
+                    final date = sortedDates[index];
+                    final timestamps = groupedTrips[date]!;
 
-                      final sortedTimestamps = getSortedTimestamps(timestamps);
+                    final sortedTimestamps = getSortedTimestamps(timestamps);
 
-                      return Card(
-                        margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        elevation: 4,
-                        color: isDarkMode ? Theme.of(context).colorScheme.onSecondaryFixedVariant : Theme.of(context).colorScheme.surfaceContainerLow,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 6.0),
-                              child: ExpansionTile(
-                                shape: Border(),
-                                title: Row(
-                                  children: [
-                                    SizedBox(width: 8),
-                                    Text(
-                                      'Date: $date',
-                                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18,
-                                        color: isDarkMode ? Theme.of(context).colorScheme.surfaceContainerLow : Colors.black,),
-                                    ),
-                                    Spacer(),
-                                    Text(
-                                      '${sortedTimestamps.length} ride${sortedTimestamps.length > 1 ? 's' : ''}',
-                                      style: TextStyle(fontSize: 16, 
-                                        color: isDarkMode ? Theme.of(context).colorScheme.surfaceContainerLow : Theme.of(context).colorScheme.onPrimaryFixed),
-                                    ),
-                                  ],
-                                ),
-                                collapsedIconColor: isDarkMode ? Theme.of(context).colorScheme.surfaceContainerLow : Theme.of(context).colorScheme.onPrimaryFixed,  
-                                iconColor: isDarkMode ? Theme.of(context).colorScheme.surfaceContainerLow : Theme.of(context).colorScheme.onPrimaryFixed, 
+                    return Card(
+                      margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 4,
+                      color: isDarkMode ? Theme.of(context).colorScheme.onSecondaryFixedVariant : Theme.of(context).colorScheme.surfaceContainerLow,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 6.0),
+                            child: ExpansionTile(
+                              shape: Border(),
+                              title: Row(
                                 children: [
-                                  ...sortedTimestamps.map((timestamp) {
-                                    final trip = tripHistoryProvider.getTripByTimestamp(timestamp);
-                                    if (trip == null) {
-                                      return ListTile(
-                                        title: Text('Trip data not available.'),
-                                      );
-                                    }
-                                    final tripDate = DateTime.fromMillisecondsSinceEpoch(timestamp * 1000);
-                                    final formattedTime = DateFormat('h:mm a').format(tripDate);
-                                    return Card(
-                                      margin: EdgeInsets.symmetric(vertical: 4, horizontal: 16),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      elevation: 4,
-                                      color: isDarkMode ? Theme.of(context).colorScheme.secondary : Theme.of(context).colorScheme.onTertiary,
-                                      child: ListTile(
-                                        contentPadding: EdgeInsets.all(16),
-                                        title: Text(
-                                          // Theme.of(context).colorScheme.onPrimaryFixed
-                                          'Trip ${sortedTimestamps.indexOf(timestamp) + 1}',
-                                          style: TextStyle(fontSize: 16, color : isDarkMode ? Colors.grey[300] : Theme.of(context).colorScheme.onPrimaryFixed),
-                                        ),
-                                        subtitle: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Row(
-                                              children: [
-                                                Icon(Icons.access_time, color: Colors.green, size: 18),
-                                                SizedBox(width: 8),
-                                                Text('Time: $formattedTime', style: TextStyle(fontSize: 16, color : isDarkMode ? Colors.grey[300] : Theme.of(context).colorScheme.onPrimaryFixed)),
-                                              ],
-                                            ),
-                                            Row(
-                                              children: [
-                                                Icon(Icons.directions_bike, color: Colors.blueAccent, size: 18),
-                                                SizedBox(width: 8),
-                                                Text('${trip.distance} km', style: TextStyle(fontSize: 16, color : isDarkMode ? Colors.grey[300] : Theme.of(context).colorScheme.onPrimaryFixed)),
-                                              ],
-                                            ),
-                                            Row(
-                                              children: [
-                                                Icon(Icons.timer, color: Colors.orange, size: 18),
-                                                SizedBox(width: 8),
-                                                Text('${trip.time} min', style: TextStyle(fontSize: 16, color : isDarkMode ? Colors.grey[300] : Theme.of(context).colorScheme.onPrimaryFixed)),
-                                              ],
-                                            ),
-                                            Row(
-                                              children: [
-                                                Icon(Icons.local_fire_department, color: Colors.red, size: 18),
-                                                SizedBox(width: 8),
-                                                Text('${trip.calories} cal', style: TextStyle(fontSize: 16, color : isDarkMode ? Colors.grey[300] : Theme.of(context).colorScheme.onPrimaryFixed)),
-                                              ],
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    );
-                                  }).toList(),
+                                  SizedBox(width: 8),
+                                  Text(
+                                    '$date',
+                                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18,
+                                      color: isDarkMode ? Theme.of(context).colorScheme.surfaceContainerLow : Colors.black,),
+                                  ),
+                                  Spacer(),
+                                  Text(
+                                    '${sortedTimestamps.length} ride${sortedTimestamps.length > 1 ? 's' : ''}',
+                                    style: TextStyle(fontSize: 16, 
+                                      color: isDarkMode ? Theme.of(context).colorScheme.surfaceContainerLow : Theme.of(context).colorScheme.onPrimaryFixed),
+                                  ),
                                 ],
                               ),
+                              collapsedIconColor: isDarkMode ? Theme.of(context).colorScheme.surfaceContainerLow : Theme.of(context).colorScheme.onPrimaryFixed,  
+                              iconColor: isDarkMode ? Theme.of(context).colorScheme.surfaceContainerLow : Theme.of(context).colorScheme.onPrimaryFixed, 
+                              children: [
+                                ...sortedTimestamps.map((timestamp) {
+                                  final trip = tripHistoryProvider.getTripByTimestamp(timestamp);
+                                  if (trip == null) {
+                                    return ListTile(
+                                      title: Text('Trip data not available.'),
+                                    );
+                                  }
+                                  final tripDate = DateTime.fromMillisecondsSinceEpoch(timestamp * 1000);
+                                  final formattedTime = DateFormat('h:mm a').format(tripDate);
+                                  return Card(
+                                    margin: EdgeInsets.symmetric(vertical: 4, horizontal: 16),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    elevation: 4,
+                                    color: isDarkMode ? Theme.of(context).colorScheme.secondary : Theme.of(context).colorScheme.onTertiary,
+                                    child: ListTile(
+                                      contentPadding: EdgeInsets.all(16),
+                                      title: Text(
+                                        'Ride ${sortedTimestamps.indexOf(timestamp) + 1}',
+                                        style: TextStyle(fontSize: 16, color : isDarkMode ? Colors.grey[300] : Theme.of(context).colorScheme.onPrimaryFixed),
+                                      ),
+                                      subtitle: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Row(
+                                            children: [
+                                              Icon(Icons.access_time, color: Colors.green, size: 18),
+                                              SizedBox(width: 8),
+                                              Text('Time: $formattedTime', style: TextStyle(fontSize: 16, color : isDarkMode ? Colors.grey[300] : Theme.of(context).colorScheme.onPrimaryFixed)),
+                                            ],
+                                          ),
+                                          Row(
+                                            children: [
+                                              Icon(Icons.directions_bike, color: Colors.blueAccent, size: 18),
+                                              SizedBox(width: 8),
+                                              Text('${trip.distance} km', style: TextStyle(fontSize: 16, color : isDarkMode ? Colors.grey[300] : Theme.of(context).colorScheme.onPrimaryFixed)),
+                                            ],
+                                          ),
+                                          Row(
+                                            children: [
+                                              Icon(Icons.timer, color: Colors.orange, size: 18),
+                                              SizedBox(width: 8),
+                                              Text('${trip.time} min', style: TextStyle(fontSize: 16, color : isDarkMode ? Colors.grey[300] : Theme.of(context).colorScheme.onPrimaryFixed)),
+                                            ],
+                                          ),
+                                          Row(
+                                            children: [
+                                              Icon(Icons.local_fire_department, color: Colors.red, size: 18),
+                                              SizedBox(width: 8),
+                                              Text('${trip.calories} cal', style: TextStyle(fontSize: 16, color : isDarkMode ? Colors.grey[300] : Theme.of(context).colorScheme.onPrimaryFixed)),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                }).toList(),
+                              ],
                             ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
                 ),
+              ),
+            ),
         ],
       ),
     );

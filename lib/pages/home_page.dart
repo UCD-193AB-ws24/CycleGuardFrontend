@@ -181,12 +181,13 @@ class _HomePageState extends State<HomePage> {
                       },
                     ),
                   ),
+                  borderData: FlBorderData(show: false),
                 ),
               ),
             ),
-            SizedBox(height: 16),
-            _buildStatistic('Current Streak', '${userStats.rideStreak} days'),
-            SizedBox(height: 4),
+            SizedBox(height: 8),
+            buildStreakDisplay(context, userStats.rideStreak),
+            SizedBox(height: 8),
               Stack(
                 alignment: Alignment.center,
                 children: [
@@ -409,17 +410,29 @@ class _HomePageState extends State<HomePage> {
     return result;
   }
 
-  Widget _buildStatistic(String title, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(title, style: TextStyle(fontSize: 16)),
-          Text(value, style: TextStyle(fontSize: 16)),
-        ],
-      ),
-    );
+  Widget buildStreakDisplay(BuildContext context, int rideStreak) {
+    if (rideStreak > 1) {
+      return Center(
+        child: Text(
+          '🔥 $rideStreak day streak',
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+      );
+    } else {
+      return Center(
+        child: Text(
+          'Get out and ride today — start a streak!',
+          style: TextStyle(
+            fontSize: 16,
+            fontStyle: FontStyle.italic,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? Colors.white70
+                : Colors.black87,
+          ),
+          textAlign: TextAlign.center,
+        ),
+      );
+    }
   }
 
   Widget _buildStatCard(IconData icon, String label, String value, Color color) {

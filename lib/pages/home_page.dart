@@ -30,6 +30,7 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     final userStats = Provider.of<UserStatsProvider>(context);
     final weekHistory = Provider.of<WeekHistoryProvider>(context);
+    final colorScheme = Theme.of(context).colorScheme;
 
     final todayUtcTimestamp = DateTime.utc(
         DateTime.now().year,
@@ -61,7 +62,7 @@ class _HomePageState extends State<HomePage> {
     bool isDailyChallengeComplete = rotatedDistances[6] >= 5;
 
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    final selectedColor = Theme.of(context).colorScheme.primary;
+    final selectedColor = colorScheme.primary;
     return Scaffold(
       appBar: AppBar(
         title: Column(
@@ -168,8 +169,8 @@ class _HomePageState extends State<HomePage> {
                   barTouchData: BarTouchData(
                     touchTooltipData: BarTouchTooltipData(
                       getTooltipColor: (group) => isDarkMode
-                        ? Theme.of(context).colorScheme.secondary
-                        : Theme.of(context).colorScheme.secondaryFixed,
+                        ? colorScheme.secondary
+                        : colorScheme.secondaryFixed,
                       getTooltipItem: (group, groupIndex, rod, rodIndex) {
                         return BarTooltipItem(
                           '${rod.toY.toStringAsFixed(1)}', 
@@ -185,9 +186,9 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
             ),
-            SizedBox(height: 8),
+            SizedBox(height: 16),
             buildStreakDisplay(context, userStats.rideStreak),
-            SizedBox(height: 8),
+            SizedBox(height: 16),
               Stack(
                 alignment: Alignment.center,
                 children: [
@@ -224,7 +225,7 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ],
               ),
-            SizedBox(height: 8),
+            SizedBox(height: 16),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
@@ -251,7 +252,7 @@ class _HomePageState extends State<HomePage> {
                 ),
               ],
             ),
-            SizedBox(height: 16),
+            SizedBox(height: 32),
             Center(
               child: Text(
                 'Week Averages',
@@ -274,9 +275,9 @@ class _HomePageState extends State<HomePage> {
                 ),
               ],
             ),
-            SizedBox(height: 8),
+            SizedBox(height: 32),
             _buildDailyChallenge(context, isDailyChallengeComplete),
-            SizedBox(height: 8),
+            SizedBox(height: 32),
             Align(
               alignment: Alignment.bottomCenter,
               child: Padding(
@@ -287,11 +288,11 @@ class _HomePageState extends State<HomePage> {
                     style: ElevatedButton.styleFrom(
                       elevation: 6,
                       backgroundColor: isDarkMode
-                          ? Theme.of(context).colorScheme.secondary
-                          : Theme.of(context).colorScheme.onInverseSurface,
+                          ? colorScheme.secondary
+                          : colorScheme.onInverseSurface,
                       foregroundColor: isDarkMode
                           ? Colors.white
-                          : Theme.of(context).colorScheme.primary,
+                          : colorScheme.primary,
                       padding: EdgeInsets.symmetric(vertical: 8.0),
                       textStyle: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                     ),
@@ -308,7 +309,7 @@ class _HomePageState extends State<HomePage> {
                         SizedBox(width: 16),
                         Icon(Icons.calendar_month_outlined, color: isDarkMode
                           ? Colors.white
-                          : Theme.of(context).colorScheme.primary
+                          : colorScheme.primary
                         ),
                       ],
                     ),
@@ -316,7 +317,7 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
             ),
-            SizedBox(height: 8),
+            SizedBox(height: 16),
             Center(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -345,11 +346,11 @@ class _HomePageState extends State<HomePage> {
                     style: ElevatedButton.styleFrom(
                       elevation: 6,
                       backgroundColor: isDarkMode
-                          ? Theme.of(context).colorScheme.secondary
-                          : Theme.of(context).colorScheme.onInverseSurface,
+                          ? colorScheme.secondary
+                          : colorScheme.onInverseSurface,
                       foregroundColor: isDarkMode
                           ? Colors.white
-                          : Theme.of(context).colorScheme.primary,
+                          : colorScheme.primary,
                       padding: EdgeInsets.symmetric(vertical: 8.0),
                       textStyle: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                     ),
@@ -366,7 +367,7 @@ class _HomePageState extends State<HomePage> {
                         SizedBox(width: 16),
                         Icon(Icons.emoji_events, color: isDarkMode
                           ? Colors.white
-                          : Theme.of(context).colorScheme.primary),
+                          : colorScheme.primary),
                       ],
                     ),
                   ),
@@ -565,10 +566,11 @@ class _HomePageState extends State<HomePage> {
 
   Widget _buildAchievement(String title, int currentValue, int goalValue, IconData icon, BuildContext context, bool isDarkMode) {
     double progressPercentage = (currentValue / goalValue).clamp(0.0, 1.0);
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Row(
       children: [
-        Icon(icon, color: isDarkMode ? Colors.white : Theme.of(context).colorScheme.primary, size: 40), 
+        Icon(icon, color: isDarkMode ? Colors.white : colorScheme.primary, size: 40), 
         SizedBox(width: 16),
         Expanded(
           child: Column(
@@ -576,12 +578,12 @@ class _HomePageState extends State<HomePage> {
             children: [
               Text(
                 title,
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: isDarkMode ? Colors.white : Theme.of(context).colorScheme.primary),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: isDarkMode ? Colors.white : colorScheme.primary),
               ),
               SizedBox(height: 8),
               LinearProgressIndicator(
                 value: progressPercentage,
-                color: isDarkMode ? Theme.of(context).colorScheme.onSecondaryFixedVariant : Theme.of(context).colorScheme.primary,
+                color: isDarkMode ? colorScheme.onSecondaryFixedVariant : colorScheme.primary,
                 minHeight: 8,
                 borderRadius: BorderRadius.circular(8),
               ),

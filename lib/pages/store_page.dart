@@ -173,9 +173,10 @@ class StorePage extends StatelessWidget {
     required IconData icon,
     bool isPlaceholder = false,
   }) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Column(
       children: [
-        Icon(icon, size: 50, color: Theme.of(context).colorScheme.primary),
+        Icon(icon, size: 50, color: colorScheme.primary),
         SizedBox(height: 10),
         Text(title, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         Text(cost),
@@ -183,11 +184,11 @@ class StorePage extends StatelessWidget {
           onPressed: isPlaceholder ? null : onBuy,
           style: ElevatedButton.styleFrom(
             backgroundColor: Theme.of(context).brightness == Brightness.dark
-              ? Theme.of(context).colorScheme.secondary
-              : Theme.of(context).colorScheme.onInverseSurface,
+              ? colorScheme.secondary
+              : colorScheme.onInverseSurface,
             foregroundColor: Theme.of(context).brightness == Brightness.dark
               ? Colors.white
-              : Theme.of(context).colorScheme.primary,
+              : colorScheme.primary,
             elevation: 5,
             padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
           ),

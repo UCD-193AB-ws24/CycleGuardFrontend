@@ -1,4 +1,16 @@
+import 'package:cycle_guard_app/data/achievements_accessor.dart';
+import 'package:cycle_guard_app/data/coordinates_accessor.dart';
+import 'package:cycle_guard_app/data/friend_requests_accessor.dart';
+import 'package:cycle_guard_app/data/friends_list_accessor.dart';
+import 'package:cycle_guard_app/data/global_leaderboards_accessor.dart';
 import 'package:cycle_guard_app/data/health_info_accessor.dart';
+import 'package:cycle_guard_app/data/single_trip_history.dart';
+import 'package:cycle_guard_app/data/submit_ride_service.dart';
+import 'package:cycle_guard_app/data/trip_history_accessor.dart';
+import 'package:cycle_guard_app/data/user_profile_accessor.dart';
+import 'package:cycle_guard_app/data/user_settings_accessor.dart';
+import 'package:cycle_guard_app/data/user_stats_accessor.dart';
+import 'package:cycle_guard_app/data/week_history_accessor.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -8,6 +20,9 @@ class TestingPage extends StatelessWidget {
   final heightController = TextEditingController();
   final weightController = TextEditingController();
   final ageController = TextEditingController();
+  final distanceController = TextEditingController();
+  final caloriesController = TextEditingController();
+  final timeController = TextEditingController();
 
   Widget _numberField(TextEditingController controller, String hint) => TextField(
     decoration: InputDecoration(
@@ -42,6 +57,16 @@ class TestingPage extends StatelessWidget {
     heightController.text = "$height";
     weightController.text = "$weight";
     ageController.text = "$age";
+  }
+
+  Future<void> _getTripHistory() async {
+    final tripHistory = await TripHistoryAccessor.getTripHistory();
+    print(tripHistory);
+  }
+
+  Future<void> _getCoordinates(int timestamp) async {
+    final coordinates = await CoordinatesAccessor.getCoordinates(timestamp);
+    print(coordinates);
   }
 
   void _showEnterHealthInfoMenu(BuildContext context, MyAppState appState) async {
@@ -85,6 +110,147 @@ class TestingPage extends StatelessWidget {
       },
     );
   }
+
+  Future<int> _addRideInfo(double distance, double calories, double time) async {
+    final timestamp = await SubmitRideService.addRideRaw(distance, calories, time, [1, 2.5, 4, 5.5], [2, 3.5, 5, 6.5]);
+    print("Successfully added ride info! Timestamp: $timestamp");
+    return timestamp;
+  }
+
+  Future<void> _getAchievementInfo() async {
+    final achievementInfo = await AchievementInfoAccessor.getAchievementInfo();
+    print(achievementInfo.getCompletedAchievements());
+    print(achievementInfo);
+    print("Successfully retrieved achievement info!");
+  }
+
+  Future<void> _getUserStats() async {
+    final userStats = await UserStatsAccessor.getUserStats();
+    print(userStats);
+    print("Successfully retrieved user stats!");
+  }
+
+  Future<void> _getAllUsers() async {
+    final users = await UserProfileAccessor.fetchAllUsernames();
+    print(users);
+    print("Successfully retrieved user list!");
+  }
+
+  Future<void> _testUserProfile() async {
+    // print("Previous profile: ${await UserProfileAccessor.getOwnProfile()}");
+    await UserProfileAccessor.updateOwnProfile(UserProfile(username: "", displayName: "Jason Feng", bio: "God of Java", isPublic: true));
+    print(await UserProfileAccessor.getOwnProfile());
+    print(await UserProfileAccessor.getPublicProfile("javagod123"));
+  }
+
+  Future<void> _testUserSettings() async {
+    print("Previous settings: ${await UserSettingsAccessor.getUserSettings()}");
+    await UserSettingsAccessor.updateUserSettings(UserSettings(darkModeEnabled: true, currentTheme: "blue"));
+    print("New settings: ${await UserSettingsAccessor.getUserSettings()}");
+  }
+
+  Future<void> _testDistanceTimeLeaderboards() async {
+    print("Note: leaderboards only update when a new ride is uploaded. If your account isn't on the leaderboard, try to submit a new ride");
+    print("Distance: ${await GlobalLeaderboardsAccessor.getDistanceLeaderboards()}");
+    print("Time: ${await GlobalLeaderboardsAccessor.getTimeLeaderboards()}");
+  }
+
+  Future<void> _testFriendsList() async {
+    print("Note: other user must login to send friend request");
+    print("Current friend list: ${await FriendsListAccessor.getFriendsList()}");
+    await FriendRequestsListAccessor.sendFriendRequest("javagod123");
+    print("Current friend requests: ${await FriendRequestsListAccessor.getFriendRequestList()}");
+
+
+    // FriendsListAccessor.removeFriend("javagod123")
+    // FriendRequestsListAccessor.acceptFriendRequest("javagod123");
+    // FriendRequestsListAccessor.rejectFriendRequest("javagod123");
+    // FriendRequestsListAccessor.cancelFriendRequest("javagod123");
+  }
+
+  Future<void> _testAllUsers() async {
+    print("Testing user/all");
+    final res = await UserProfileAccessor.getAllUsers();
+    print(res);
+  }
+
+  Future<void> _getWeekHistory() async {
+    final weekHistory = await WeekHistoryAccessor.getWeekHistory();
+
+    // Extract individual days
+    final Map<int, SingleTripInfo> dayHistoryMap = weekHistory.dayHistoryMap;
+
+    // Variables to hold sum of values
+    double totalDistance = 0.0, totalCalories = 0.0, totalTime = 0.0;
+    int numberOfDays = dayHistoryMap.length;
+    List<double> dayDistances = [];
+    List<int> days = [];
+      
+    // Iterate through each day's history
+    dayHistoryMap.forEach((day, history) {
+      DateTime dateTime = DateTime.fromMillisecondsSinceEpoch(day * 1000);
+      print("Day: $day");
+      print("Day: ${["M", "T", "W", "R", "F", "Sa", "Su"][dateTime.weekday]}");
+      print("Distance: ${history.distance}");
+      print("Calories: ${history.calories}");
+      print("Time: ${history.time}\n");
+
+      totalDistance += history.distance;
+      totalCalories += history.calories;
+      totalTime += history.time;
+      dayDistances.add(history.distance);
+      days.add(day);
+    });
+
+    // Compute averages
+    double avgDistance = numberOfDays > 0 ? totalDistance / numberOfDays : 0.0;
+    double avgCalories = numberOfDays > 0 ? totalCalories / numberOfDays : 0.0;
+    double avgTime = numberOfDays > 0 ? totalTime / numberOfDays : 0.0;
+
+    print("Average Distance: $avgDistance");
+    print("Average Calories: $avgCalories");
+    print("Average Time: $avgTime");
+    print("DayDistances : $dayDistances");
+    print("days: $days");
+  }
+
+  void _showRideInputPage(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text("Enter Ride Information"),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _numberField(distanceController, "Distance (miles)"),
+              const SizedBox(height: 12),
+              _numberField(caloriesController, "Calories burned"),
+              const SizedBox(height: 12),
+              _numberField(timeController, "Time (minutes)"),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: () {
+                  final distance = double.tryParse(distanceController.text) ?? 0.0;
+                  final calories = double.tryParse(caloriesController.text) ?? 0.0;
+                  final time = double.tryParse(timeController.text) ?? 0.0;
+
+                  _addRideInfo(distance, calories, time);
+                  Navigator.pop(context);
+                },
+                child: Text("Submit Ride Info"),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text("Cancel"),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final appState = Provider.of<MyAppState>(context);
@@ -104,6 +270,102 @@ class TestingPage extends StatelessWidget {
                     padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
                   ),
                   child: Text("Set fitness info"),
+                ),
+                ElevatedButton(
+                  onPressed: () => _showRideInputPage(context),
+                  style: ElevatedButton.styleFrom(
+                    elevation: 5,
+                    padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
+                  ),
+                  child: Text("Add Ride Info"),
+                ),
+                ElevatedButton(
+                  onPressed: () => _getAchievementInfo(),
+                  style: ElevatedButton.styleFrom(
+                    elevation: 5,
+                    padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
+                  ),
+                  child: Text("Get Achievement Info"),
+                ),
+                ElevatedButton(
+                  onPressed: () => _getWeekHistory(),
+                  style: ElevatedButton.styleFrom(
+                    elevation: 5,
+                    padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
+                  ),
+                  child: Text("Get Week History"),
+                ),
+                ElevatedButton(
+                  onPressed: () => _getAllUsers(),
+                  style: ElevatedButton.styleFrom(
+                    elevation: 5,
+                    padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
+                  ),
+                  child: Text("Get All Users"),
+                ),
+                ElevatedButton(
+                  onPressed: () => _getUserStats(),
+                  style: ElevatedButton.styleFrom(
+                    elevation: 5,
+                    padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
+                  ),
+                  child: Text("Get User Stats"),
+                ),
+                ElevatedButton(
+                  onPressed: () => _getTripHistory(),
+                  style: ElevatedButton.styleFrom(
+                    elevation: 5,
+                    padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
+                  ),
+                  child: Text("Get All Trip History"),
+                ),
+                ElevatedButton(
+                  onPressed: () => _getCoordinates(1741060234),
+                  style: ElevatedButton.styleFrom(
+                    elevation: 5,
+                    padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
+                  ),
+                  child: Text("Get Timestamp (edit value in code)"),
+                ),
+                ElevatedButton(
+                  onPressed: () => _testUserProfile(),
+                  style: ElevatedButton.styleFrom(
+                    elevation: 5,
+                    padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
+                  ),
+                  child: Text("User Profile tests"),
+                ),
+                ElevatedButton(
+                  onPressed: () => _testUserSettings(),
+                  style: ElevatedButton.styleFrom(
+                    elevation: 5,
+                    padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
+                  ),
+                  child: Text("User Settings tests"),
+                ),
+                ElevatedButton(
+                  onPressed: () => _testDistanceTimeLeaderboards(),
+                  style: ElevatedButton.styleFrom(
+                    elevation: 5,
+                    padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
+                  ),
+                  child: Text("Leaderboards tests"),
+                ),
+                ElevatedButton(
+                  onPressed: () => _testFriendsList(),
+                  style: ElevatedButton.styleFrom(
+                    elevation: 5,
+                    padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
+                  ),
+                  child: Text("Friend List tests"),
+                ),
+                ElevatedButton(
+                  onPressed: () => _testAllUsers(),
+                  style: ElevatedButton.styleFrom(
+                    elevation: 5,
+                    padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
+                  ),
+                  child: Text("user/all"),
                 ),
               ],
             ),

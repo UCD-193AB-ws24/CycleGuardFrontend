@@ -1,3 +1,9 @@
+# Maps API token and key, for testing
+.env
+android/gradle.properties
+pubspec.lock
+
+
 # Miscellaneous
 *.class
 *.log
@@ -46,3 +52,24 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+/android/gradle.properties
+ios/Runner/Base.lproj/Main.storyboard
+ios/Flutter/Debug.xcconfig
+ios/Flutter/Release.xcconfig
+ios/Flutter/Debug.xcconfig
+ios/Runner/LocationManager.swift
+ios/Flutter/Debug.xcconfig
+ios/Flutter/Debug.xcconfig
+ios/Flutter/Debug.xcconfig
+ios/Flutter/Debug.xcconfig
+ios/Flutter/Release.xcconfig
+ios/Runner/Base.lproj/Main.storyboard
+macos/Flutter/Flutter-Debug.xcconfig
+macos/Flutter/Flutter-Release.xcconfig
+macos/Flutter/Flutter-Release.xcconfig
+macos/Runner.xcodeproj/xcshareddata/xcschemes/Runner.xcscheme
+macos/Runner.xcodeproj/project.pbxproj
+macos/Runner.xcworkspace/contents.xcworkspacedata
+.vscode/launch.json
+ios/Runner.xcodeproj/project.pbxproj
+ios/Runner.xcodeproj/project.pbxproj

@@ -1,10 +1,19 @@
 //import 'package:english_words/english_words.dart';
+import 'package:curved_navigation_bar/curved_navigation_bar.dart';
 import 'package:cycle_guard_app/data/purchase_info_accessor.dart';
 import 'package:cycle_guard_app/pages/feature_testing.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:provider/provider.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
+import 'package:cycle_guard_app/data/user_stats_provider.dart';
+import 'package:cycle_guard_app/data/achievements_progress_provider.dart';
+import 'package:cycle_guard_app/data/week_history_provider.dart';
+import 'package:cycle_guard_app/data/trip_history_provider.dart';
+import 'package:cycle_guard_app/data/user_settings_accessor.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'constants.dart';
 
 // import pages 
 import 'pages/start_page.dart';
@@ -15,19 +24,59 @@ import 'pages/history_page.dart';
 import 'pages/achievements_page.dart';
 import 'pages/routes_page.dart';
 import 'pages/store_page.dart';
+import 'pages/leader_page.dart';
 import 'pages/settings_page.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 
-void main() {
-  runApp(MyApp());
+//const MethodChannel platform = MethodChannel('com.cycleguard.channel'); // Must match iOS
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await dotenv.load(fileName: ".env");
+
+  String? apiKey = dotenv.env['API_KEY'];
+
+  if (apiKey == null || apiKey.isEmpty) {
+    throw Exception("Google Maps API Key is missing in .env file.");
+  }
+
+  print("Google Maps API Key: $apiKey");
+  try {
+    // Send API Key to iOS
+    //await platform.invokeMethod('setApiKey', {"apiKey": apiKey});
+    // print("Google Maps API Key sent to iOS successfully");
+
+    // Request Location Permission from iOS
+    // await platform.invokeMethod('requestLocationPermission');
+    print("Location permission requested");
+  } catch (e) {
+    print("Error: $e");
+  }
+
+  SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]).then((_) {
+    runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (context) => UserStatsProvider()),
+        ChangeNotifierProvider(create: (context) => AchievementsProgressProvider()),
+        ChangeNotifierProvider(create: (context) => WeekHistoryProvider()),
+        ChangeNotifierProvider(create: (context) => TripHistoryProvider()), 
+      ],
+      child: MyApp(),
+    ),
+  );
+  });
+
 }
-
-
 
 class OnBoardStart extends StatefulWidget{
   const OnBoardStart({Key?key}) : super(key:key);
   @override
   OnBoardStartState createState() => OnBoardStartState();
-
 }
 
 class OnBoardStartState extends State<OnBoardStart>{
@@ -44,13 +93,6 @@ class OnBoardStartState extends State<OnBoardStart>{
               LoginPage()
             ],
           ),
-          Container(
-             alignment: const Alignment(0, .75),
-              child: SmoothPageIndicator(
-                  controller:pageController,
-                  count:2
-              ),
-          )
         ],
       )
     );
@@ -64,8 +106,8 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (context) => MyAppState(),
-      child: Consumer<MyAppState>(
-        builder: (context, appState, child) {
+      child: Consumer5<MyAppState, UserStatsProvider, AchievementsProgressProvider, WeekHistoryProvider, TripHistoryProvider>(
+        builder: (context, appState, userStats, achievementsProgress, weekHistory, tripHistory, child) {
           return MaterialApp(
             title: 'Cycle Guard App',
             debugShowCheckedModeBanner: false,
@@ -76,10 +118,9 @@ class MyApp extends StatelessWidget {
             ),
             darkTheme: ThemeData.dark().copyWith(
               brightness: Brightness.dark,
-              colorScheme: ColorScheme.fromSeed(seedColor: appState.selectedColor)
+              colorScheme: ColorScheme.fromSeed(seedColor: appState.selectedColor),
             ),
             home: OnBoardStart(),
-
           );
         },
       ),
@@ -88,54 +129,162 @@ class MyApp extends StatelessWidget {
 }
 
 class MyAppState extends ChangeNotifier {
-  Color selectedColor = Colors.indigo;
+  Color selectedColor = Colors.orange;
   bool isDarkMode = false;
 
-  final List<Map<String, dynamic>> availableThemes = [
-    {'name': 'Indigo', 'color': Colors.indigo},
-    {'name': 'Red', 'color': Colors.red},
-    {'name': 'Green', 'color': Colors.green},
-    {'name': 'Blue', 'color': Colors.blue},
-    {'name': 'Purple', 'color': Colors.purple},
-    {'name': 'Orange', 'color': Colors.orange},
-  ];
+  final Map<String, Color> availableThemes = {
+    'Indigo': Colors.indigo,
+    'Red': Colors.red,
+    'Green': Colors.green,
+    'Blue': Colors.blue,
+    'Purple': Colors.purple,
+    'Orange': Colors.orange,
+  };
 
-  final List<Map<String, dynamic>> storeThemes = [
-    {'name': 'Teal', 'color': Colors.teal},
-    {'name': 'Lime', 'color': Colors.lime},
-    {'name': 'Pink', 'color': Colors.pink},
-  ];
+  final Map<String, Color> storeThemes = {
+    'Teal': Colors.teal,
+    'Lime': Colors.lime,
+    'Pink': Colors.pink,
+  };
 
-  void updateThemeColor(Color newColor) {
-    selectedColor = newColor;
+  final Map<String, Color> ownedThemes = {};
+
+  Future<void> fetchOwnedThemes() async {
+    final ownedThemeNames = await PurchaseInfo.getOwnedItems();
+
+    for (var themeName in ownedThemeNames) {
+      if (storeThemes.containsKey(themeName)) {
+        ownedThemes[themeName] = storeThemes[themeName]!; 
+      }
+    }
+
     notifyListeners(); 
   }
 
-  void toggleDarkMode(bool isEnabled) {
+  void toggleDarkMode(bool isEnabled) async {
     isDarkMode = isEnabled;
-    notifyListeners();
+    String themeName = _getThemeNameFromColor(selectedColor);
+    
+    UserSettings updatedSettings = UserSettings(
+      darkModeEnabled: isDarkMode,
+      currentTheme: themeName,
+    );
+    
+
+    try {
+      await UserSettingsAccessor.updateUserSettings(updatedSettings);
+      print("updated user settings: ${await UserSettingsAccessor.getUserSettings()}");
+      notifyListeners();
+    } catch (e) {
+      print("Error updating user settings: $e");
+    }
   }
 
-  void purchaseTheme(Map<String, dynamic> theme) async {
-    // availableThemes.add(theme);
-    // storeThemes.removeWhere((item) => item['color'] == theme['color']);
-
-    print("Purchasing theme: $theme");
-    final themeName = theme["name"];
-
-    final purchaseResponse = await PurchaseInfo.buyItem(themeName);
-
-    Fluttertoast.showToast(
-        msg: "Server response: $purchaseResponse",
-        toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.CENTER,
-        timeInSecForIosWeb: 5,
-        backgroundColor: Colors.blueAccent,
-        textColor: Colors.white,
-        fontSize: 16.0
+    void updateThemeColor(Color newColor) async {
+    selectedColor = newColor;
+    String themeName = _getThemeNameFromColor(selectedColor);
+    UserSettings updatedSettings = UserSettings(
+      darkModeEnabled: isDarkMode,
+      currentTheme: themeName,
     );
+    try {
+      await UserSettingsAccessor.updateUserSettings(updatedSettings);
+      print("updated user settings: ${await UserSettingsAccessor.getUserSettings()}");
+      notifyListeners();
+    } catch (e) {
+      print("Error updating user settings: $e");
+    }
+  }
 
-    notifyListeners();
+  String _getThemeNameFromColor(Color color) {
+    for (String themeName in availableThemes.keys) {
+      if (availableThemes[themeName] == color) {
+        return themeName;
+      }
+    }
+
+    for (String themeName in storeThemes.keys) {
+      if (storeThemes[themeName] == color) {
+        return themeName;
+      }
+    }
+
+    return 'Orange';
+  }
+
+  Future<void> loadUserSettings() async {
+    try {
+      UserSettings settings = await UserSettingsAccessor.getUserSettings();
+      print("Retrieved Settings: $settings");
+
+      selectedColor = _getColorFromTheme(settings.currentTheme);
+      isDarkMode = settings.darkModeEnabled;
+
+      notifyListeners();
+    } catch (e, stackTrace) {
+      print("Error loading user settings: $e");
+      print(stackTrace);
+    }
+  }
+
+  Color _getColorFromTheme(String theme) {
+    return availableThemes[theme] ?? storeThemes[theme] ?? Colors.orange;
+  }
+
+  Future<bool> purchaseTheme(String themeName) async {
+    final coins = await CycleCoinInfo.getCycleCoins();
+    if (coins < 10) {
+      Fluttertoast.showToast(
+        msg: "Not enough CycleCoins!",
+        backgroundColor: Colors.red,
+      );
+      return false; // Return false if not enough coins
+    }
+
+    final response = await PurchaseInfo.buyItem(themeName);
+    switch (response) {
+      case BuyResponse.success:
+        final color = storeThemes.remove(themeName);
+        if (color != null) availableThemes[themeName] = color;
+        Fluttertoast.showToast(msg: "Purchase successful!");
+        notifyListeners();
+        return true; // Return true if purchase is successful
+      case BuyResponse.notEnoughCoins:
+        Fluttertoast.showToast(msg: "Not enough CycleCoins!");
+        return false; // Return false if not enough coins
+      case BuyResponse.alreadyOwned:
+        Fluttertoast.showToast(msg: "You already own this theme!");
+        return false; // Return false if already owned
+      default:
+        Fluttertoast.showToast(msg: "Purchase failed. Try again later.");
+        return false; // Return false for any other failure
+    }
+  }
+
+  Future<bool> purchaseRocketBoost() async {
+    final coins = await CycleCoinInfo.getCycleCoins();
+    if (coins < 100) {
+      Fluttertoast.showToast(
+        msg: "Not enough CycleCoins!",
+        backgroundColor: Colors.red,
+      );
+      return false; // Return false if not enough coins
+    }
+
+    final response = await PurchaseInfo.buyItem("Rocket Boost");
+    switch (response) {
+      case BuyResponse.success:
+        await CycleCoinInfo.addCycleCoins(-100);
+        Fluttertoast.showToast(msg: "Rocket Boost purchased!");
+        notifyListeners();
+        return true; // Return true if purchase is successful
+      case BuyResponse.notEnoughCoins:
+        Fluttertoast.showToast(msg: "Not enough CycleCoins!");
+        return false; // Return false if not enough coins
+      default:
+        Fluttertoast.showToast(msg: "Purchase failed. Try again later.");
+        return false; // Return false for any other failure
+    }
   }
 }
 
@@ -145,105 +294,63 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  var selectedIndex = 0;
+  var selectedIndex = 1;
 
-  Color? getIconColor(BuildContext context) {
+  Color getNavBarColor(BuildContext context) {
     return Theme.of(context).brightness == Brightness.dark
-        ? Colors.white70 
-        : Colors.black; 
+        ? Theme.of(context).colorScheme.onSecondaryFixedVariant
+        : Theme.of(context).colorScheme.primary; 
   }
 
-  Color? getNavRailBackgroundColor(BuildContext context) {
+  Color getNavBarBackgroundColor(BuildContext context) {
     return Theme.of(context).brightness == Brightness.dark
-        ? Theme.of(context).colorScheme.secondary
-        : Theme.of(context).colorScheme.secondaryFixedDim; 
+        ? Colors.black12
+        : Colors.white; 
   }
 
-  @override
+@override
   Widget build(BuildContext context) {
-    Widget page;
-    switch (selectedIndex) {
-      case 0:
-        page = HomePage();
-      case 1:
-        page = SocialPage();
-      case 2:
-        page = HistoryPage();
-      case 3:
-        page = AchievementsPage();
-      case 4:
-        page = RoutesPage();
-      case 5:
-        page = StorePage();
-      case 6:
-        page = SettingsPage();
-      case 7:
-        page = TestingPage();
-      default:
-        throw UnimplementedError('no widget for $selectedIndex');
-    }
-
     return LayoutBuilder(
       builder: (context, constraints) {
         return Scaffold(
-          body: Row(
-            children: [
-              // if (selectedIndex != 0) //comment out for navigation menu access
-                SizedBox(
-                  height: double.infinity,
-                  child: NavigationRail(
-                    backgroundColor: getNavRailBackgroundColor(context),
-                    extended: constraints.maxWidth >= 600,
-                    destinations: [
-                      NavigationRailDestination(
-                        icon: Icon(Icons.home, color: getIconColor(context),),
-                        label: Text('Home'),
-                      ),
-                      NavigationRailDestination(
-                        icon: Icon(Icons.person_outline, color: getIconColor(context),),
-                        label: Text('Social'),
-                      ),
-                      NavigationRailDestination(
-                        icon: Icon(Icons.calendar_month_outlined, color: getIconColor(context),),
-                        label: Text('History'),
-                      ),
-                      NavigationRailDestination(
-                        icon: Icon(Icons.emoji_events_outlined, color: getIconColor(context),),
-                        label: Text('Achievements'),
-                      ),
-                      NavigationRailDestination(
-                        icon: Icon(Icons.pedal_bike, color: getIconColor(context),),
-                        label: Text('Routes'),
-                      ),
-                      NavigationRailDestination(
-                        icon: Icon(Icons.monetization_on_outlined, color: getIconColor(context),),
-                        label: Text('Store'),
-                      ),
-                      NavigationRailDestination(
-                        icon: Icon(Icons.settings_outlined, color: getIconColor(context),),
-                        label: Text('Settings'),
-                      ),
-                      NavigationRailDestination(
-                        icon: Icon(Icons.perm_device_info_rounded, color: getIconColor(context),),
-                        label: Text('Feature Testing'),
-                      ),
-                    ],
-                    selectedIndex: selectedIndex,
-                    onDestinationSelected: (value) {
-                      setState(() {
-                        selectedIndex = value;
-                      });
-                    },
-                  ),
-                ),
-              Expanded(
-                child: page,
-              ),
-            ],
+          body: _getSelectedPage(selectedIndex),
+          bottomNavigationBar: CurvedNavigationBar(
+            backgroundColor: getNavBarBackgroundColor(context),
+            color: getNavBarColor(context),
+            animationDuration: Duration(milliseconds: 270),
+            index: selectedIndex,
+            onTap: (int index) {
+              setState(() {
+                selectedIndex = index;
+              });
+            },
+            items: [
+              Icon(Icons.pedal_bike, color: Theme.of(context).colorScheme.onPrimary),
+              Icon(Icons.home, color: Theme.of(context).colorScheme.onPrimary),
+              Icon(Icons.person_outline, color: Theme.of(context).colorScheme.onPrimary),
+              Icon(Icons.perm_device_info_rounded, color: Theme.of(context).colorScheme.onPrimary),
+            ]
+
           ),
         );
       },
     );
+  }
+
+  Widget _getSelectedPage(int index) {
+    switch (index) {
+      case 0:
+        return RoutesPage();
+      case 1:
+        return HomePage();
+      case 2:
+        return SocialPage();
+      case 3: 
+        return TestingPage();
+      default:
+        return Center(
+          child: Text("Page not found"));
+    }
   }
 }
 
@@ -258,8 +365,8 @@ AppBar createAppBar(BuildContext context, String titleText) {
             : Colors.black,
       ),
     ),
-    backgroundColor: Theme.of(context).brightness == Brightness.dark 
-        ? Colors.black12 
-        : Theme.of(context).colorScheme.surface,
+    backgroundColor: Theme.of(context).brightness == Brightness.dark
+        ? Colors.black12
+        : null,
   );
 }

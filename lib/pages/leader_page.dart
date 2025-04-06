@@ -130,6 +130,7 @@ class _LeaderPageState extends State<LeaderPage> with SingleTickerProviderStateM
 
   /// Builds the leaderboard list
   Widget _buildLeaderboard(Future<List<Leader>> futureLeaders, bool isDistanceMode) {
+    bool isDarkMode = Theme.of(context).brightness == Brightness.dark; 
     return RefreshIndicator(
       onRefresh: _refreshLeaders,
       child: FutureBuilder<List<Leader>>(
@@ -149,21 +150,30 @@ class _LeaderPageState extends State<LeaderPage> with SingleTickerProviderStateM
                 final leader = leaders[index];
                 return Card(
                   margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  color: isDarkMode ? Theme.of(context).colorScheme.onSecondaryFixedVariant : Colors.white,
                   child: ListTile(
                     leading: CircleAvatar(
                       radius: 24, // Adjust size if needed
-                      backgroundColor: Color.fromRGBO(33, 150, 243, 0.2), // BlueAccent with 20% opacity
+                      backgroundColor: isDarkMode ? Theme.of(context).colorScheme.inverseSurface : Theme.of(context).colorScheme.onInverseSurface,//Color.fromRGBO(33, 150, 243, 0.2), // BlueAccent with 20% opacity
                       child: Icon(
                         getUserIcon(leader.rank),
                         size: 30, // Increase icon size
                         color: _getIconColor(leader.rank), // Set a visible icon color
                       ),
                     ),
-                    title: Text(leader.username),
+                    title: Text(
+                      leader.username,
+                      style: TextStyle(
+                        color: isDarkMode ? Colors.white70 : null,
+                      ),
+                    ),
                     subtitle: Text(
                       isDistanceMode
                           ? 'Distance: ${leader.distance.toStringAsFixed(2)} miles'
                           : 'Time: ${leader.distance.toStringAsFixed(2)} hrs',
+                      style: TextStyle(
+                        color: isDarkMode ? Colors.white70 : null,
+                      ),
                     ),
                   ),
                 );

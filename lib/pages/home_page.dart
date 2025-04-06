@@ -307,7 +307,8 @@ class _HomePageState extends State<HomePage> {
                         SizedBox(width: 16),
                         Icon(Icons.calendar_month_outlined, color: isDarkMode
                           ? Colors.white
-                          : Theme.of(context).colorScheme.primary),
+                          : Theme.of(context).colorScheme.primary
+                        ),
                       ],
                     ),
                   ),

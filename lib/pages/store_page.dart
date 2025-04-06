@@ -45,6 +45,7 @@ class StorePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appState = Provider.of<MyAppState>(context);
+    bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       appBar: createAppBar(context, 'Store'),
@@ -127,7 +128,7 @@ class StorePage extends StatelessWidget {
                         SizedBox(width: 5),
                         Text(
                           'Loading...',
-                          style: TextStyle(fontWeight: FontWeight.bold, color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black),
+                          style: TextStyle(fontWeight: FontWeight.bold, color: isDarkMode ? Colors.white : Colors.black),
                         ),
                       ],
                     );
@@ -138,7 +139,7 @@ class StorePage extends StatelessWidget {
                         SizedBox(width: 5),
                         Text(
                           'Error!',
-                          style: TextStyle(fontWeight: FontWeight.bold, color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black),
+                          style: TextStyle(fontWeight: FontWeight.bold, color: isDarkMode ? Colors.white : Colors.black),
                         ),
                       ],
                     );
@@ -149,7 +150,7 @@ class StorePage extends StatelessWidget {
                         SizedBox(width: 5),
                         Text(
                           '${snapshot.data} CycleCoins',
-                          style: TextStyle(fontWeight: FontWeight.bold, color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black),
+                          style: TextStyle(fontWeight: FontWeight.bold, color: isDarkMode ? Colors.white : Colors.black),
                         ),
                       ],
                     );
@@ -174,13 +175,19 @@ class StorePage extends StatelessWidget {
   }) {
     return Column(
       children: [
-        Icon(icon, size: 50, color: Theme.of(context).primaryColor),
+        Icon(icon, size: 50, color: Theme.of(context).colorScheme.primary),
         SizedBox(height: 10),
         Text(title, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         Text(cost),
         ElevatedButton(
           onPressed: isPlaceholder ? null : onBuy,
           style: ElevatedButton.styleFrom(
+            backgroundColor: Theme.of(context).brightness == Brightness.dark
+              ? Theme.of(context).colorScheme.secondary
+              : Theme.of(context).colorScheme.onInverseSurface,
+            foregroundColor: Theme.of(context).brightness == Brightness.dark
+              ? Colors.white
+              : Theme.of(context).colorScheme.primary,
             elevation: 5,
             padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
           ),

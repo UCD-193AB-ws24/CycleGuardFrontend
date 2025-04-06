@@ -176,6 +176,7 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
   Widget _buildProfileTab() {
     TextEditingController nameController = TextEditingController();
     TextEditingController bioController = TextEditingController();
+    bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
     String profileImageUrl = "https://via.placeholder.com/150"; // Replace with actual image URL
 
     return FutureBuilder<UserProfile>(
@@ -220,7 +221,7 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
                           Icon(
                             Icons.settings,
                             size: 40,
-                            color: Theme.of(context).brightness == Brightness.dark
+                            color: isDarkMode
                               ? Theme.of(context).colorScheme.secondaryFixedDim
                               : Theme.of(context).colorScheme.secondary, 
                           ),
@@ -229,7 +230,7 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
                             'Settings',
                             style: TextStyle(
                               fontSize: 14,
-                              color: Theme.of(context).brightness == Brightness.dark
+                              color: isDarkMode
                                 ? Theme.of(context).colorScheme.secondaryFixedDim
                                 : Theme.of(context).colorScheme.secondary, 
                             ),
@@ -283,7 +284,17 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
                     );
                   }
                 },
-                child: Text("Update Profile"),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: isDarkMode
+                    ? Theme.of(context).colorScheme.secondary
+                    : Theme.of(context).colorScheme.onInverseSurface,
+                ),
+                child: Text(
+                  "Update Profile",
+                  style: TextStyle(
+                    color: isDarkMode ? Colors.white70 : null,
+                  ),
+                ),
               ),
             ],
           ),
@@ -296,6 +307,7 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
   Widget _buildSearchTab() {
     TextEditingController searchController = TextEditingController();
     List<String> _friends = []; // Stores the user's friends
+    bool isDarkMode = Theme.of(context).brightness == Brightness.dark; 
 
     return Column(
       children: [
@@ -342,13 +354,27 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
 
                     return Card(
                       margin: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      color: isDarkMode ? Theme.of(context).colorScheme.onSecondaryFixedVariant : Colors.white,
                       child: ListTile(
                         leading: CircleAvatar(child: Text(user[0].toUpperCase())),
-                        title: Text(user),
+                        title: Text(
+                          user,
+                          style: TextStyle(
+                            color: isDarkMode ? Colors.white70 : null,
+                          ),
+                        ),
                         subtitle: isFriend ? Text("Friend", style: TextStyle(color: Colors.green)) : null,
                         trailing: isFriend
                             ? null // Don't show add friend button for existing friends
                             : ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: isDarkMode
+                                    ? Theme.of(context).colorScheme.secondary
+                                    : Theme.of(context).colorScheme.onInverseSurface,
+                                foregroundColor: isDarkMode
+                                    ? Colors.white70
+                                    : Theme.of(context).colorScheme.primary,
+                              ),
                                 onPressed: () => _sendFriendRequest(user),
                                 child: Text("Add Friend"),
                               ),
@@ -433,6 +459,7 @@ class _RequestsTabState extends State<RequestsTab> {
 
   @override
   Widget build(BuildContext context) {
+    bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
     if (_isLoading) {
       return Center(child: CircularProgressIndicator());
     } else if (_requests.isEmpty) {
@@ -446,10 +473,22 @@ class _RequestsTabState extends State<RequestsTab> {
 
         return Card(
           margin: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          color: isDarkMode ? Theme.of(context).colorScheme.onSecondaryFixedVariant : Colors.white,
           child: ListTile(
             leading: CircleAvatar(child: Text(requester[0].toUpperCase())),
-            title: Text(requester),
-            subtitle: Text("Sent you a friend request"),
+            title: Text(
+              requester,
+              style: TextStyle(
+                color: isDarkMode ? Colors.white70 : null,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            subtitle: Text(
+              "Sent you a friend request",
+              style: TextStyle(
+                color: isDarkMode ? Colors.white70 : null,
+              ),
+            ),
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [

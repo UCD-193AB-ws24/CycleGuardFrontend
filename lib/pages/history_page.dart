@@ -4,6 +4,8 @@ import 'package:intl/intl.dart';
 import '../main.dart';
 import 'package:cycle_guard_app/data/trip_history_provider.dart';
 import 'package:cycle_guard_app/data/user_stats_provider.dart';
+import 'package:cycle_guard_app/data/single_trip_history.dart';
+import 'package:cycle_guard_app/pages/calendar_view.dart';
 import 'package:draggable_scrollbar/draggable_scrollbar.dart';
 
 class HistoryPage extends StatefulWidget {
@@ -26,38 +28,54 @@ class _HistoryPageState extends State<HistoryPage> {
     });
   }
 
-Future<void> _pickDateRange(BuildContext context) async {
-  
-  final DateTimeRange? picked = await showDateRangePicker(
-    context: context,
-    firstDate: DateTime(2025), 
-    lastDate: DateTime.now(), 
-    initialDateRange: _selectedDateRange,
-    builder: (BuildContext context, Widget? child) {
-      return Theme(
-        data: ThemeData.light().copyWith(
-          primaryColor: Theme.of(context).colorScheme.primary, 
-          datePickerTheme: DatePickerThemeData(
-            dayBackgroundColor: WidgetStateProperty.resolveWith((states) {
-              if (states.contains(WidgetState.selected)) {
-                return Theme.of(context).colorScheme.primary;
-              }
-              return Colors.orange;
-            }),
-            rangeSelectionBackgroundColor: Theme.of(context).colorScheme.onInverseSurface,
+  Future<void> _pickDateRange(BuildContext context) async {
+    
+    final DateTimeRange? picked = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(2025), 
+      lastDate: DateTime.now(), 
+      initialDateRange: _selectedDateRange,
+      builder: (BuildContext context, Widget? child) {
+        return Theme(
+          data: ThemeData.light().copyWith(
+            primaryColor: Theme.of(context).colorScheme.primary, 
+            datePickerTheme: DatePickerThemeData(
+              dayBackgroundColor: WidgetStateProperty.resolveWith((states) {
+                if (states.contains(WidgetState.selected)) {
+                  return Theme.of(context).colorScheme.primary;
+                }
+                return Colors.orange;
+              }),
+              rangeSelectionBackgroundColor: Theme.of(context).colorScheme.onInverseSurface,
+            ),
           ),
-        ),
-        child: child!,
-      );
-    },
-  );
+          child: child!,
+        );
+      },
+    );
 
-  if (picked != null && picked != _selectedDateRange) {
-    setState(() {
-      _selectedDateRange = picked;
-    });
+    if (picked != null && picked != _selectedDateRange) {
+      setState(() {
+        _selectedDateRange = picked;
+      });
+    }
   }
-}
+
+  Map<String, double> _getDailyMiles(Map<int, SingleTripInfo> tripHistory) {
+    Map<String, double> dailyMiles = {};
+
+    tripHistory.forEach((timestamp, trip) {
+      final tripDate = DateTime.fromMillisecondsSinceEpoch(timestamp * 1000);
+      final date = DateFormat('M-d-yyyy').format(tripDate); 
+
+      if (!dailyMiles.containsKey(date)) {
+        dailyMiles[date] = 0;
+      }
+      dailyMiles[date] = dailyMiles[date]! + trip.distance; 
+    });
+
+    return dailyMiles;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -207,6 +225,60 @@ Future<void> _pickDateRange(BuildContext context) async {
               ),
             ),
           ),
+          ElevatedButton(
+            onPressed: () async {
+              final tripHistoryProvider = Provider.of<TripHistoryProvider>(context, listen: false);
+
+              // Fetch the trip history
+              await tripHistoryProvider.fetchTripHistory();
+
+              // Check if the trip history is not null before proceeding
+              if (tripHistoryProvider.tripHistory != null && tripHistoryProvider.tripHistory.isNotEmpty) {
+                final dailyMiles = _getDailyMiles(tripHistoryProvider.tripHistory);
+
+                // Check if CalendarView is already on the navigation stack
+                bool isCalendarInStack = false;
+
+                // Loop through the current navigation stack
+                Navigator.of(context).popUntil((route) {
+                  if (route.settings.name == '/calendar') {
+                    isCalendarInStack = true;  // CalendarView is already on the stack
+                  }
+                  return true;
+                });
+
+                // If it's not in the stack, push it
+                if (!isCalendarInStack) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => CalendarView(dailyMiles: dailyMiles),
+                      settings: RouteSettings(name: '/calendar'),
+                    ),
+                  );
+                }
+              } else {
+                // Handle the case where the trip history is null or empty
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('No trip history available.')),
+                );
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: isDarkMode
+                  ? Theme.of(context).colorScheme.onSecondaryFixedVariant
+                  : Theme.of(context).colorScheme.surfaceContainerLow,
+            ),
+            child: Text(
+              'View Miles Biked Calendar',
+              style: TextStyle(
+                color: isDarkMode
+                    ? Theme.of(context).colorScheme.surfaceContainerLow
+                    : Theme.of(context).colorScheme.onSecondaryFixedVariant,
+              ),
+            ),
+          ),
+          SizedBox(height: 8),
           Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [

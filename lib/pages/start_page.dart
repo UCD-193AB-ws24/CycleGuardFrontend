@@ -19,11 +19,11 @@ class StartPage extends StatelessWidget {
         children: [
           Positioned(
             left: screenWidth * (-0.9), 
-            top: screenHeight * 0.05,
+            top: 0,
             child: SvgPicture.asset(
               'assets/cg_logomark.svg',
-              width: screenWidth * 0.4, 
-              height: screenHeight * 0.95, 
+              width: screenWidth, 
+              height: screenHeight, 
               colorFilter: ColorFilter.mode(
                 Color(0xFFFFCC80), 
                 BlendMode.srcIn,

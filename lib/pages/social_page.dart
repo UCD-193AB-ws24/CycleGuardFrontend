@@ -124,13 +124,21 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
 
   @override
   Widget build(BuildContext context) {
+    bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
     return DefaultTabController(
       length: 3,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Social'),
+          title: Text(
+            'Social',
+            style: TextStyle(
+              color: isDarkMode ? Colors.white70 : Colors.black,
+            ),
+          ),
+          backgroundColor: isDarkMode ? Colors.black12 : null,
           bottom: TabBar(
             controller: _tabController,
+            unselectedLabelColor: isDarkMode ? Colors.white70 : null,
             tabs: const [
               Tab(icon: Icon(Icons.person), text: "Profile"),
               Tab(icon: Icon(Icons.search), text: "Bikers"),
@@ -145,9 +153,7 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
                 height: 30,
                 width: 30,
                 colorFilter: ColorFilter.mode( 
-                  Theme.of(context).brightness == Brightness.dark 
-                    ? Colors.white70
-                    : Colors.black,
+                  isDarkMode ? Colors.white70 : Colors.black,
                   BlendMode.srcIn,
                 ),
               ),

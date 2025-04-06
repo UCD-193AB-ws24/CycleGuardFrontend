@@ -79,13 +79,24 @@ class _LeaderPageState extends State<LeaderPage> with SingleTickerProviderStateM
 
   @override
   Widget build(BuildContext context) {
+    bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
     return DefaultTabController(
       length: 2,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Leader Dashboard'),
+          iconTheme: IconThemeData(
+            color: isDarkMode ? Colors.white70 : null
+          ),
+          title: Text(
+            'Leader Dashboard',
+            style: TextStyle (
+              color: isDarkMode ? Colors.white70 : Colors.black,
+            ),
+          ),
+          backgroundColor: isDarkMode  ? Colors.black12 : null, 
           bottom: TabBar(
             controller: _tabController,
+            unselectedLabelColor: isDarkMode ? Colors.white70 : null,
             tabs: const [
               Tab(text: "Distance"),
               Tab(text: "Time"),
@@ -99,15 +110,12 @@ class _LeaderPageState extends State<LeaderPage> with SingleTickerProviderStateM
                 height: 30,
                 width: 30,
                 colorFilter: ColorFilter.mode( 
-                  Theme.of(context).brightness == Brightness.dark 
-                    ? Colors.white70
-                    : Colors.black,
+                  isDarkMode ? Colors.white70 : Colors.black,
                   BlendMode.srcIn,
                 ),
               ),
             )
           ],
-          backgroundColor: Theme.of(context).brightness == Brightness.dark  ? Colors.black12 : null, 
         ),
         body: TabBarView(
           controller: _tabController,

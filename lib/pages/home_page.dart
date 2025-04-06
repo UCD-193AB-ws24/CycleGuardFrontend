@@ -58,7 +58,7 @@ class _HomePageState extends State<HomePage> {
     }
 
     List<double>rotatedDistances = getRotatedArray(distancesForWeek, DateTime.now().weekday);
-    bool isDailyChallengeComplete = rotatedDistances[6] > 5;
+    bool isDailyChallengeComplete = rotatedDistances[6] >= 5;
 
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final selectedColor = Theme.of(context).colorScheme.primary;
@@ -85,7 +85,7 @@ class _HomePageState extends State<HomePage> {
               'here is your progress',
               style: TextStyle(
                 fontSize: 16, 
-                color: Theme.of(context).brightness == Brightness.dark 
+                color: isDarkMode 
                   ? Colors.white70 
                   : Colors.black,
               ),
@@ -101,7 +101,7 @@ class _HomePageState extends State<HomePage> {
               height: 30,
               width: 30,
               colorFilter: ColorFilter.mode( 
-                Theme.of(context).brightness == Brightness.dark 
+                isDarkMode 
                   ? Colors.white70
                   : Colors.black,
                 BlendMode.srcIn,

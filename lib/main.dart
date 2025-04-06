@@ -356,19 +356,19 @@ class _MyHomePageState extends State<MyHomePage> {
 }
 
 AppBar createAppBar(BuildContext context, String titleText) {
+  bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
   return AppBar(
+    iconTheme: IconThemeData(
+        color: isDarkMode ? Colors.white70 : null
+      ),
     title: Text(
       titleText,
       style: TextStyle(
         fontWeight: FontWeight.bold,
-        color: Theme.of(context).brightness == Brightness.dark 
-            ? Colors.white70 
-            : Colors.black,
+        color: isDarkMode ? Colors.white70 : Colors.black,
       ),
     ),
-    backgroundColor: Theme.of(context).brightness == Brightness.dark
-        ? Colors.black12
-        : null,
+    backgroundColor: isDarkMode ? Colors.black12 : null,
     actions: [
       Padding(
         padding: const EdgeInsets.only(right: 32.0),

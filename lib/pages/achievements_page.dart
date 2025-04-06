@@ -43,10 +43,10 @@ class _AchievementsPageState extends State<AchievementsPage> {
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     elevation: 4,
-                    backgroundColor: Theme.of(context).brightness == Brightness.dark
+                    backgroundColor: isDarkMode
                         ? Theme.of(context).colorScheme.secondary
                         : Theme.of(context).colorScheme.onInverseSurface,
-                    foregroundColor: Theme.of(context).brightness == Brightness.dark
+                    foregroundColor: isDarkMode
                         ? Colors.white
                         : Theme.of(context).colorScheme.primary,
                     padding: EdgeInsets.symmetric(vertical: 8.0),

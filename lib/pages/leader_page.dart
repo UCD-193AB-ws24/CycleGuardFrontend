@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:cycle_guard_app/data/global_leaderboards_accessor.dart';
 import 'package:cycle_guard_app/pages/leader.dart'; // Import Leader model'
 import 'package:http/http.dart' as http;
+import 'package:flutter_svg/flutter_svg.dart';
 
 /// Function to get an appropriate user icon based on rank
 IconData getUserIcon(int rank) {
@@ -90,6 +91,23 @@ class _LeaderPageState extends State<LeaderPage> with SingleTickerProviderStateM
               Tab(text: "Time"),
             ],
           ),
+          actions: [
+            Padding(
+              padding: const EdgeInsets.only(right: 32.0),
+              child: SvgPicture.asset(
+                'assets/cg_logomark.svg',
+                height: 30,
+                width: 30,
+                colorFilter: ColorFilter.mode( 
+                  Theme.of(context).brightness == Brightness.dark 
+                    ? Colors.white70
+                    : Colors.black,
+                  BlendMode.srcIn,
+                ),
+              ),
+            )
+          ],
+          backgroundColor: Theme.of(context).brightness == Brightness.dark  ? Colors.black12 : null, 
         ),
         body: TabBarView(
           controller: _tabController,

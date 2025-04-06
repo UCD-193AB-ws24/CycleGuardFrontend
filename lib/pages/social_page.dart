@@ -8,6 +8,7 @@ import 'package:cycle_guard_app/data/friends_list_accessor.dart';
 import 'package:cycle_guard_app/data/friend_requests_accessor.dart';
 import 'package:cycle_guard_app/data/health_info_accessor.dart';
 import 'package:cycle_guard_app/pages/settings_page.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class SocialPage extends StatefulWidget {
   @override
@@ -136,6 +137,22 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
               Tab(icon: Icon(Icons.people), text: "Requests"),
             ],
           ),
+          actions: [
+            Padding(
+              padding: const EdgeInsets.only(right: 32.0),
+              child: SvgPicture.asset(
+                'assets/cg_logomark.svg',
+                height: 30,
+                width: 30,
+                colorFilter: ColorFilter.mode( 
+                  Theme.of(context).brightness == Brightness.dark 
+                    ? Colors.white70
+                    : Colors.black,
+                  BlendMode.srcIn,
+                ),
+              ),
+            )
+          ],
         ),
         body: TabBarView(
           controller: _tabController,

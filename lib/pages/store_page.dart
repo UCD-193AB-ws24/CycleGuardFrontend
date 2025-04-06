@@ -57,36 +57,42 @@ class StorePage extends StatelessWidget {
               Center(
                 child: Column(
                   children: [
-                    Text(
-                      "New Color Themes",
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        _buildItem(
+                          context: context,
+                          title: "New Color Theme",
+                          cost: "10 CycleCoins",
+                          onBuy: () => _showThemeMenu(context, appState),
+                          icon: Icons.color_lens, 
+                        ),
+                        _buildItem(
+                          context: context,
+                          title: "New Profile Icon",
+                          cost: "50 CycleCoins",
+                          onBuy: () {},
+                          icon: Icons.person, 
+                          isPlaceholder: true, 
+                        ),
+                      ],
                     ),
-                    Text("10 CycleCoins"),
-                    ElevatedButton(
-                      onPressed: appState.storeThemes.isNotEmpty
-                          ? () => _showThemeMenu(context, appState)
-                          : null, // Disable if no themes left
-                      style: ElevatedButton.styleFrom(
-                        elevation: 5,
-                        padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
-                      ),
-                      child: Text("Buy"),
+                    SizedBox(height: 20),
+                    
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        _buildItem(
+                          context: context,
+                          title: "Rocket Boost",
+                          cost: "100 CycleCoins",
+                          onBuy: () => _buyRocketBoost(context, appState),
+                          icon: Icons.rocket, 
+                        ),
+                      ],
                     ),
-                    SizedBox(height: 20), // Adds space between the two sections
-                    Text(
-                      "Rocket Boost",
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                    ),
-                    Text("100 CycleCoins"),
-                    ElevatedButton(
-                      onPressed: () => _buyRocketBoost(context, appState),
-                      style: ElevatedButton.styleFrom(
-                        elevation: 5,
-                        padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
-                      ),
-                      child: Text("Buy"),
-                    ),
-                    SizedBox(height: 20), 
+
+                    // Temporary buttons
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         elevation: 5,
@@ -154,6 +160,33 @@ class StorePage extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  // Widget to build each item with a title, cost, button, and icon
+  Widget _buildItem({
+    required BuildContext context,
+    required String title,
+    required String cost,
+    required VoidCallback onBuy,
+    required IconData icon,
+    bool isPlaceholder = false,
+  }) {
+    return Column(
+      children: [
+        Icon(icon, size: 50, color: Theme.of(context).primaryColor),
+        SizedBox(height: 10),
+        Text(title, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        Text(cost),
+        ElevatedButton(
+          onPressed: isPlaceholder ? null : onBuy,
+          style: ElevatedButton.styleFrom(
+            elevation: 5,
+            padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
+          ),
+          child: Text(isPlaceholder ? "Coming Soon" : "Buy"),
+        ),
+      ],
     );
   }
 

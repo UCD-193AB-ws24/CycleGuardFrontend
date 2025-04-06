@@ -5,6 +5,7 @@ import 'package:cycle_guard_app/pages/feature_testing.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:cycle_guard_app/data/user_stats_provider.dart';
 import 'package:cycle_guard_app/data/achievements_progress_provider.dart';
@@ -308,7 +309,7 @@ class _MyHomePageState extends State<MyHomePage> {
         : Colors.white; 
   }
 
-@override
+  @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -368,5 +369,21 @@ AppBar createAppBar(BuildContext context, String titleText) {
     backgroundColor: Theme.of(context).brightness == Brightness.dark
         ? Colors.black12
         : null,
+    actions: [
+      Padding(
+        padding: const EdgeInsets.only(right: 32.0),
+        child: SvgPicture.asset(
+          'assets/cg_logomark.svg',
+          height: 30,
+          width: 30,
+          colorFilter: ColorFilter.mode( 
+            Theme.of(context).brightness == Brightness.dark 
+              ? Colors.white70
+              : Colors.black,
+            BlendMode.srcIn,
+          ),
+        ),
+      )
+    ],
   );
 }

@@ -7,6 +7,9 @@ import 'package:cycle_guard_app/pages/store_page.dart';
 import 'package:cycle_guard_app/pages/history_page.dart';
 import 'package:cycle_guard_app/pages/achievements_page.dart';
 import 'package:cycle_guard_app/data/achievements_progress_provider.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:percent_indicator/circular_percent_indicator.dart';
+import 'package:cycle_guard_app/data/single_trip_history.dart';
 
 
 class HomePage extends StatefulWidget {
@@ -27,8 +30,19 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     final userStats = Provider.of<UserStatsProvider>(context);
     final weekHistory = Provider.of<WeekHistoryProvider>(context);
-    //final achievementsProgress = Provider.of<AchievementsProgressProvider>(context);
-    //print(achievementsProgress.achievementsCompleted);
+
+    final todayUtcTimestamp = DateTime.utc(
+        DateTime.now().year,
+        DateTime.now().month,
+        DateTime.now().day,
+        0, 0, 0, 0, 0,
+      ).millisecondsSinceEpoch ~/ 1000;
+
+    final todayInfo = weekHistory.dayHistoryMap[todayUtcTimestamp]  ?? const SingleTripInfo(distance: 0.0, calories: 0.0, time: 0.0);
+
+    double todayDistance = todayInfo.distance;
+    double todayCalories = todayInfo.calories;
+    double todayTime = todayInfo.time;
 
     List<double> distancesForWeek = List.filled(7, 0.0);
     for (int i = 0; i < weekHistory.days.length; i++) {
@@ -37,7 +51,7 @@ class _HomePageState extends State<HomePage> {
 
       // Convert the day to the correct index (0-6, Monday-Sunday)
       DateTime dateTime = DateTime.fromMillisecondsSinceEpoch(day * 1000);
-      int dayIndex = dateTime.weekday;  // Adjust for Monday=0 to Sunday=6
+      int dayIndex = dateTime.weekday; 
 
       // Assign the distance for that day
       distancesForWeek[dayIndex] = dayDistance;
@@ -55,23 +69,46 @@ class _HomePageState extends State<HomePage> {
           children: [
             RichText(
               text: TextSpan(
-                style: TextStyle(fontSize: 20, color: isDarkMode ? Colors.white : Colors.black54),
+                style: TextStyle(fontSize: 20, color: isDarkMode ? Colors.white70 : Colors.black87),
                 children: [
                   TextSpan(text: 'Hi, '),
                   TextSpan(
                     text: userStats.username,
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold, 
+                    ),
                   ),
                 ],
               ),
             ),
             Text(
               'here is your progress',
-              style: TextStyle(color: Colors.grey, fontSize: 16),
+              style: TextStyle(
+                fontSize: 16, 
+                color: Theme.of(context).brightness == Brightness.dark 
+                  ? Colors.white70 
+                  : Colors.black,
+              ),
             ),
           ],
         ),
         backgroundColor: isDarkMode ? Colors.black12 : null, 
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 32.0),
+            child: SvgPicture.asset(
+              'assets/cg_logomark.svg',
+              height: 30,
+              width: 30,
+              colorFilter: ColorFilter.mode( 
+                Theme.of(context).brightness == Brightness.dark 
+                  ? Colors.white70
+                  : Colors.black,
+                BlendMode.srcIn,
+              ),
+            ),
+          )
+        ],
       ),
       body: SingleChildScrollView( 
         padding: const EdgeInsets.all(8.0),
@@ -149,19 +186,91 @@ class _HomePageState extends State<HomePage> {
             ),
             SizedBox(height: 16),
             _buildStatistic('Current Streak', '${userStats.rideStreak} days'),
+            SizedBox(height: 4),
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  Center(
+                    child: Text(
+                      "Today's Goal Progress",
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  Positioned(
+                    right: 0,
+                    bottom: 0,
+                    top: 2,
+                    child: IconButton(
+                      icon: Icon(Icons.help_outline, color: isDarkMode ? Colors.white70 : Colors.black),
+                      padding: EdgeInsets.zero,
+                      constraints: BoxConstraints(),
+                      onPressed: () {
+                        showDialog(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: Text('Daily Goals'),
+                            content: Text('You can set your daily goals in your profile.'),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context),
+                                child: Text('OK'),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _buildCircularStat(
+                  context,
+                  title: 'Time',
+                  value: '$todayTime min',
+                  percent: todayTime / 27, 
+                  color: Colors.blueAccent,
+                ),
+                _buildCircularStat(
+                  context,
+                  title: 'Distance',
+                  value: '$todayDistance mi',
+                  percent: todayDistance / 27, 
+                  color: Colors.orangeAccent,
+                ),
+                _buildCircularStat(
+                  context,
+                  title: 'Calories',
+                  value: '$todayCalories cal',
+                  percent: todayCalories / 27, 
+                  color: Colors.redAccent,
+                ),
+              ],
+            ),
             SizedBox(height: 16),
             Center(
               child: Text(
-                'Daily Averages',
+                'Week Averages',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
             ),
             SizedBox(height: 8),
-            Column(
+            Row(
               children: [
-                _buildStatistic('Time Biking', '${weekHistory.averageTime.round()} minutes'),
-                _buildStatistic('Distance Biked', '${weekHistory.averageDistance.round()} miles'),
-                _buildStatistic('Calories Burned', '${weekHistory.averageCalories.round()} calories'),
+                Expanded(
+                  child: _buildStatCard(Icons.timer, 'Time', '${weekHistory.averageTime.round()} min', Colors.blueAccent),
+                ),
+                SizedBox(width: 8),
+                Expanded(
+                  child: _buildStatCard(Icons.directions_bike, 'Distance', '${weekHistory.averageDistance.round()} mi', Colors.orangeAccent),
+                ),
+                SizedBox(width: 8),
+                Expanded(
+                  child: _buildStatCard(Icons.local_fire_department, 'Calories', '${weekHistory.averageCalories.round()} cal', Colors.redAccent),
+                ),
               ],
             ),
             SizedBox(height: 8),
@@ -309,6 +418,53 @@ class _HomePageState extends State<HomePage> {
           Text(value, style: TextStyle(fontSize: 16)),
         ],
       ),
+    );
+  }
+
+  Widget _buildStatCard(IconData icon, String label, String value, Color color) {
+    return Card(
+      color: color.withAlpha(30),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      elevation: 2,
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Row(
+          children: [
+            Icon(icon, color: color),
+            SizedBox(width: 12),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                Text(value, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCircularStat(BuildContext context,
+      {required String title,
+      required String value,
+      required double percent,
+      required Color color}) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        CircularPercentIndicator(
+          radius: 60.0,
+          lineWidth: 8.0,
+          percent: percent.clamp(0.0, 1.0),
+          center: Text(value, style: TextStyle(fontWeight: FontWeight.bold)),
+          progressColor: color,
+          backgroundColor: Colors.grey.shade300,
+          circularStrokeCap: CircularStrokeCap.round,
+        ),
+        const SizedBox(height: 8),
+        Text(title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+      ],
     );
   }
 

@@ -210,12 +210,28 @@ class _HomePageState extends State<HomePage> {
                         showDialog(
                           context: context,
                           builder: (context) => AlertDialog(
-                            title: Text('Daily Goals'),
-                            content: Text('You can set your daily goals in your profile.'),
+                            backgroundColor: isDarkMode ? colorScheme.secondary : null,
+                            title: Text(
+                              'Daily Goals',
+                              style: TextStyle(
+                                color: isDarkMode ? Colors.white70 : Colors.black,
+                              ),
+                            ),
+                            content: Text(
+                              'You can set your daily goals in your profile.',
+                              style: TextStyle(
+                                color: isDarkMode ? Colors.white70 : Colors.black,
+                              ),
+                            ),
                             actions: [
                               TextButton(
                                 onPressed: () => Navigator.pop(context),
-                                child: Text('OK'),
+                                child: Text(
+                                  'OK',
+                                  style: TextStyle(
+                                    color: isDarkMode ? Colors.white70 : null,
+                                  ),
+                                ),
                               ),
                             ],
                           ),
@@ -255,7 +271,7 @@ class _HomePageState extends State<HomePage> {
             SizedBox(height: 32),
             Center(
               child: Text(
-                'Week Averages',
+                'Average Ride this Week',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
             ),
@@ -422,7 +438,7 @@ class _HomePageState extends State<HomePage> {
     } else {
       return Center(
         child: Text(
-          'Get out and ride today — start a streak!',
+          'Get out and ride — start a streak!',
           style: TextStyle(
             fontSize: 16,
             fontStyle: FontStyle.italic,

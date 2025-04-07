@@ -87,6 +87,12 @@ flutter:
     - .env
     - assets/cg_logomark.svg
     - assets/terms_of_service.txt
+    - assets/cg_logo_typog.svg
+    - assets/cg_icon_default.svg
+    - assets/cg_icon_set1_F.svg
+    - assets/cg_icon_set1_M.svg
+    - assets/cg_icon_set2_F.svg
+    - assets/cg_icon_set2_M.svg
   # assets:
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg

@@ -30,20 +30,22 @@ class StartPage extends StatelessWidget {
               ),
             ),
           ),
+          Positioned(
+            top: screenHeight * 0.3,
+            left: 15,
+            right: 15,
+            child: SvgPicture.asset(
+              'assets/cg_logo_typog.svg',
+              width: screenWidth * 0.5, 
+              height: screenHeight * 0.3, 
+              //fit: BoxFit.contain,
+            ),
+          ),
           Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(
-                  "CycleGuard",
-                  style: GoogleFonts.poppins(
-                    textStyle: TextStyle(
-                      fontSize: 60,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF555555), 
-                    ),
-                  ),
-                ),
+                SizedBox(height: screenHeight * 0.15),
                 Text(
                   "Ready to Ride?",
                   style: GoogleFonts.poppins(
@@ -54,7 +56,7 @@ class StartPage extends StatelessWidget {
                     ),
                   ),
                 ),
-                SizedBox(height: 75),
+                SizedBox(height: 50),
 
                 ElevatedButton(
                   onPressed: () {

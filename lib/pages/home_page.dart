@@ -52,13 +52,13 @@ class _HomePageState extends State<HomePage> {
 
       // Convert the day to the correct index (0-6, Monday-Sunday)
       DateTime dateTime = DateTime.fromMillisecondsSinceEpoch(day * 1000);
-      int dayIndex = dateTime.weekday; 
+      int dayIndex = dateTime.weekday - 1; 
 
       // Assign the distance for that day
       distancesForWeek[dayIndex] = dayDistance;
     }
 
-    List<double>rotatedDistances = getRotatedArray(distancesForWeek, DateTime.now().weekday);
+    List<double>rotatedDistances = getRotatedArray(distancesForWeek, DateTime.now().weekday - 1);
     bool isDailyChallengeComplete = rotatedDistances[6] >= 5;
 
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;

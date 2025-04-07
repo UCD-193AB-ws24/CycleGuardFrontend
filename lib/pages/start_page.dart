@@ -2,6 +2,7 @@ import 'package:cycle_guard_app/pages/login_page.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import '../auth/dim_util.dart';
 // import '../main.dart'; 
 
 class StartPage extends StatelessWidget {
@@ -10,20 +11,18 @@ class StartPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    double screenWidth = MediaQuery.of(context).size.width;
-    double screenHeight = MediaQuery.of(context).size.height;
 
     return Scaffold(
       backgroundColor: Color(0xFFF5E7C4),
       body: Stack(
         children: [
           Positioned(
-            left: screenWidth * (-0.9), 
+            left: DimUtil.safeWidth(context) * (-0.9), 
             top: 0,
             child: SvgPicture.asset(
               'assets/cg_logomark.svg',
-              width: screenWidth, 
-              height: screenHeight, 
+              width:  DimUtil.safeWidth(context),
+              height: DimUtil.safeHeight(context), 
               colorFilter: ColorFilter.mode(
                 Color(0xFFFFCC80), 
                 BlendMode.srcIn,

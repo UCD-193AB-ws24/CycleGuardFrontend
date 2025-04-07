@@ -3,6 +3,7 @@ import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:permission_handler/permission_handler.dart';
+import '../auth/dim_util.dart';
 
 class BluetoothController extends GetxController {
   static BluetoothController get to => Get.find();
@@ -60,8 +61,7 @@ void showCustomDialog(BuildContext context) async {
       return AlertDialog(
         title: Text('Select Your Helmet'),
         content: Container(
-          height: 300,
-          width: 300,
+          padding: EdgeInsets.symmetric(horizontal: 4,vertical: 5),
           child: StreamBuilder<List<ScanResult>>(
             stream: Get.put(BluetoothController()).scanResults,
             builder: (context, snapshot) {

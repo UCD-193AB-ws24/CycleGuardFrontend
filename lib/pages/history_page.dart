@@ -7,6 +7,7 @@ import 'package:cycle_guard_app/data/user_stats_provider.dart';
 import 'package:cycle_guard_app/data/single_trip_history.dart';
 import 'package:cycle_guard_app/pages/calendar_view.dart';
 import 'package:draggable_scrollbar/draggable_scrollbar.dart';
+import '../auth/dim_util.dart';
 
 class HistoryPage extends StatefulWidget {
   @override
@@ -167,7 +168,7 @@ class _HistoryPageState extends State<HistoryPage> {
                         style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: isDarkMode ? colorScheme.surfaceContainerLow : Colors.black),
                       ),
                     ),
-                    SizedBox(height: 8),
+                    SizedBox(height: DimUtil.safeHeight(context)*1/80),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -184,7 +185,7 @@ class _HistoryPageState extends State<HistoryPage> {
                             ),
                           ],
                         ),
-                        SizedBox(height: 8),
+                        SizedBox(height: DimUtil.safeHeight(context)*1/80),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -198,7 +199,7 @@ class _HistoryPageState extends State<HistoryPage> {
                             ),
                           ],
                         ),
-                        SizedBox(height: 8),
+                        SizedBox(height: DimUtil.safeHeight(context)*1/80),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -212,7 +213,7 @@ class _HistoryPageState extends State<HistoryPage> {
                             ),
                           ],
                         ),
-                        SizedBox(height: 8),
+                        SizedBox(height: DimUtil.safeHeight(context)*1/80),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -291,7 +292,7 @@ class _HistoryPageState extends State<HistoryPage> {
                 'Filter rides by:',
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
-              SizedBox(height: 8), 
+              SizedBox(height: DimUtil.safeHeight(context)*1/80),
               ToggleButtons(
                 isSelected: [
                   0 == _selectedFilterIndex,
@@ -324,7 +325,7 @@ class _HistoryPageState extends State<HistoryPage> {
               ),
             ],
           ),
-          SizedBox(height: 12),
+          SizedBox(height: DimUtil.safeHeight(context)*1/60),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -366,7 +367,7 @@ class _HistoryPageState extends State<HistoryPage> {
               ),
             ],
           ),
-          SizedBox(height: 12),
+          SizedBox(height: DimUtil.safeHeight(context)*1/60),
           groupedTrips.isEmpty
             ? Center(child: Text('No trips recorded for the selected range.', style: TextStyle(fontSize: 18, color: Colors.grey)))
             : Expanded(
@@ -398,7 +399,7 @@ class _HistoryPageState extends State<HistoryPage> {
                               shape: Border(),
                               title: Row(
                                 children: [
-                                  SizedBox(width: 8),
+                                  SizedBox(width: DimUtil.safeWidth(context)*1/80),
                                   Text(
                                     '$date',
                                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18,
@@ -443,28 +444,28 @@ class _HistoryPageState extends State<HistoryPage> {
                                           Row(
                                             children: [
                                               Icon(Icons.access_time, color: Colors.green, size: 18),
-                                              SizedBox(width: 8),
+                                              SizedBox(width: DimUtil.safeWidth(context)*1/80),
                                               Text('Time: $formattedTime', style: TextStyle(fontSize: 16, color : isDarkMode ? Colors.grey[300] : colorScheme.onPrimaryFixed)),
                                             ],
                                           ),
                                           Row(
                                             children: [
                                               Icon(Icons.directions_bike, color: Colors.blueAccent, size: 18),
-                                              SizedBox(width: 8),
+                                              SizedBox(width: DimUtil.safeWidth(context)*1/80),
                                               Text('${trip.distance} km', style: TextStyle(fontSize: 16, color : isDarkMode ? Colors.grey[300] : colorScheme.onPrimaryFixed)),
                                             ],
                                           ),
                                           Row(
                                             children: [
                                               Icon(Icons.timer, color: Colors.orange, size: 18),
-                                              SizedBox(width: 8),
+                                              SizedBox(width:DimUtil.safeWidth(context)*1/80),
                                               Text('${trip.time} min', style: TextStyle(fontSize: 16, color : isDarkMode ? Colors.grey[300] : colorScheme.onPrimaryFixed)),
                                             ],
                                           ),
                                           Row(
                                             children: [
                                               Icon(Icons.local_fire_department, color: Colors.red, size: 18),
-                                              SizedBox(width: 8),
+                                              SizedBox(width: DimUtil.safeWidth(context)*1/80),
                                               Text('${trip.calories} cal', style: TextStyle(fontSize: 16, color : isDarkMode ? Colors.grey[300] : colorScheme.onPrimaryFixed)),
                                             ],
                                           ),

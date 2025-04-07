@@ -5,6 +5,7 @@ import '../main.dart';
 import 'package:cycle_guard_app/data/trip_history_provider.dart';
 import 'package:cycle_guard_app/data/user_stats_provider.dart';
 import 'package:draggable_scrollbar/draggable_scrollbar.dart';
+import '../auth/dim_util.dart';
 
 class HistoryPage extends StatefulWidget {
   @override
@@ -141,7 +142,7 @@ Future<void> _pickDateRange(BuildContext context) async {
                         style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: isDarkMode ? Theme.of(context).colorScheme.surfaceContainerLow : Colors.black),
                       ),
                     ),
-                    SizedBox(height: 8),
+                    SizedBox(height: DimUtil.safeHeight(context)*1/80),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -158,7 +159,7 @@ Future<void> _pickDateRange(BuildContext context) async {
                             ),
                           ],
                         ),
-                        SizedBox(height: 8),
+                        SizedBox(height: DimUtil.safeHeight(context)*1/80),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -172,7 +173,7 @@ Future<void> _pickDateRange(BuildContext context) async {
                             ),
                           ],
                         ),
-                        SizedBox(height: 8),
+                        SizedBox(height: DimUtil.safeHeight(context)*1/80),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -186,7 +187,7 @@ Future<void> _pickDateRange(BuildContext context) async {
                             ),
                           ],
                         ),
-                        SizedBox(height: 8),
+                        SizedBox(height: DimUtil.safeHeight(context)*1/80),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -214,7 +215,7 @@ Future<void> _pickDateRange(BuildContext context) async {
                 'Filter rides by:',
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
-              SizedBox(height: 8), 
+              SizedBox(height: DimUtil.safeHeight(context)*1/80),
               ToggleButtons(
                 isSelected: [
                   0 == _selectedFilterIndex,
@@ -247,7 +248,7 @@ Future<void> _pickDateRange(BuildContext context) async {
               ),
             ],
           ),
-          SizedBox(height: 12),
+          SizedBox(height: DimUtil.safeHeight(context)*1/60),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -289,7 +290,7 @@ Future<void> _pickDateRange(BuildContext context) async {
               ),
             ],
           ),
-          SizedBox(height: 12),
+          SizedBox(height: DimUtil.safeHeight(context)*1/60),
           groupedTrips.isEmpty
             ? Center(child: Text('No trips recorded for the selected range.', style: TextStyle(fontSize: 18, color: Colors.grey)))
             : Expanded(
@@ -321,7 +322,7 @@ Future<void> _pickDateRange(BuildContext context) async {
                               shape: Border(),
                               title: Row(
                                 children: [
-                                  SizedBox(width: 8),
+                                  SizedBox(width: DimUtil.safeWidth(context)*1/80),
                                   Text(
                                     '$date',
                                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18,
@@ -366,28 +367,28 @@ Future<void> _pickDateRange(BuildContext context) async {
                                           Row(
                                             children: [
                                               Icon(Icons.access_time, color: Colors.green, size: 18),
-                                              SizedBox(width: 8),
+                                              SizedBox(width: DimUtil.safeWidth(context)*1/80),
                                               Text('Time: $formattedTime', style: TextStyle(fontSize: 16, color : isDarkMode ? Colors.grey[300] : Theme.of(context).colorScheme.onPrimaryFixed)),
                                             ],
                                           ),
                                           Row(
                                             children: [
                                               Icon(Icons.directions_bike, color: Colors.blueAccent, size: 18),
-                                              SizedBox(width: 8),
+                                              SizedBox(width: DimUtil.safeWidth(context)*1/80),
                                               Text('${trip.distance} km', style: TextStyle(fontSize: 16, color : isDarkMode ? Colors.grey[300] : Theme.of(context).colorScheme.onPrimaryFixed)),
                                             ],
                                           ),
                                           Row(
                                             children: [
                                               Icon(Icons.timer, color: Colors.orange, size: 18),
-                                              SizedBox(width: 8),
+                                              SizedBox(width:DimUtil.safeWidth(context)*1/80),
                                               Text('${trip.time} min', style: TextStyle(fontSize: 16, color : isDarkMode ? Colors.grey[300] : Theme.of(context).colorScheme.onPrimaryFixed)),
                                             ],
                                           ),
                                           Row(
                                             children: [
                                               Icon(Icons.local_fire_department, color: Colors.red, size: 18),
-                                              SizedBox(width: 8),
+                                              SizedBox(width: DimUtil.safeWidth(context)*1/80),
                                               Text('${trip.calories} cal', style: TextStyle(fontSize: 16, color : isDarkMode ? Colors.grey[300] : Theme.of(context).colorScheme.onPrimaryFixed)),
                                             ],
                                           ),

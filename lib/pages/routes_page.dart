@@ -6,6 +6,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
 import 'package:google_places_flutter/google_places_flutter.dart';
 import '../auth/key_util.dart';
+import '../auth/dim_util.dart';
 
 ApiService apiService = ApiService();
 class RoutesPage extends StatefulWidget {
@@ -65,9 +66,9 @@ class mapState extends State<RoutesPage> {
 
   Widget locationTextInput() =>
       Positioned(
-        top: 100.0,
-        width: 350.0,
-        right: 10.0,
+        top: DimUtil.safeHeight(context)*1/10,
+        width: DimUtil.safeWidth(context)*9.5/10,
+        right: DimUtil.safeWidth(context)*.2/10,
 
         child: Container(
           margin:EdgeInsets.symmetric(horizontal: 30.0, vertical: 1.0),
@@ -106,9 +107,6 @@ class mapState extends State<RoutesPage> {
                   textController.text = prediction.description!;
                   print(dest);
                 },
-              ),
-              SizedBox(
-                height: 10,
               ),
             ],
           ),

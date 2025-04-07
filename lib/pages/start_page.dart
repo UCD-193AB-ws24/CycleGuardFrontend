@@ -30,13 +30,13 @@ class StartPage extends StatelessWidget {
             ),
           ),
           Positioned(
-            top: screenHeight * 0.3,
+            top: DimUtil.safeHeight(context) * 0.3,
             left: 15,
             right: 15,
             child: SvgPicture.asset(
               'assets/cg_logo_typog.svg',
-              width: screenWidth * 0.5, 
-              height: screenHeight * 0.3, 
+              width: DimUtil.safeWidth(context) * 0.5, 
+              height: DimUtil.safeHeight(context) * 0.3, 
               //fit: BoxFit.contain,
             ),
           ),
@@ -44,7 +44,7 @@ class StartPage extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                SizedBox(height: screenHeight * 0.15),
+                SizedBox(height: DimUtil.safeHeight(context) * 0.15),
                 Text(
                   "Ready to Ride?",
                   style: GoogleFonts.poppins(

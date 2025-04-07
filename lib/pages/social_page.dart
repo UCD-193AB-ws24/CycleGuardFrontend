@@ -17,12 +17,13 @@ class SocialPage extends StatefulWidget {
 
 class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  int numOfTabs = 3;
   bool isPublic = true; // Move isPublic to the state class
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: numOfTabs, vsync: this);
     _loadUserProfile(); // Load profile data including isPublic
   }
 
@@ -126,7 +127,7 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
   Widget build(BuildContext context) {
     bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
     return DefaultTabController(
-      length: 3,
+      length: numOfTabs,
       child: Scaffold(
         appBar: AppBar(
           title: Text(

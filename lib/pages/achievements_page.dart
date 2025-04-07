@@ -100,7 +100,7 @@ class _AchievementsPageState extends State<AchievementsPage> {
               ),
             ),
           ...achievements.map((achievement) {
-            final index = achievementIndex++; 
+            final index = achievementIndex++;
             return AchievementCard(
               title: achievement['title']!,
               description: achievement['description']!,

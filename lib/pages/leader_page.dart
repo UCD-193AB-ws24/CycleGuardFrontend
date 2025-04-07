@@ -22,11 +22,11 @@ IconData getUserIcon(int rank) {
 Color _getIconColor(int rank) {
   switch(rank) {
     case 1:
-      return Colors.orange.shade600;
+      return Colors.orange.shade900;
     case 2:
       return Colors.grey.shade700;
     case 3:
-      return const Color.fromARGB(255, 205, 76, 203);
+      return Colors.brown.shade500;
     default:
       return Colors.blue;
   }
@@ -130,58 +130,112 @@ class _LeaderPageState extends State<LeaderPage> with SingleTickerProviderStateM
 
   /// Builds the leaderboard list
   Widget _buildLeaderboard(Future<List<Leader>> futureLeaders, bool isDistanceMode) {
-    bool isDarkMode = Theme.of(context).brightness == Brightness.dark; 
-    return RefreshIndicator(
-      onRefresh: _refreshLeaders,
-      child: FutureBuilder<List<Leader>>(
-        future: futureLeaders,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return const Center(child: Text('Error loading leaderboard'));
-          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(child: Text('No leaderboard data found.'));
-          } else {
-            final leaders = snapshot.data!;
-            return ListView.builder(
-              itemCount: leaders.length,
-              itemBuilder: (context, index) {
-                final leader = leaders[index];
-                return Card(
-                  margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  color: isDarkMode ? Theme.of(context).colorScheme.onSecondaryFixedVariant : Colors.white,
+  bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
+  return RefreshIndicator(
+    onRefresh: _refreshLeaders,
+    child: FutureBuilder<List<Leader>>(
+      future: futureLeaders,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        } else if (snapshot.hasError) {
+          return const Center(child: Text('Error loading leaderboard'));
+        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return const Center(child: Text('No leaderboard data found.'));
+        } else {
+          final leaders = snapshot.data!;
+
+          return ListView.builder(
+            itemCount: leaders.length,
+            itemBuilder: (context, index) {
+              final leader = leaders[index];
+
+              Color cardColor = isDarkMode ? Theme.of(context).colorScheme.onSecondaryFixedVariant : Theme.of(context).colorScheme.primaryFixed;
+              BoxDecoration? decoration = BoxDecoration();
+              double cardElevation = 1.0; // Default elevation for everyone
+              TextStyle titleStyle = TextStyle(color: isDarkMode ? Colors.white70 : Colors.black);
+              TextStyle subtitleStyle = TextStyle(color: isDarkMode ? Colors.white70 : Colors.black);
+
+              // 1st, 2nd, and 3rd place special styles
+              if (leader.rank == 1) {
+                decoration = BoxDecoration(
+                  borderRadius: BorderRadius.circular(8),
+                  gradient: LinearGradient(
+                    colors: [Colors.amber.shade800, Colors.amber.shade200],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                );
+                titleStyle = TextStyle(fontWeight: FontWeight.bold, color: Colors.black);
+                subtitleStyle = TextStyle(fontWeight: FontWeight.bold, color: Colors.black87);
+                cardElevation = 4.0;
+              } else if (leader.rank == 2) {
+                decoration = BoxDecoration(
+                  borderRadius: BorderRadius.circular(8),
+                  gradient: LinearGradient(
+                    colors: [Colors.grey.shade600, Colors.grey.shade200],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                );
+                titleStyle = TextStyle(color: Colors.black);
+                subtitleStyle = TextStyle(color: Colors.black87);
+                cardElevation = 3.0; 
+              } else if (leader.rank == 3) {
+                decoration = BoxDecoration(
+                  borderRadius: BorderRadius.circular(8),
+                  gradient: LinearGradient(
+                    colors: [Colors.brown.shade400, Colors.brown.shade200],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                );
+                titleStyle = TextStyle(color: Colors.black);
+                subtitleStyle = TextStyle(color: Colors.black87);
+                cardElevation = 2.0; 
+              }
+
+              return Card(
+                margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                elevation: cardElevation,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                color: cardColor,
+                child: Container(
+                  decoration: decoration,
                   child: ListTile(
                     leading: CircleAvatar(
-                      radius: 24, // Adjust size if needed
-                      backgroundColor: isDarkMode ? Theme.of(context).colorScheme.inverseSurface : Theme.of(context).colorScheme.onInverseSurface,//Color.fromRGBO(33, 150, 243, 0.2), // BlueAccent with 20% opacity
+                      radius: 28, 
+                      backgroundColor: isDarkMode
+                          ? Theme.of(context).colorScheme.inverseSurface
+                          : Theme.of(context).colorScheme.onInverseSurface,
                       child: Icon(
                         getUserIcon(leader.rank),
-                        size: 30, // Increase icon size
-                        color: _getIconColor(leader.rank), // Set a visible icon color
+                        size: leader.rank <= 3 ? 35 : 28, 
+                        color: _getIconColor(leader.rank),
                       ),
                     ),
                     title: Text(
                       leader.username,
-                      style: TextStyle(
-                        color: isDarkMode ? Colors.white70 : null,
-                      ),
+                      style: titleStyle,
                     ),
                     subtitle: Text(
                       isDistanceMode
                           ? 'Distance: ${leader.distance.toStringAsFixed(2)} miles'
                           : 'Time: ${leader.distance.toStringAsFixed(2)} hrs',
-                      style: TextStyle(
-                        color: isDarkMode ? Colors.white70 : null,
-                      ),
+                      style: subtitleStyle,
                     ),
                   ),
-                );
-              },
-            );
-          }
-        },
-      ),
-    );
-  }
+                ),
+              );
+            },
+          );
+        }
+      },
+    ),
+  );
+}
+
 }

@@ -13,6 +13,7 @@ import 'package:cycle_guard_app/data/user_stats_accessor.dart';
 import 'package:cycle_guard_app/data/week_history_accessor.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import './ble.dart';
 
 import '../main.dart';
 
@@ -366,6 +367,14 @@ class TestingPage extends StatelessWidget {
                     padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
                   ),
                   child: Text("user/all"),
+                ),
+                ElevatedButton(
+                  onPressed: () => showCustomDialog(context),
+                  style: ElevatedButton.styleFrom(
+                    elevation: 5,
+                    padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
+                  ),
+                  child: Text("BLUETOOTH"),
                 ),
               ],
             ),

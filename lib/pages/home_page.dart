@@ -7,7 +7,7 @@ import 'package:cycle_guard_app/pages/store_page.dart';
 import 'package:cycle_guard_app/pages/history_page.dart';
 import 'package:cycle_guard_app/pages/achievements_page.dart';
 import 'package:cycle_guard_app/data/achievements_progress_provider.dart';
-
+import '../auth/dim_util.dart';
 
 class HomePage extends StatefulWidget {
   @override
@@ -86,7 +86,7 @@ class _HomePageState extends State<HomePage> {
             ),
             SizedBox(height: 8),
             SizedBox(
-              height: 250,
+              height: DimUtil.safeHeight(context)*1/3,
               child: BarChart(
                 BarChartData(
                   alignment: BarChartAlignment.spaceAround,
@@ -147,16 +147,16 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
             ),
-            SizedBox(height: 16),
+            SizedBox(height: DimUtil.safeWidth(context)*1/40),
             _buildStatistic('Current Streak', '${userStats.rideStreak} days'),
-            SizedBox(height: 16),
+            SizedBox(height: DimUtil.safeWidth(context)*1/40),
             Center(
               child: Text(
                 'Daily Averages',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
             ),
-            SizedBox(height: 8),
+            SizedBox(height: DimUtil.safeWidth(context)*1/80),
             Column(
               children: [
                 _buildStatistic('Time Biking', '${weekHistory.averageTime.round()} minutes'),
@@ -164,9 +164,9 @@ class _HomePageState extends State<HomePage> {
                 _buildStatistic('Calories Burned', '${weekHistory.averageCalories.round()} calories'),
               ],
             ),
-            SizedBox(height: 8),
+            SizedBox(height: DimUtil.safeWidth(context)*1/80),
             _buildDailyChallenge(context, isDailyChallengeComplete),
-            SizedBox(height: 8),
+            SizedBox(height: DimUtil.safeWidth(context)*1/80),
             Align(
               alignment: Alignment.bottomCenter,
               child: Padding(
@@ -195,7 +195,7 @@ class _HomePageState extends State<HomePage> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text('Your Ride History'),
-                        SizedBox(width: 16),
+                        SizedBox(width: DimUtil.safeWidth(context)*1/40),
                         Icon(Icons.calendar_month_outlined, color: isDarkMode
                           ? Colors.white
                           : Theme.of(context).colorScheme.primary),
@@ -205,7 +205,7 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
             ),
-            SizedBox(height: 8),
+            SizedBox(height: DimUtil.safeWidth(context)*1/40),
             Center(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -221,9 +221,9 @@ class _HomePageState extends State<HomePage> {
                 ],
               ),
             ),
-            SizedBox(height: 8),
+            SizedBox(height: DimUtil.safeWidth(context)*1/80),
             _buildAchievementProgress(context, isDarkMode),
-            SizedBox(height: 8),
+            SizedBox(height: DimUtil.safeWidth(context)*1/80),
             Align(
               alignment: Alignment.bottomCenter,
               child: Padding(
@@ -252,7 +252,7 @@ class _HomePageState extends State<HomePage> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text('Your Achievements'),
-                        SizedBox(width: 16),
+                        SizedBox(width: DimUtil.safeWidth(context)*1/80),
                         Icon(Icons.emoji_events, color: isDarkMode
                           ? Colors.white
                           : Theme.of(context).colorScheme.primary),
@@ -330,7 +330,7 @@ class _HomePageState extends State<HomePage> {
             color: isDailyChallengeComplete ? Colors.amber : Colors.white, 
             size: 40,
           ), // Bike Icon
-          SizedBox(width: 16),
+          SizedBox(width: DimUtil.safeWidth(context)*1/40),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -339,7 +339,7 @@ class _HomePageState extends State<HomePage> {
                   'Daily Challenge: Bike 5 miles',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
                 ),
-                SizedBox(height: 8),
+                SizedBox(height: DimUtil.safeWidth(context)*1/80),
                 Text(
                   'Reward: 5 CycleCoins',
                   style: TextStyle(fontSize: 16, color: Colors.white),
@@ -379,7 +379,7 @@ class _HomePageState extends State<HomePage> {
             context,
             isDarkMode,
           ),
-          SizedBox(height: 16),
+          SizedBox(height: DimUtil.safeWidth(context)*1/40),
           _buildAchievement(
             selectedAchievements[1]['title'],
             selectedAchievements[1]['progress'].toInt(),
@@ -399,7 +399,7 @@ class _HomePageState extends State<HomePage> {
     return Row(
       children: [
         Icon(icon, color: isDarkMode ? Colors.white : Theme.of(context).colorScheme.primary, size: 40), 
-        SizedBox(width: 16),
+        SizedBox(width: DimUtil.safeWidth(context)*1/40),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -408,7 +408,7 @@ class _HomePageState extends State<HomePage> {
                 title,
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: isDarkMode ? Colors.white : Theme.of(context).colorScheme.primary),
               ),
-              SizedBox(height: 8),
+              SizedBox(height: DimUtil.safeWidth(context)*1/80),
               LinearProgressIndicator(
                 value: progressPercentage,
                 color: isDarkMode ? Theme.of(context).colorScheme.onSecondaryFixedVariant : Theme.of(context).colorScheme.primary,

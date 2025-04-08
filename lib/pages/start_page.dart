@@ -17,32 +17,34 @@ class StartPage extends StatelessWidget {
       body: Stack(
         children: [
           Positioned(
-            left: DimUtil.safeWidth(context) * (-0.95),
-            top:  DimUtil.safeHeight(context) * 0.05,
+            left: DimUtil.safeWidth(context) * (-0.9), 
+            top: 0,
             child: SvgPicture.asset(
               'assets/cg_logomark.svg',
               width:  DimUtil.safeWidth(context),
-              height: DimUtil.safeHeight(context),
+              height: DimUtil.safeHeight(context), 
               colorFilter: ColorFilter.mode(
                 Color(0xFFFFCC80), 
                 BlendMode.srcIn,
               ),
             ),
           ),
+          Positioned(
+            top: DimUtil.safeHeight(context) * 0.3,
+            left: 15,
+            right: 15,
+            child: SvgPicture.asset(
+              'assets/cg_type_logo.svg',
+              width: DimUtil.safeWidth(context) * 0.5, 
+              height: DimUtil.safeHeight(context) * 0.3, 
+              //fit: BoxFit.contain,
+            ),
+          ),
           Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(
-                  "CycleGuard",
-                  style: GoogleFonts.poppins(
-                    textStyle: TextStyle(
-                      fontSize: 60,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF555555), 
-                    ),
-                  ),
-                ),
+                SizedBox(height: DimUtil.safeHeight(context) * 0.15),
                 Text(
                   "Ready to Ride?",
                   style: GoogleFonts.poppins(
@@ -53,7 +55,7 @@ class StartPage extends StatelessWidget {
                     ),
                   ),
                 ),
-                SizedBox(height: 75),
+                SizedBox(height: 50),
 
                 ElevatedButton(
                   onPressed: () {

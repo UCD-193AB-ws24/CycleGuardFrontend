@@ -7,6 +7,9 @@ import 'package:cycle_guard_app/pages/store_page.dart';
 import 'package:cycle_guard_app/pages/history_page.dart';
 import 'package:cycle_guard_app/pages/achievements_page.dart';
 import 'package:cycle_guard_app/data/achievements_progress_provider.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:percent_indicator/circular_percent_indicator.dart';
+import 'package:cycle_guard_app/data/single_trip_history.dart';
 import '../auth/dim_util.dart';
 
 class HomePage extends StatefulWidget {
@@ -27,8 +30,20 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     final userStats = Provider.of<UserStatsProvider>(context);
     final weekHistory = Provider.of<WeekHistoryProvider>(context);
-    //final achievementsProgress = Provider.of<AchievementsProgressProvider>(context);
-    //print(achievementsProgress.achievementsCompleted);
+    final colorScheme = Theme.of(context).colorScheme;
+
+    final todayUtcTimestamp = DateTime.utc(
+        DateTime.now().year,
+        DateTime.now().month,
+        DateTime.now().day,
+        0, 0, 0, 0, 0,
+      ).millisecondsSinceEpoch ~/ 1000;
+
+    final todayInfo = weekHistory.dayHistoryMap[todayUtcTimestamp]  ?? const SingleTripInfo(distance: 0.0, calories: 0.0, time: 0.0);
+
+    double todayDistance = todayInfo.distance;
+    double todayCalories = todayInfo.calories;
+    double todayTime = todayInfo.time;
 
     List<double> distancesForWeek = List.filled(7, 0.0);
     for (int i = 0; i < weekHistory.days.length; i++) {
@@ -37,17 +52,17 @@ class _HomePageState extends State<HomePage> {
 
       // Convert the day to the correct index (0-6, Monday-Sunday)
       DateTime dateTime = DateTime.fromMillisecondsSinceEpoch(day * 1000);
-      int dayIndex = dateTime.weekday;  // Adjust for Monday=0 to Sunday=6
+      int dayIndex = dateTime.weekday - 1; 
 
       // Assign the distance for that day
       distancesForWeek[dayIndex] = dayDistance;
     }
 
-    List<double>rotatedDistances = getRotatedArray(distancesForWeek, DateTime.now().weekday);
-    bool isDailyChallengeComplete = rotatedDistances[6] > 5;
+    List<double>rotatedDistances = getRotatedArray(distancesForWeek, DateTime.now().weekday - 1);
+    bool isDailyChallengeComplete = rotatedDistances[6] >= 5;
 
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    final selectedColor = Theme.of(context).colorScheme.primary;
+    final selectedColor = colorScheme.primary;
     return Scaffold(
       appBar: AppBar(
         title: Column(
@@ -55,23 +70,46 @@ class _HomePageState extends State<HomePage> {
           children: [
             RichText(
               text: TextSpan(
-                style: TextStyle(fontSize: 20, color: isDarkMode ? Colors.white : Colors.black54),
+                style: TextStyle(fontSize: 20, color: isDarkMode ? Colors.white70 : Colors.black87),
                 children: [
                   TextSpan(text: 'Hi, '),
                   TextSpan(
                     text: userStats.username,
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold, 
+                    ),
                   ),
                 ],
               ),
             ),
             Text(
               'here is your progress',
-              style: TextStyle(color: Colors.grey, fontSize: 16),
+              style: TextStyle(
+                fontSize: 16, 
+                color: isDarkMode 
+                  ? Colors.white70 
+                  : Colors.black,
+              ),
             ),
           ],
         ),
         backgroundColor: isDarkMode ? Colors.black12 : null, 
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 32.0),
+            child: SvgPicture.asset(
+              'assets/cg_logomark.svg',
+              height: 30,
+              width: 30,
+              colorFilter: ColorFilter.mode( 
+                isDarkMode 
+                  ? Colors.white70
+                  : Colors.black,
+                BlendMode.srcIn,
+              ),
+            ),
+          )
+        ],
       ),
       body: SingleChildScrollView( 
         padding: const EdgeInsets.all(8.0),
@@ -84,9 +122,9 @@ class _HomePageState extends State<HomePage> {
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
             ),
-            SizedBox(height: 8),
+            SizedBox(height: DimUtil.safeHeight(context)*1/40),
             SizedBox(
-              height: DimUtil.safeHeight(context)*1/3,
+              height: DimUtil.safeHeight(context)*1/4,
               child: BarChart(
                 BarChartData(
                   alignment: BarChartAlignment.spaceAround,
@@ -131,8 +169,8 @@ class _HomePageState extends State<HomePage> {
                   barTouchData: BarTouchData(
                     touchTooltipData: BarTouchTooltipData(
                       getTooltipColor: (group) => isDarkMode
-                        ? Theme.of(context).colorScheme.secondary
-                        : Theme.of(context).colorScheme.secondaryFixed,
+                        ? colorScheme.secondary
+                        : colorScheme.secondaryFixed,
                       getTooltipItem: (group, groupIndex, rod, rodIndex) {
                         return BarTooltipItem(
                           '${rod.toY.toStringAsFixed(1)}', 
@@ -144,29 +182,118 @@ class _HomePageState extends State<HomePage> {
                       },
                     ),
                   ),
+                  borderData: FlBorderData(show: false),
                 ),
               ),
             ),
             SizedBox(height: DimUtil.safeWidth(context)*1/40),
-            _buildStatistic('Current Streak', '${userStats.rideStreak} days'),
+            buildStreakDisplay(context, userStats.rideStreak),
+            SizedBox(height: DimUtil.safeWidth(context)*1/20),
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  Center(
+                    child: Text(
+                      "Today's Goal Progress",
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  Positioned(
+                    right: 0,
+                    bottom: 0,
+                    top: 2,
+                    child: IconButton(
+                      icon: Icon(Icons.help_outline, color: isDarkMode ? Colors.white70 : Colors.black),
+                      padding: EdgeInsets.zero,
+                      constraints: BoxConstraints(),
+                      onPressed: () {
+                        showDialog(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            backgroundColor: isDarkMode ? colorScheme.secondary : null,
+                            title: Text(
+                              'Daily Goals',
+                              style: TextStyle(
+                                color: isDarkMode ? Colors.white70 : Colors.black,
+                              ),
+                            ),
+                            content: Text(
+                              'You can set your daily goals in your profile.',
+                              style: TextStyle(
+                                color: isDarkMode ? Colors.white70 : Colors.black,
+                              ),
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context),
+                                child: Text(
+                                  'OK',
+                                  style: TextStyle(
+                                    color: isDarkMode ? Colors.white70 : null,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
             SizedBox(height: DimUtil.safeWidth(context)*1/40),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _buildCircularStat(
+                  context,
+                  title: 'Time',
+                  value: '$todayTime min',
+                  percent: todayTime / 27, 
+                  color: Colors.blueAccent,
+                ),
+                _buildCircularStat(
+                  context,
+                  title: 'Distance',
+                  value: '$todayDistance mi',
+                  percent: todayDistance / 27, 
+                  color: Colors.orangeAccent,
+                ),
+                _buildCircularStat(
+                  context,
+                  title: 'Calories',
+                  value: '$todayCalories cal',
+                  percent: todayCalories / 27, 
+                  color: Colors.redAccent,
+                ),
+              ],
+            ),
+            SizedBox(height: DimUtil.safeWidth(context)*1/20),
             Center(
               child: Text(
-                'Daily Averages',
+                'Average Ride this Week',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
             ),
-            SizedBox(height: DimUtil.safeWidth(context)*1/80),
-            Column(
+            SizedBox(height: DimUtil.safeWidth(context)*1/40),
+            Row(
               children: [
-                _buildStatistic('Time Biking', '${weekHistory.averageTime.round()} minutes'),
-                _buildStatistic('Distance Biked', '${weekHistory.averageDistance.round()} miles'),
-                _buildStatistic('Calories Burned', '${weekHistory.averageCalories.round()} calories'),
+                Expanded(
+                  child: _buildStatCard(Icons.timer, 'Time', '${weekHistory.averageTime.round()} min', Colors.blueAccent),
+                ),
+                SizedBox(width: 8),
+                Expanded(
+                  child: _buildStatCard(Icons.directions_bike, 'Distance', '${weekHistory.averageDistance.round()} mi', Colors.orangeAccent),
+                ),
+                SizedBox(width: 8),
+                Expanded(
+                  child: _buildStatCard(Icons.local_fire_department, 'Calories', '${weekHistory.averageCalories.round()} cal', Colors.redAccent),
+                ),
               ],
             ),
-            SizedBox(height: DimUtil.safeWidth(context)*1/80),
+            SizedBox(height: DimUtil.safeWidth(context)*1/20),
             _buildDailyChallenge(context, isDailyChallengeComplete),
-            SizedBox(height: DimUtil.safeWidth(context)*1/80),
+            SizedBox(height: DimUtil.safeWidth(context)*1/20),
             Align(
               alignment: Alignment.bottomCenter,
               child: Padding(
@@ -177,11 +304,11 @@ class _HomePageState extends State<HomePage> {
                     style: ElevatedButton.styleFrom(
                       elevation: 6,
                       backgroundColor: isDarkMode
-                          ? Theme.of(context).colorScheme.secondary
-                          : Theme.of(context).colorScheme.onInverseSurface,
+                          ? colorScheme.secondary
+                          : colorScheme.onInverseSurface,
                       foregroundColor: isDarkMode
                           ? Colors.white
-                          : Theme.of(context).colorScheme.primary,
+                          : colorScheme.primary,
                       padding: EdgeInsets.symmetric(vertical: 8.0),
                       textStyle: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                     ),
@@ -198,14 +325,15 @@ class _HomePageState extends State<HomePage> {
                         SizedBox(width: DimUtil.safeWidth(context)*1/40),
                         Icon(Icons.calendar_month_outlined, color: isDarkMode
                           ? Colors.white
-                          : Theme.of(context).colorScheme.primary),
+                          : colorScheme.primary
+                        ),
                       ],
                     ),
                   ),
                 ),
               ),
             ),
-            SizedBox(height: DimUtil.safeWidth(context)*1/40),
+            SizedBox(height: DimUtil.safeWidth(context)*1/20),
             Center(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -234,11 +362,11 @@ class _HomePageState extends State<HomePage> {
                     style: ElevatedButton.styleFrom(
                       elevation: 6,
                       backgroundColor: isDarkMode
-                          ? Theme.of(context).colorScheme.secondary
-                          : Theme.of(context).colorScheme.onInverseSurface,
+                          ? colorScheme.secondary
+                          : colorScheme.onInverseSurface,
                       foregroundColor: isDarkMode
                           ? Colors.white
-                          : Theme.of(context).colorScheme.primary,
+                          : colorScheme.primary,
                       padding: EdgeInsets.symmetric(vertical: 8.0),
                       textStyle: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                     ),
@@ -255,7 +383,7 @@ class _HomePageState extends State<HomePage> {
                         SizedBox(width: DimUtil.safeWidth(context)*1/80),
                         Icon(Icons.emoji_events, color: isDarkMode
                           ? Colors.white
-                          : Theme.of(context).colorScheme.primary),
+                          : colorScheme.primary),
                       ],
                     ),
                   ),
@@ -299,16 +427,75 @@ class _HomePageState extends State<HomePage> {
     return result;
   }
 
-  Widget _buildStatistic(String title, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(title, style: TextStyle(fontSize: 16)),
-          Text(value, style: TextStyle(fontSize: 16)),
-        ],
+  Widget buildStreakDisplay(BuildContext context, int rideStreak) {
+    if (rideStreak > 1) {
+      return Center(
+        child: Text(
+          '🔥 $rideStreak day streak',
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+      );
+    } else {
+      return Center(
+        child: Text(
+          'Get out and ride — start a streak!',
+          style: TextStyle(
+            fontSize: 16,
+            fontStyle: FontStyle.italic,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? Colors.white70
+                : Colors.black87,
+          ),
+          textAlign: TextAlign.center,
+        ),
+      );
+    }
+  }
+
+  Widget _buildStatCard(IconData icon, String label, String value, Color color) {
+    return Card(
+      color: color.withAlpha(30),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      elevation: 2,
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Row(
+          children: [
+            Icon(icon, color: color),
+            SizedBox(width: 12),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                Text(value, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              ],
+            ),
+          ],
+        ),
       ),
+    );
+  }
+
+  Widget _buildCircularStat(BuildContext context,
+      {required String title,
+      required String value,
+      required double percent,
+      required Color color}) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        CircularPercentIndicator(
+          radius: 60.0,
+          lineWidth: 8.0,
+          percent: percent.clamp(0.0, 1.0),
+          center: Text(value, style: TextStyle(fontWeight: FontWeight.bold)),
+          progressColor: color,
+          backgroundColor: Colors.grey.shade300,
+          circularStrokeCap: CircularStrokeCap.round,
+        ),
+        const SizedBox(height: 8),
+        Text(title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+      ],
     );
   }
 
@@ -395,10 +582,11 @@ class _HomePageState extends State<HomePage> {
 
   Widget _buildAchievement(String title, int currentValue, int goalValue, IconData icon, BuildContext context, bool isDarkMode) {
     double progressPercentage = (currentValue / goalValue).clamp(0.0, 1.0);
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Row(
       children: [
-        Icon(icon, color: isDarkMode ? Colors.white : Theme.of(context).colorScheme.primary, size: 40), 
+        Icon(icon, color: isDarkMode ? Colors.white : colorScheme.primary, size: 40), 
         SizedBox(width: DimUtil.safeWidth(context)*1/40),
         Expanded(
           child: Column(
@@ -406,12 +594,12 @@ class _HomePageState extends State<HomePage> {
             children: [
               Text(
                 title,
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: isDarkMode ? Colors.white : Theme.of(context).colorScheme.primary),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: isDarkMode ? Colors.white : colorScheme.primary),
               ),
               SizedBox(height: DimUtil.safeWidth(context)*1/80),
               LinearProgressIndicator(
                 value: progressPercentage,
-                color: isDarkMode ? Theme.of(context).colorScheme.onSecondaryFixedVariant : Theme.of(context).colorScheme.primary,
+                color: isDarkMode ? colorScheme.onSecondaryFixedVariant : colorScheme.primary,
                 minHeight: 8,
                 borderRadius: BorderRadius.circular(8),
               ),

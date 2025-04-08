@@ -4,6 +4,8 @@ import 'package:intl/intl.dart';
 import '../main.dart';
 import 'package:cycle_guard_app/data/trip_history_provider.dart';
 import 'package:cycle_guard_app/data/user_stats_provider.dart';
+import 'package:cycle_guard_app/data/single_trip_history.dart';
+import 'package:cycle_guard_app/pages/calendar_view.dart';
 import 'package:draggable_scrollbar/draggable_scrollbar.dart';
 import '../auth/dim_util.dart';
 
@@ -27,44 +29,68 @@ class _HistoryPageState extends State<HistoryPage> {
     });
   }
 
-Future<void> _pickDateRange(BuildContext context) async {
-  
-  final DateTimeRange? picked = await showDateRangePicker(
-    context: context,
-    firstDate: DateTime(2025), 
-    lastDate: DateTime.now(), 
-    initialDateRange: _selectedDateRange,
-    builder: (BuildContext context, Widget? child) {
-      return Theme(
-        data: ThemeData.light().copyWith(
-          primaryColor: Theme.of(context).colorScheme.primary, 
-          datePickerTheme: DatePickerThemeData(
-            dayBackgroundColor: WidgetStateProperty.resolveWith((states) {
-              if (states.contains(WidgetState.selected)) {
-                return Theme.of(context).colorScheme.primary;
-              }
-              return Colors.orange;
-            }),
-            rangeSelectionBackgroundColor: Theme.of(context).colorScheme.onInverseSurface,
+  Future<void> _pickDateRange(BuildContext context, DateTime firstDay) async {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final colorScheme = Theme.of(context).colorScheme;
+    
+    final DateTimeRange? picked = await showDateRangePicker(
+      context: context,
+      firstDate: firstDay,
+      lastDate: DateTime.now(), 
+      initialDateRange: _selectedDateRange,
+      builder: (BuildContext context, Widget? child) {
+        return Theme(
+         data: ThemeData(
+            brightness: isDarkMode ? Brightness.dark : Brightness.light,
+            colorScheme: colorScheme.copyWith(
+              primary: colorScheme.primary,
+              surface: isDarkMode ? Colors.grey[900]! : Colors.white,
+              onSurface: isDarkMode ? Colors.white : Colors.black,
+              onSurfaceVariant: isDarkMode ? Colors.white : Colors.black,
+            ),
+            datePickerTheme: DatePickerThemeData(
+              backgroundColor: isDarkMode ? Colors.grey[850]! : Colors.white,
+              headerForegroundColor: isDarkMode ? Colors.black : colorScheme.onPrimary,
+              headerBackgroundColor: isDarkMode ? colorScheme.secondary : colorScheme.primary,
+              rangeSelectionBackgroundColor: colorScheme.onInverseSurface.withValues(alpha: 0.2),
+            ),
           ),
-        ),
-        child: child!,
-      );
-    },
-  );
+          child: child!,
+        );
+      },
+    );
 
-  if (picked != null && picked != _selectedDateRange) {
-    setState(() {
-      _selectedDateRange = picked;
-    });
+    if (picked != null && picked != _selectedDateRange) {
+      setState(() {
+        _selectedDateRange = picked;
+      });
+    }
   }
-}
+
+  Map<String, double> _getDailyMiles(Map<int, SingleTripInfo> tripHistory) {
+    Map<String, double> dailyMiles = {};
+
+    tripHistory.forEach((timestamp, trip) {
+      final tripDate = DateTime.fromMillisecondsSinceEpoch(timestamp * 1000);
+      final date = DateFormat('M-d-yyyy').format(tripDate); 
+
+      if (!dailyMiles.containsKey(date)) {
+        dailyMiles[date] = 0;
+      }
+      dailyMiles[date] = dailyMiles[date]! + trip.distance; 
+    });
+
+    return dailyMiles;
+  }
 
   @override
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final tripHistoryProvider = Provider.of<TripHistoryProvider>(context);
     final userStatsProvider = Provider.of<UserStatsProvider>(context);
+    final colorScheme = Theme.of(context).colorScheme;
+    DateTime creationDate = DateTime.fromMillisecondsSinceEpoch(userStatsProvider.accountCreationTime * 1000);
+    DateTime firstDay = DateTime(creationDate.year, creationDate.month, creationDate.day);
     final tripHistory = tripHistoryProvider.tripHistory;
 
     double totalCalories = tripHistory.values.fold(0.0, (sum, trip) => sum + trip.calories);
@@ -127,7 +153,7 @@ Future<void> _pickDateRange(BuildContext context) async {
             padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
             child: Card(
               elevation: 4,
-              color: isDarkMode ? Theme.of(context).colorScheme.onSecondaryFixedVariant : Theme.of(context).colorScheme.surfaceContainerLow,
+              color: isDarkMode ? colorScheme.onSecondaryFixedVariant : colorScheme.surfaceContainerLow,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -139,7 +165,7 @@ Future<void> _pickDateRange(BuildContext context) async {
                     Center(
                       child: Text(
                         'All Time Ride Summary',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: isDarkMode ? Theme.of(context).colorScheme.surfaceContainerLow : Colors.black),
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: isDarkMode ? colorScheme.surfaceContainerLow : Colors.black),
                       ),
                     ),
                     SizedBox(height: DimUtil.safeHeight(context)*1/80),
@@ -151,11 +177,11 @@ Future<void> _pickDateRange(BuildContext context) async {
                           children: [
                             Text(
                               'Distance:',
-                              style: TextStyle(fontSize: 16, color: isDarkMode ? Theme.of(context).colorScheme.surfaceContainerLow : Theme.of(context).colorScheme.onPrimaryFixed),
+                              style: TextStyle(fontSize: 16, color: isDarkMode ?colorScheme.surfaceContainerLow : colorScheme.onPrimaryFixed),
                             ),
                             Text(
                               '${userStatsProvider.totalDistance} km',
-                              style: TextStyle(fontSize: 16, color: isDarkMode ? Theme.of(context).colorScheme.surfaceContainerLow : Theme.of(context).colorScheme.onPrimaryFixed),
+                              style: TextStyle(fontSize: 16, color: isDarkMode ? colorScheme.surfaceContainerLow : colorScheme.onPrimaryFixed),
                             ),
                           ],
                         ),
@@ -165,11 +191,11 @@ Future<void> _pickDateRange(BuildContext context) async {
                           children: [
                             Text(
                               'Calories:',
-                              style: TextStyle(fontSize: 16, color: isDarkMode ? Theme.of(context).colorScheme.surfaceContainerLow : Theme.of(context).colorScheme.onPrimaryFixed),
+                              style: TextStyle(fontSize: 16, color: isDarkMode ? colorScheme.surfaceContainerLow : colorScheme.onPrimaryFixed),
                             ),
                             Text(
                               '$totalCalories cal',
-                              style: TextStyle(fontSize: 16, color: isDarkMode ? Theme.of(context).colorScheme.surfaceContainerLow : Theme.of(context).colorScheme.onPrimaryFixed),
+                              style: TextStyle(fontSize: 16, color: isDarkMode ? colorScheme.surfaceContainerLow : Theme.of(context).colorScheme.onPrimaryFixed),
                             ),
                           ],
                         ),
@@ -179,11 +205,11 @@ Future<void> _pickDateRange(BuildContext context) async {
                           children: [
                             Text(
                               'Time:',
-                              style: TextStyle(fontSize: 16, color: isDarkMode ? Theme.of(context).colorScheme.surfaceContainerLow : Theme.of(context).colorScheme.onPrimaryFixed),
+                              style: TextStyle(fontSize: 16, color: isDarkMode ? colorScheme.surfaceContainerLow : colorScheme.onPrimaryFixed),
                             ),
                             Text(
                               '${userStatsProvider.totalTime} min',
-                              style: TextStyle(fontSize: 16, color: isDarkMode ? Theme.of(context).colorScheme.surfaceContainerLow : Theme.of(context).colorScheme.onPrimaryFixed),
+                              style: TextStyle(fontSize: 16, color: isDarkMode ? colorScheme.surfaceContainerLow : colorScheme.onPrimaryFixed),
                             ),
                           ],
                         ),
@@ -193,11 +219,11 @@ Future<void> _pickDateRange(BuildContext context) async {
                           children: [
                             Text(
                               'Rides:',
-                              style: TextStyle(fontSize: 16, color: isDarkMode ? Theme.of(context).colorScheme.surfaceContainerLow : Theme.of(context).colorScheme.onPrimaryFixed),
+                              style: TextStyle(fontSize: 16, color: isDarkMode ? colorScheme.surfaceContainerLow : colorScheme.onPrimaryFixed),
                             ),
                             Text(
                               '$totalTrips',
-                              style: TextStyle(fontSize: 16, color: isDarkMode ? Theme.of(context).colorScheme.surfaceContainerLow : Theme.of(context).colorScheme.onPrimaryFixed),
+                              style: TextStyle(fontSize: 16, color: isDarkMode ? colorScheme.surfaceContainerLow : colorScheme.onPrimaryFixed),
                             ),
                           ],
                         ),
@@ -208,6 +234,57 @@ Future<void> _pickDateRange(BuildContext context) async {
               ),
             ),
           ),
+          ElevatedButton(
+            onPressed: () async {
+              await tripHistoryProvider.fetchTripHistory();
+
+              // Check if the trip history is not null before proceeding
+              if (tripHistoryProvider.tripHistory.isNotEmpty) {
+                final dailyMiles = _getDailyMiles(tripHistoryProvider.tripHistory);
+
+                // Check if CalendarView is already on the navigation stack
+                bool isCalendarInStack = false;
+
+                // Loop through the current navigation stack
+                Navigator.of(context).popUntil((route) {
+                  if (route.settings.name == '/calendar') {
+                    isCalendarInStack = true;  // CalendarView is already on the stack
+                  }
+                  return true;
+                });
+
+                // If it's not in the stack, push it
+                if (!isCalendarInStack) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => CalendarView(dailyMiles: dailyMiles),
+                      settings: RouteSettings(name: '/calendar'),
+                    ),
+                  );
+                }
+              } else {
+                // Handle the case where the trip history is null or empty
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('No trip history available.')),
+                );
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: isDarkMode
+                  ? colorScheme.onSecondaryFixedVariant
+                  : colorScheme.surfaceContainerLow,
+            ),
+            child: Text(
+              'View Miles Biked Calendar',
+              style: TextStyle(
+                color: isDarkMode
+                    ? colorScheme.surfaceContainerLow
+                    : colorScheme.onSecondaryFixedVariant,
+              ),
+            ),
+          ),
+          SizedBox(height: 8),
           Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
@@ -257,14 +334,14 @@ Future<void> _pickDateRange(BuildContext context) async {
                 borderRadius: BorderRadius.circular(8), 
                 child: Container(
                   decoration: BoxDecoration(
-                    color: isDarkMode ? Theme.of(context).colorScheme.onSecondaryFixedVariant : Theme.of(context).colorScheme.surfaceContainerLow,
+                    color: isDarkMode ? colorScheme.onSecondaryFixedVariant : colorScheme.surfaceContainerLow,
                     borderRadius: BorderRadius.circular(8),
                     border: _selectedDateRange != null
-                        ? Border.all(color: Theme.of(context).colorScheme.outline, width: 2)
+                        ? Border.all(color: colorScheme.outline, width: 2)
                         : Border.all(color: Colors.transparent), 
                   ),
                   child: OutlinedButton(
-                    onPressed: () => _pickDateRange(context),
+                    onPressed: () => _pickDateRange(context, firstDay),
                     style: OutlinedButton.styleFrom(
                       side: BorderSide.none, 
                       shape: RoundedRectangleBorder(
@@ -275,13 +352,13 @@ Future<void> _pickDateRange(BuildContext context) async {
                       _selectedDateRange == null
                           ? 'Sort Date Range'
                           : '${DateFormat('M/d/yyyy').format(_selectedDateRange!.start)} - ${DateFormat('M/d/yyyy').format(_selectedDateRange!.end)}',
-                      style: TextStyle(fontSize: 16, color: isDarkMode ? Theme.of(context).colorScheme.surfaceContainerLow : Theme.of(context).colorScheme.onSecondaryFixedVariant,),
+                      style: TextStyle(fontSize: 16, color: isDarkMode ? colorScheme.surfaceContainerLow : colorScheme.onSecondaryFixedVariant,),
                     ),
                   ),
                 ),
               ),
               IconButton(
-                icon: Icon(Icons.delete, color: isDarkMode ? Theme.of(context).colorScheme.surfaceContainerLow : Theme.of(context).colorScheme.onSecondaryFixedVariant,),
+                icon: Icon(Icons.delete, color: isDarkMode ? colorScheme.surfaceContainerLow : colorScheme.onSecondaryFixedVariant,),
                 onPressed: () {
                   setState(() {
                     _selectedDateRange = null;  
@@ -296,7 +373,7 @@ Future<void> _pickDateRange(BuildContext context) async {
             : Expanded(
               child: DraggableScrollbar.arrows (
                 controller: _controller,
-                backgroundColor: isDarkMode ? Theme.of(context).colorScheme.surfaceContainerLow : Theme.of(context).colorScheme.onSecondaryFixedVariant,
+                backgroundColor: isDarkMode ? colorScheme.surfaceContainerLow : colorScheme.onSecondaryFixedVariant,
                 child: ListView.builder(
                   controller: _controller,
                   itemCount: groupedTrips.length,
@@ -312,7 +389,7 @@ Future<void> _pickDateRange(BuildContext context) async {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       elevation: 4,
-                      color: isDarkMode ? Theme.of(context).colorScheme.onSecondaryFixedVariant : Theme.of(context).colorScheme.surfaceContainerLow,
+                      color: isDarkMode ? colorScheme.onSecondaryFixedVariant : colorScheme.surfaceContainerLow,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -326,18 +403,18 @@ Future<void> _pickDateRange(BuildContext context) async {
                                   Text(
                                     '$date',
                                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18,
-                                      color: isDarkMode ? Theme.of(context).colorScheme.surfaceContainerLow : Colors.black,),
+                                      color: isDarkMode ? colorScheme.surfaceContainerLow : Colors.black,),
                                   ),
                                   Spacer(),
                                   Text(
                                     '${sortedTimestamps.length} ride${sortedTimestamps.length > 1 ? 's' : ''}',
                                     style: TextStyle(fontSize: 16, 
-                                      color: isDarkMode ? Theme.of(context).colorScheme.surfaceContainerLow : Theme.of(context).colorScheme.onPrimaryFixed),
+                                      color: isDarkMode ? colorScheme.surfaceContainerLow : colorScheme.onPrimaryFixed),
                                   ),
                                 ],
                               ),
-                              collapsedIconColor: isDarkMode ? Theme.of(context).colorScheme.surfaceContainerLow : Theme.of(context).colorScheme.onPrimaryFixed,  
-                              iconColor: isDarkMode ? Theme.of(context).colorScheme.surfaceContainerLow : Theme.of(context).colorScheme.onPrimaryFixed, 
+                              collapsedIconColor: isDarkMode ? colorScheme.surfaceContainerLow : colorScheme.onPrimaryFixed,  
+                              iconColor: isDarkMode ? colorScheme.surfaceContainerLow : colorScheme.onPrimaryFixed, 
                               children: [
                                 ...sortedTimestamps.map((timestamp) {
                                   final trip = tripHistoryProvider.getTripByTimestamp(timestamp);
@@ -354,12 +431,12 @@ Future<void> _pickDateRange(BuildContext context) async {
                                       borderRadius: BorderRadius.circular(12),
                                     ),
                                     elevation: 4,
-                                    color: isDarkMode ? Theme.of(context).colorScheme.secondary : Theme.of(context).colorScheme.onTertiary,
+                                    color: isDarkMode ? colorScheme.secondary : colorScheme.onTertiary,
                                     child: ListTile(
                                       contentPadding: EdgeInsets.all(16),
                                       title: Text(
                                         'Ride ${sortedTimestamps.indexOf(timestamp) + 1}',
-                                        style: TextStyle(fontSize: 16, color : isDarkMode ? Colors.grey[300] : Theme.of(context).colorScheme.onPrimaryFixed),
+                                        style: TextStyle(fontSize: 16, color : isDarkMode ? Colors.grey[300] : colorScheme.onPrimaryFixed),
                                       ),
                                       subtitle: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -368,28 +445,28 @@ Future<void> _pickDateRange(BuildContext context) async {
                                             children: [
                                               Icon(Icons.access_time, color: Colors.green, size: 18),
                                               SizedBox(width: DimUtil.safeWidth(context)*1/80),
-                                              Text('Time: $formattedTime', style: TextStyle(fontSize: 16, color : isDarkMode ? Colors.grey[300] : Theme.of(context).colorScheme.onPrimaryFixed)),
+                                              Text('Time: $formattedTime', style: TextStyle(fontSize: 16, color : isDarkMode ? Colors.grey[300] : colorScheme.onPrimaryFixed)),
                                             ],
                                           ),
                                           Row(
                                             children: [
                                               Icon(Icons.directions_bike, color: Colors.blueAccent, size: 18),
                                               SizedBox(width: DimUtil.safeWidth(context)*1/80),
-                                              Text('${trip.distance} km', style: TextStyle(fontSize: 16, color : isDarkMode ? Colors.grey[300] : Theme.of(context).colorScheme.onPrimaryFixed)),
+                                              Text('${trip.distance} km', style: TextStyle(fontSize: 16, color : isDarkMode ? Colors.grey[300] : colorScheme.onPrimaryFixed)),
                                             ],
                                           ),
                                           Row(
                                             children: [
                                               Icon(Icons.timer, color: Colors.orange, size: 18),
                                               SizedBox(width:DimUtil.safeWidth(context)*1/80),
-                                              Text('${trip.time} min', style: TextStyle(fontSize: 16, color : isDarkMode ? Colors.grey[300] : Theme.of(context).colorScheme.onPrimaryFixed)),
+                                              Text('${trip.time} min', style: TextStyle(fontSize: 16, color : isDarkMode ? Colors.grey[300] : colorScheme.onPrimaryFixed)),
                                             ],
                                           ),
                                           Row(
                                             children: [
                                               Icon(Icons.local_fire_department, color: Colors.red, size: 18),
                                               SizedBox(width: DimUtil.safeWidth(context)*1/80),
-                                              Text('${trip.calories} cal', style: TextStyle(fontSize: 16, color : isDarkMode ? Colors.grey[300] : Theme.of(context).colorScheme.onPrimaryFixed)),
+                                              Text('${trip.calories} cal', style: TextStyle(fontSize: 16, color : isDarkMode ? Colors.grey[300] : colorScheme.onPrimaryFixed)),
                                             ],
                                           ),
                                         ],

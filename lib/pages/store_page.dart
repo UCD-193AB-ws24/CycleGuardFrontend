@@ -1,4 +1,5 @@
 import 'package:cycle_guard_app/data/purchase_info_accessor.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:provider/provider.dart';
@@ -45,11 +46,25 @@ class StorePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appState = Provider.of<MyAppState>(context);
+    bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
       appBar: createAppBar(context, 'Store'),
       body: Stack(
         children: [
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  isDarkMode ? Colors.black12 : colorScheme.onInverseSurface, 
+                  isDarkMode ? colorScheme.onPrimaryContainer : colorScheme.secondary
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+          ),
           Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
@@ -57,36 +72,42 @@ class StorePage extends StatelessWidget {
               Center(
                 child: Column(
                   children: [
-                    Text(
-                      "New Color Themes",
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        _buildItem(
+                          context: context,
+                          title: "Color Theme",
+                          cost: "10 CycleCoins",
+                          onBuy: () => _showThemeMenu(context, appState),
+                          icon: Icons.color_lens, 
+                        ),
+                        _buildItem(
+                          context: context,
+                          title: "Profile Icon",
+                          cost: "50 CycleCoins",
+                          onBuy: () {},
+                          icon: Icons.person, 
+                          isPlaceholder: false, 
+                        ),
+                      ],
                     ),
-                    Text("10 CycleCoins"),
-                    ElevatedButton(
-                      onPressed: appState.storeThemes.isNotEmpty
-                          ? () => _showThemeMenu(context, appState)
-                          : null, // Disable if no themes left
-                      style: ElevatedButton.styleFrom(
-                        elevation: 5,
-                        padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
-                      ),
-                      child: Text("Buy"),
+                    SizedBox(height: 20),
+
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        _buildItem(
+                          context: context,
+                          title: "Rocket Boost",
+                          cost: "100 CycleCoins",
+                          onBuy: () => _buyRocketBoost(context, appState),
+                          icon: Icons.rocket, 
+                        ),
+                      ],
                     ),
-                    SizedBox(height: 20), // Adds space between the two sections
-                    Text(
-                      "Rocket Boost",
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                    ),
-                    Text("100 CycleCoins"),
-                    ElevatedButton(
-                      onPressed: () => _buyRocketBoost(context, appState),
-                      style: ElevatedButton.styleFrom(
-                        elevation: 5,
-                        padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
-                      ),
-                      child: Text("Buy"),
-                    ),
-                    SizedBox(height: 20), 
+
+                    // Temporary buttons
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         elevation: 5,
@@ -121,7 +142,7 @@ class StorePage extends StatelessWidget {
                         SizedBox(width: 5),
                         Text(
                           'Loading...',
-                          style: TextStyle(fontWeight: FontWeight.bold, color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black),
+                          style: TextStyle(fontWeight: FontWeight.bold, color: isDarkMode ? Colors.white : Colors.black),
                         ),
                       ],
                     );
@@ -132,7 +153,7 @@ class StorePage extends StatelessWidget {
                         SizedBox(width: 5),
                         Text(
                           'Error!',
-                          style: TextStyle(fontWeight: FontWeight.bold, color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black),
+                          style: TextStyle(fontWeight: FontWeight.bold, color: isDarkMode ? Colors.white : Colors.black),
                         ),
                       ],
                     );
@@ -143,7 +164,7 @@ class StorePage extends StatelessWidget {
                         SizedBox(width: 5),
                         Text(
                           '${snapshot.data} CycleCoins',
-                          style: TextStyle(fontWeight: FontWeight.bold, color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black),
+                          style: TextStyle(fontWeight: FontWeight.bold, color: isDarkMode ? Colors.white : Colors.black),
                         ),
                       ],
                     );
@@ -153,6 +174,69 @@ class StorePage extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  // Widget to build each item with a title, cost, button, and icon
+  Widget _buildItem({
+    required BuildContext context,
+    required String title,
+    required String cost,
+    required VoidCallback onBuy,
+    required IconData icon,
+    bool isPlaceholder = false,
+  }) {
+    final colorScheme = Theme.of(context).colorScheme;
+    bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
+    return GestureDetector(
+      onTap: isPlaceholder ? null : onBuy,
+      child: Card(
+        elevation: 5,
+        color: isDarkMode
+          ? colorScheme.secondary
+          : colorScheme.onInverseSurface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(32),
+        ),
+        margin: EdgeInsets.all(8),
+        child: Container(
+          decoration: BoxDecoration(
+            border: Border.all(
+              color: isDarkMode ? colorScheme.onPrimaryContainer : colorScheme.secondary,
+              width: 5, 
+            ),
+            borderRadius: BorderRadius.circular(32), 
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  icon, 
+                  size: 100, 
+                  color: isDarkMode ? colorScheme.onPrimaryContainer : colorScheme.primary
+                ),
+                SizedBox(height: 10),
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 20, 
+                  ),
+                ),
+                Text(
+                  cost,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

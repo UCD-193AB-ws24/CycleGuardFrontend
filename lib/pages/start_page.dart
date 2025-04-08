@@ -17,12 +17,12 @@ class StartPage extends StatelessWidget {
       body: Stack(
         children: [
           Positioned(
-            left: DimUtil.safeWidth(context) * (-0.9), 
+            left: DimUtil.safeWidth(context) * (-0.75), 
             top: 0,
             child: SvgPicture.asset(
               'assets/cg_logomark.svg',
               width:  DimUtil.safeWidth(context),
-              height: DimUtil.safeHeight(context), 
+              height: DimUtil.safeHeight(context) * 1.1, 
               colorFilter: ColorFilter.mode(
                 Color(0xFFFFCC80), 
                 BlendMode.srcIn,

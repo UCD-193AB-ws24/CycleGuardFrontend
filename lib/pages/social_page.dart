@@ -168,7 +168,9 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
         body: TabBarView(
           controller: _tabController,
           children: [
-            _buildProfileTab(),
+            SingleChildScrollView(
+              child: _buildProfileTab(),
+            ),
             _buildSearchTab(),
             RequestsTab(),
           ],

@@ -7,6 +7,7 @@ import 'package:cycle_guard_app/pages/store_page.dart';
 import 'package:cycle_guard_app/pages/history_page.dart';
 import 'package:cycle_guard_app/pages/achievements_page.dart';
 import 'package:cycle_guard_app/data/achievements_progress_provider.dart';
+import 'package:cycle_guard_app/data/user_daily_goal_provider.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:percent_indicator/circular_percent_indicator.dart';
 import 'package:cycle_guard_app/data/single_trip_history.dart';
@@ -24,12 +25,14 @@ class _HomePageState extends State<HomePage> {
     Future.microtask(() => Provider.of<UserStatsProvider>(context, listen: false).fetchUserStats());
     Future.microtask(() => Provider.of<WeekHistoryProvider>(context, listen: false).fetchWeekHistory());
     Future.microtask(() => Provider.of<AchievementsProgressProvider>(context, listen: false).fetchAchievementProgress());
+    Future.microtask(() => Provider.of<UserDailyGoalProvider>(context, listen: false).fetchDailyGoals());
   }
 
   @override
   Widget build(BuildContext context) {
     final userStats = Provider.of<UserStatsProvider>(context);
     final weekHistory = Provider.of<WeekHistoryProvider>(context);
+    final userGoals = Provider.of<UserDailyGoalProvider>(context);
     final colorScheme = Theme.of(context).colorScheme;
 
     final todayUtcTimestamp = DateTime.utc(
@@ -217,11 +220,26 @@ class _HomePageState extends State<HomePage> {
                                 color: isDarkMode ? Colors.white70 : Colors.black,
                               ),
                             ),
-                            content: Text(
-                              'You can set your daily goals in your profile.',
-                              style: TextStyle(
-                                color: isDarkMode ? Colors.white70 : Colors.black,
-                              ),
+                            content: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  userGoals.dailyDistanceGoal == 0 && userGoals.dailyTimeGoal == 0 && userGoals.dailyCaloriesGoal == 0
+                                    ? 'Your goals are currently set to 20 minutes, 3 miles, and 250 calories burned.'
+                                    : 'Your goals are currently set to ${userGoals.dailyTimeGoal} minutes, ${userGoals.dailyDistanceGoal} miles, and ${userGoals.dailyCaloriesGoal} calories burned.',
+                                  style: TextStyle(
+                                    color: isDarkMode ? Colors.white70 : Colors.black,
+                                  ),
+                                ),
+                                SizedBox(height: 8),
+                                Text(
+                                  'You can set daily goals in your profile.',
+                                  style: TextStyle(
+                                    color: isDarkMode ? Colors.white70 : Colors.black,
+                                  ),
+                                ),
+                              ],
                             ),
                             actions: [
                               TextButton(
@@ -249,21 +267,24 @@ class _HomePageState extends State<HomePage> {
                   context,
                   title: 'Time',
                   value: '$todayTime min',
-                  percent: todayTime / 27, 
+                  goal: '${userGoals.dailyTimeGoal} min',
+                  percent: todayTime / (userGoals.dailyTimeGoal == 0 ? 20 : userGoals.dailyTimeGoal),
                   color: Colors.blueAccent,
                 ),
                 _buildCircularStat(
                   context,
                   title: 'Distance',
                   value: '$todayDistance mi',
-                  percent: todayDistance / 27, 
+                  goal: '${userGoals.dailyDistanceGoal} mi',
+                  percent: todayDistance / (userGoals.dailyDistanceGoal == 0 ? 3 : userGoals.dailyDistanceGoal),
                   color: Colors.orangeAccent,
                 ),
                 _buildCircularStat(
                   context,
                   title: 'Calories',
                   value: '$todayCalories cal',
-                  percent: todayCalories / 27, 
+                  goal: '${userGoals.dailyCaloriesGoal} cal',
+                  percent: todayCalories / (userGoals.dailyCaloriesGoal == 0 ? 300 : userGoals.dailyCaloriesGoal),
                   color: Colors.redAccent,
                 ),
               ],
@@ -479,6 +500,7 @@ class _HomePageState extends State<HomePage> {
   Widget _buildCircularStat(BuildContext context,
       {required String title,
       required String value,
+      required String goal,
       required double percent,
       required Color color}) {
     return Column(
@@ -495,6 +517,10 @@ class _HomePageState extends State<HomePage> {
         ),
         const SizedBox(height: 8),
         Text(title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+        Text(
+          '$goal',
+          style: TextStyle(fontSize: 12, color: Theme.of(context).brightness == Brightness.dark ? Colors.white70 : Colors.black87),
+        ),
       ],
     );
   }

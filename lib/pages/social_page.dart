@@ -4,11 +4,14 @@ import 'dart:convert';
 import 'package:cycle_guard_app/pages/leader.dart'; // Import Leader model
 import 'package:http/http.dart' as http;
 import 'package:cycle_guard_app/data/user_profile_accessor.dart';
+import 'package:cycle_guard_app/data/user_daily_goal_provider.dart';
+import 'package:cycle_guard_app/data/user_daily_goal_accessor.dart';
 import 'package:cycle_guard_app/data/friends_list_accessor.dart';
 import 'package:cycle_guard_app/data/friend_requests_accessor.dart';
 import 'package:cycle_guard_app/data/health_info_accessor.dart';
 import 'package:cycle_guard_app/pages/settings_page.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:provider/provider.dart';
 
 class SocialPage extends StatefulWidget {
   @override
@@ -25,6 +28,7 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
     super.initState();
     _tabController = TabController(length: numOfTabs, vsync: this);
     _loadUserProfile(); // Load profile data including isPublic
+    Future.microtask(() => Provider.of<UserDailyGoalProvider>(context, listen: false).fetchDailyGoals());
   }
 
   /// **Load User Profile Data**
@@ -179,6 +183,7 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
     TextEditingController bioController = TextEditingController();
     bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
     String profileImageUrl = "https://via.placeholder.com/150"; // Replace with actual image URL
+    //final userGoals = Provider.of<UserDailyGoalProvider>(context);
 
     return FutureBuilder<UserProfile>(
       future: UserProfileAccessor.getOwnProfile(),
@@ -263,6 +268,7 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
                   Text("Public Profile"),
                 ],
               ),
+              UserDailyGoalsSection(),
               SizedBox(height: 20),
               ElevatedButton(
                 onPressed: () async {
@@ -388,6 +394,101 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
           ),
         ),
       ],
+    );
+  }
+}
+
+class UserDailyGoalsSection extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<UserDailyGoalProvider>(
+      builder: (context, userGoals, child) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Divider(height: 40),
+            Text(
+              "Daily Goals",
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
+            ),
+            Text("Time: ${userGoals.dailyTimeGoal} mins"),
+            Text("Distance: ${userGoals.dailyDistanceGoal} mi"),
+            Text("Calories: ${userGoals.dailyCaloriesGoal} cal"),
+            SizedBox(height: 8),
+            OutlinedButton(
+              onPressed: () => _showChangeGoalsDialog(context, userGoals),
+              child: Text("Change Goals"),
+            ),
+            SizedBox(height: 20),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showChangeGoalsDialog(BuildContext context, UserDailyGoalProvider userGoals) {
+    final distanceController = TextEditingController(text: userGoals.dailyDistanceGoal.toString());
+    final timeController = TextEditingController(text: userGoals.dailyTimeGoal.toString());
+    final caloriesController = TextEditingController(text: userGoals.dailyCaloriesGoal.toString());
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Set New Daily Goals"),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: timeController,
+                keyboardType: TextInputType.numberWithOptions(decimal: true),
+                decoration: InputDecoration(labelText: "Time (mins)"),
+              ),
+              TextField(
+                controller: distanceController,
+                keyboardType: TextInputType.numberWithOptions(decimal: true),
+                decoration: InputDecoration(labelText: "Distance (mi)"),
+              ),
+              TextField(
+                controller: caloriesController,
+                keyboardType: TextInputType.numberWithOptions(decimal: true),
+                decoration: InputDecoration(labelText: "Calories"),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text("Cancel"),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                try {
+                  final newDistance = double.tryParse(distanceController.text.trim()) ?? 0;
+                  final newTime = double.tryParse(timeController.text.trim()) ?? 0;
+                  final newCalories = double.tryParse(caloriesController.text.trim()) ?? 0;
+
+                  await userGoals.updateUserGoals(newDistance, newTime, newCalories);
+
+                  Navigator.pop(context);
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text("Goals updated!")),
+                  );
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text("Failed to update goals: $e")),
+                  );
+                }
+              },
+              child: Text("Submit"),
+            ),
+          ],
+        );
+      },
     );
   }
 }

@@ -268,7 +268,6 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
                   Text("Public Profile"),
                 ],
               ),
-              UserDailyGoalsSection(),
               SizedBox(height: 20),
               ElevatedButton(
                 onPressed: () async {
@@ -303,6 +302,7 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
                   ),
                 ),
               ),
+              UserDailyGoalsSection(),
             ],
           ),
         );
@@ -414,9 +414,9 @@ class UserDailyGoalsSection extends StatelessWidget {
                 fontSize: 16,
               ),
             ),
-            Text("Time: ${userGoals.dailyTimeGoal} mins"),
-            Text("Distance: ${userGoals.dailyDistanceGoal} mi"),
-            Text("Calories: ${userGoals.dailyCaloriesGoal} cal"),
+            Text(" • Time: ${userGoals.dailyTimeGoal} min"),
+            Text(" • Distance: ${userGoals.dailyDistanceGoal} mi"),
+            Text(" • Calories: ${userGoals.dailyCaloriesGoal} cal"),
             SizedBox(height: 8),
             OutlinedButton(
               onPressed: () => _showChangeGoalsDialog(context, userGoals),

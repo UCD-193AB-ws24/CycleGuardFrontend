@@ -136,7 +136,7 @@ class MyAppState extends ChangeNotifier {
   bool isDarkMode = false;
 
   final Map<String, Color> availableThemes = {
-    'Indigo': Colors.indigo,
+    'Yellow': Colors.yellow,
     'Red': Colors.red,
     'Green': Colors.green,
     'Blue': Colors.blue,
@@ -148,6 +148,8 @@ class MyAppState extends ChangeNotifier {
     'Teal': Colors.teal,
     'Lime': Colors.lime,
     'Pink': Colors.pink,
+    'Cyan': Colors.cyan,
+    'Indigo': Colors.indigo,
   };
 
   final Map<String, Color> ownedThemes = {};

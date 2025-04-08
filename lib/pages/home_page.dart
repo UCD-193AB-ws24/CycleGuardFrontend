@@ -224,22 +224,55 @@ class _HomePageState extends State<HomePage> {
                               mainAxisSize: MainAxisSize.min,
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  userGoals.dailyDistanceGoal == 0 && userGoals.dailyTimeGoal == 0 && userGoals.dailyCaloriesGoal == 0
-                                    ? 'Your goals are currently set to 20 minutes, 3 miles, and 250 calories burned.'
-                                    : 'Your goals are currently set to ${userGoals.dailyTimeGoal} minutes, ${userGoals.dailyDistanceGoal} miles, and ${userGoals.dailyCaloriesGoal} calories burned.',
-                                  style: TextStyle(
-                                    color: isDarkMode ? Colors.white70 : Colors.black,
-                                  ),
-                                ),
+                                userGoals.dailyDistanceGoal == 0 && userGoals.dailyTimeGoal == 0 && userGoals.dailyCaloriesGoal == 0
+                                  ? Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Your goals are currently unset.',
+                                          style: TextStyle(
+                                            color: isDarkMode ? Colors.white70 : Colors.black,
+                                          ),
+                                        ),
+                                      ],
+                                    )
+                                  : Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Your goals are currently : ',
+                                          style: TextStyle(
+                                            color: isDarkMode ? Colors.white70 : Colors.black,
+                                          ),
+                                        ),
+                                        Text(
+                                          ' • ${userGoals.dailyTimeGoal} minutes',
+                                          style: TextStyle(
+                                            color: isDarkMode ? Colors.white70 : Colors.black,
+                                          ),
+                                        ),
+                                        Text(
+                                          ' • ${userGoals.dailyDistanceGoal} miles',
+                                          style: TextStyle(
+                                            color: isDarkMode ? Colors.white70 : Colors.black,
+                                          ),
+                                        ),
+                                        Text(
+                                          ' • ${userGoals.dailyCaloriesGoal} calories',
+                                          style: TextStyle(
+                                            color: isDarkMode ? Colors.white70 : Colors.black,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                 SizedBox(height: 8),
                                 Text(
-                                  'You can set daily goals in your profile.',
+                                  'You can update daily goals in your profile.',
                                   style: TextStyle(
                                     color: isDarkMode ? Colors.white70 : Colors.black,
                                   ),
                                 ),
-                              ],
+                              ]
                             ),
                             actions: [
                               TextButton(
@@ -268,7 +301,7 @@ class _HomePageState extends State<HomePage> {
                   title: 'Time',
                   value: '$todayTime min',
                   goal: '${userGoals.dailyTimeGoal} min',
-                  percent: todayTime / (userGoals.dailyTimeGoal == 0 ? 20 : userGoals.dailyTimeGoal),
+                  percent: userGoals.dailyTimeGoal == 0 ? 0 : todayTime / userGoals.dailyTimeGoal,
                   color: Colors.blueAccent,
                 ),
                 _buildCircularStat(
@@ -276,7 +309,7 @@ class _HomePageState extends State<HomePage> {
                   title: 'Distance',
                   value: '$todayDistance mi',
                   goal: '${userGoals.dailyDistanceGoal} mi',
-                  percent: todayDistance / (userGoals.dailyDistanceGoal == 0 ? 3 : userGoals.dailyDistanceGoal),
+                  percent: userGoals.dailyDistanceGoal == 0 ? 0 : todayDistance / userGoals.dailyDistanceGoal,
                   color: Colors.orangeAccent,
                 ),
                 _buildCircularStat(
@@ -284,7 +317,7 @@ class _HomePageState extends State<HomePage> {
                   title: 'Calories',
                   value: '$todayCalories cal',
                   goal: '${userGoals.dailyCaloriesGoal} cal',
-                  percent: todayCalories / (userGoals.dailyCaloriesGoal == 0 ? 300 : userGoals.dailyCaloriesGoal),
+                  percent: userGoals.dailyCaloriesGoal == 0 ? 0 : todayCalories / userGoals.dailyCaloriesGoal,
                   color: Colors.redAccent,
                 ),
               ],

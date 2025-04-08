@@ -122,9 +122,9 @@ class _HomePageState extends State<HomePage> {
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
             ),
-            SizedBox(height: 8),
+            SizedBox(height: DimUtil.safeHeight(context)*1/40),
             SizedBox(
-              height: DimUtil.safeHeight(context)*1/3,
+              height: DimUtil.safeHeight(context)*1/4,
               child: BarChart(
                 BarChartData(
                   alignment: BarChartAlignment.spaceAround,
@@ -188,7 +188,7 @@ class _HomePageState extends State<HomePage> {
             ),
             SizedBox(height: DimUtil.safeWidth(context)*1/40),
             buildStreakDisplay(context, userStats.rideStreak),
-            SizedBox(height: DimUtil.safeWidth(context)*1/40),
+            SizedBox(height: DimUtil.safeWidth(context)*1/20),
               Stack(
                 alignment: Alignment.center,
                 children: [
@@ -268,14 +268,14 @@ class _HomePageState extends State<HomePage> {
                 ),
               ],
             ),
-            SizedBox(height: DimUtil.safeWidth(context)*1/40),
+            SizedBox(height: DimUtil.safeWidth(context)*1/20),
             Center(
               child: Text(
                 'Average Ride this Week',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
             ),
-            SizedBox(height: DimUtil.safeWidth(context)*1/80),
+            SizedBox(height: DimUtil.safeWidth(context)*1/40),
             Row(
               children: [
                 Expanded(
@@ -291,12 +291,9 @@ class _HomePageState extends State<HomePage> {
                 ),
               ],
             ),
-            SizedBox(height: DimUtil.safeWidth(context)*1/80),
+            SizedBox(height: DimUtil.safeWidth(context)*1/20),
             _buildDailyChallenge(context, isDailyChallengeComplete),
-            SizedBox(height: DimUtil.safeWidth(context)*1/80),
-            SizedBox(height: DimUtil.safeWidth(context)*1/80),
-            _buildDailyChallenge(context, isDailyChallengeComplete),
-            SizedBox(height: DimUtil.safeWidth(context)*1/80),
+            SizedBox(height: DimUtil.safeWidth(context)*1/20),
             Align(
               alignment: Alignment.bottomCenter,
               child: Padding(
@@ -336,7 +333,7 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
             ),
-            SizedBox(height: DimUtil.safeWidth(context)*1/40),
+            SizedBox(height: DimUtil.safeWidth(context)*1/20),
             Center(
               child: Column(
                 mainAxisSize: MainAxisSize.min,

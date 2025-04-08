@@ -34,7 +34,7 @@ class StartPage extends StatelessWidget {
             left: 15,
             right: 15,
             child: SvgPicture.asset(
-              'assets/cg_logo_typog.svg',
+              'assets/cg_type_logo.svg',
               width: DimUtil.safeWidth(context) * 0.5, 
               height: DimUtil.safeHeight(context) * 0.3, 
               //fit: BoxFit.contain,

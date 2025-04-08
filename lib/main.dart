@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:cycle_guard_app/data/user_stats_provider.dart';
+import 'package:cycle_guard_app/data/user_daily_goal_provider.dart';
 import 'package:cycle_guard_app/data/achievements_progress_provider.dart';
 import 'package:cycle_guard_app/data/week_history_provider.dart';
 import 'package:cycle_guard_app/data/trip_history_provider.dart';
@@ -66,6 +67,7 @@ void main() async {
         ChangeNotifierProvider(create: (context) => AchievementsProgressProvider()),
         ChangeNotifierProvider(create: (context) => WeekHistoryProvider()),
         ChangeNotifierProvider(create: (context) => TripHistoryProvider()), 
+        ChangeNotifierProvider(create: (context) => UserDailyGoalProvider()), 
       ],
       child: MyApp(),
     ),
@@ -107,8 +109,8 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (context) => MyAppState(),
-      child: Consumer5<MyAppState, UserStatsProvider, AchievementsProgressProvider, WeekHistoryProvider, TripHistoryProvider>(
-        builder: (context, appState, userStats, achievementsProgress, weekHistory, tripHistory, child) {
+      child: Consumer6<MyAppState, UserStatsProvider, AchievementsProgressProvider, WeekHistoryProvider, TripHistoryProvider, UserDailyGoalProvider>(
+        builder: (context, appState, userStats, achievementsProgress, weekHistory, tripHistory, userDailyGoal, child) {
           return MaterialApp(
             title: 'Cycle Guard App',
             debugShowCheckedModeBanner: false,
@@ -134,7 +136,7 @@ class MyAppState extends ChangeNotifier {
   bool isDarkMode = false;
 
   final Map<String, Color> availableThemes = {
-    'Indigo': Colors.indigo,
+    'Yellow': Colors.yellow,
     'Red': Colors.red,
     'Green': Colors.green,
     'Blue': Colors.blue,
@@ -146,6 +148,8 @@ class MyAppState extends ChangeNotifier {
     'Teal': Colors.teal,
     'Lime': Colors.lime,
     'Pink': Colors.pink,
+    'Cyan': Colors.cyan,
+    'Indigo': Colors.indigo,
   };
 
   final Map<String, Color> ownedThemes = {};

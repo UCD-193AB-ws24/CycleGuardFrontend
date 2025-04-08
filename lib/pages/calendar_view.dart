@@ -64,17 +64,18 @@ class CalendarView extends StatelessWidget {
 
   Color _getColorBasedOnMiles(double miles, BuildContext context) {
     final base = Theme.of(context).colorScheme.primary;
+    bool isDarkMode = Theme.of(context).brightness == Brightness.dark; 
 
     if (miles == 0) {
-      return darken(base, 0.1);
+      return (isDarkMode ? darken(base, 0.1) : lighten(base, 0.1));
     } else if (miles < 10) {
-      return darken(base, 0.05);
+      return (isDarkMode ? darken(base, 0.05): lighten(base, 0.05));
     } else if (miles < 20) {
       return base;
     } else if (miles < 40) {
-      return lighten(base, 0.05);
+      return (isDarkMode ? lighten(base, 0.05): darken(base, 0.05)) ;
     } else {
-      return lighten(base, 0.1);
+      return (isDarkMode ? lighten(base, 0.1): darken(base, 0.1));
     }
   }
 }

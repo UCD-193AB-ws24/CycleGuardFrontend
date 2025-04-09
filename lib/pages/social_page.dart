@@ -432,6 +432,7 @@ class UserDailyGoalsSection extends StatelessWidget {
   }
 
   void _showChangeGoalsDialog(BuildContext context, UserDailyGoalProvider userGoals) {
+    bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final distanceController = TextEditingController(text: userGoals.dailyDistanceGoal.toString());
     final timeController = TextEditingController(text: userGoals.dailyTimeGoal.toString());
     final caloriesController = TextEditingController(text: userGoals.dailyCaloriesGoal.toString());
@@ -440,33 +441,49 @@ class UserDailyGoalsSection extends StatelessWidget {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text("Set New Daily Goals"),
+          backgroundColor: isDarkMode ? Colors.grey[900] : Colors.white,
+          title: Text(
+            "Set New Daily Goals",
+            style: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
+          ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
                 controller: timeController,
                 keyboardType: TextInputType.numberWithOptions(decimal: true),
-                decoration: InputDecoration(labelText: "Time (mins)"),
+                style: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
+                decoration: InputDecoration(
+                  labelText: "Time (mins)",
+                  labelStyle: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black),
+                ),
               ),
               TextField(
                 controller: distanceController,
                 keyboardType: TextInputType.numberWithOptions(decimal: true),
-                decoration: InputDecoration(labelText: "Distance (mi)"),
+                style: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
+                decoration: InputDecoration(
+                  labelText: "Distance (mi)",
+                  labelStyle: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black),
+                ),
               ),
               TextField(
                 controller: caloriesController,
                 keyboardType: TextInputType.numberWithOptions(decimal: true),
-                decoration: InputDecoration(labelText: "Calories"),
+                style: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
+                decoration: InputDecoration(
+                  labelText: "Calories",
+                  labelStyle: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black),
+                ),
               ),
             ],
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text("Cancel"),
+              child: Text("Cancel", style: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black)),
             ),
-            ElevatedButton(
+            TextButton(
               onPressed: () async {
                 try {
                   final newDistance = double.tryParse(distanceController.text.trim()) ?? 0;
@@ -486,7 +503,7 @@ class UserDailyGoalsSection extends StatelessWidget {
                   );
                 }
               },
-              child: Text("Submit"),
+              child: Text("Submit", style: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black)),
             ),
           ],
         );

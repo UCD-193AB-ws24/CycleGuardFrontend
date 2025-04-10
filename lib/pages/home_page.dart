@@ -372,7 +372,7 @@ class _HomePageState extends State<HomePage> {
                       style: ElevatedButton.styleFrom(
                         elevation: 6,
                         backgroundColor: isDarkMode
-                            ? colorScheme.secondary
+                            ? colorScheme.onPrimaryFixedVariant
                             : colorScheme.onInverseSurface,
                         foregroundColor: isDarkMode
                             ? Colors.white
@@ -430,7 +430,7 @@ class _HomePageState extends State<HomePage> {
                       style: ElevatedButton.styleFrom(
                         elevation: 6,
                         backgroundColor: isDarkMode
-                            ? colorScheme.secondary
+                            ? colorScheme.onPrimaryFixedVariant
                             : colorScheme.onInverseSurface,
                         foregroundColor: isDarkMode
                             ? Colors.white

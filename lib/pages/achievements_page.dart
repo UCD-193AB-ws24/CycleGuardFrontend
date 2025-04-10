@@ -45,7 +45,7 @@ class _AchievementsPageState extends State<AchievementsPage> {
                   style: ElevatedButton.styleFrom(
                     elevation: 4,
                     backgroundColor: isDarkMode
-                        ? colorScheme.secondary
+                        ? colorScheme.onPrimaryFixedVariant
                         : colorScheme.onInverseSurface,
                     foregroundColor: isDarkMode
                         ? Colors.white

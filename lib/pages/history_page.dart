@@ -278,7 +278,7 @@ class _HistoryPageState extends State<HistoryPage> {
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: isDarkMode
-                  ? colorScheme.onSecondaryFixedVariant
+                  ? colorScheme.onPrimaryFixedVariant
                   : colorScheme.surfaceContainerLow,
             ),
             child: Text(
@@ -340,7 +340,7 @@ class _HistoryPageState extends State<HistoryPage> {
                 borderRadius: BorderRadius.circular(8), 
                 child: Container(
                   decoration: BoxDecoration(
-                    color: isDarkMode ? colorScheme.onSecondaryFixedVariant : colorScheme.surfaceContainerLow,
+                    color: isDarkMode ? colorScheme.onPrimaryFixedVariant : colorScheme.surfaceContainerLow,
                     borderRadius: BorderRadius.circular(8),
                     border: _selectedDateRange != null
                         ? Border.all(color: colorScheme.outline, width: 2)

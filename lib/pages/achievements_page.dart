@@ -26,6 +26,7 @@ class _AchievementsPageState extends State<AchievementsPage> {
     final userStats = Provider.of<UserStatsProvider>(context);
     final selectedColor = Theme.of(context).colorScheme.primary;
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final colorScheme = Theme.of(context).colorScheme;
 
     achievementIndex = 0; 
 
@@ -43,12 +44,12 @@ class _AchievementsPageState extends State<AchievementsPage> {
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     elevation: 4,
-                    backgroundColor: Theme.of(context).brightness == Brightness.dark
-                        ? Theme.of(context).colorScheme.secondary
-                        : Theme.of(context).colorScheme.onInverseSurface,
-                    foregroundColor: Theme.of(context).brightness == Brightness.dark
+                    backgroundColor: isDarkMode
+                        ? colorScheme.secondary
+                        : colorScheme.onInverseSurface,
+                    foregroundColor: isDarkMode
                         ? Colors.white
-                        : Theme.of(context).colorScheme.primary,
+                        : colorScheme.primary,
                     padding: EdgeInsets.symmetric(vertical: 8.0),
                     textStyle: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
@@ -99,7 +100,7 @@ class _AchievementsPageState extends State<AchievementsPage> {
               ),
             ),
           ...achievements.map((achievement) {
-            final index = achievementIndex++; 
+            final index = achievementIndex++;
             return AchievementCard(
               title: achievement['title']!,
               description: achievement['description']!,

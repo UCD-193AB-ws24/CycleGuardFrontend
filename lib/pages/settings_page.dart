@@ -29,48 +29,53 @@ class _SettingsPageState extends State<SettingsPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Select Theme Color:',
-                style: Theme.of(context).textTheme.headlineSmall,
-              ),
-              SizedBox(height: 10),
-              Consumer<MyAppState>( 
-                builder: (context, appState, child) {
-                  return DropdownButton<Color>(
-                    value: appState.selectedColor,
-                    items: [
-                      ...appState.availableThemes.entries.map((entry) {
-                        return DropdownMenuItem<Color>(
-                          value: entry.value,
-                          child: Row(
-                            children: [
-                              Container(width: 24, height: 24, color: entry.value),
-                              SizedBox(width: 15),
-                              Text(entry.key),
-                            ],
-                          ),
-                        );
-                      }),
-                      ...appState.ownedThemes.entries.map((entry) {
-                        return DropdownMenuItem<Color>(
-                          value: entry.value,
-                          child: Row(
-                            children: [
-                              Container(width: 24, height: 24, color: entry.value),
-                              SizedBox(width: 15),
-                              Text(entry.key),
-                            ],
-                          ),
-                        );
-                      }),
-                    ],
-                    onChanged: (newColor) {
-                      if (newColor != null) {
-                        appState.updateThemeColor(newColor);
-                      }
+              Row (
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Select Theme Color:',
+                    style: Theme.of(context).textTheme.headlineSmall,
+                  ),
+                  SizedBox(height: 10),
+                  Consumer<MyAppState>( 
+                    builder: (context, appState, child) {
+                      return DropdownButton<Color>(
+                        value: appState.selectedColor,
+                        items: [
+                          ...appState.availableThemes.entries.map((entry) {
+                            return DropdownMenuItem<Color>(
+                              value: entry.value,
+                              child: Row(
+                                children: [
+                                  Container(width: 24, height: 24, color: entry.value),
+                                  SizedBox(width: 15),
+                                  Text(entry.key),
+                                ],
+                              ),
+                            );
+                          }),
+                          ...appState.ownedThemes.entries.map((entry) {
+                            return DropdownMenuItem<Color>(
+                              value: entry.value,
+                              child: Row(
+                                children: [
+                                  Container(width: 24, height: 24, color: entry.value),
+                                  SizedBox(width: 15),
+                                  Text(entry.key),
+                                ],
+                              ),
+                            );
+                          }),
+                        ],
+                        onChanged: (newColor) {
+                          if (newColor != null) {
+                            appState.updateThemeColor(newColor);
+                          }
+                        },
+                      );
                     },
-                  );
-                },
+                  ),
+                ],
               ),
               SizedBox(height: 10),
               Consumer<MyAppState>( 

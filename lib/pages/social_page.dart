@@ -4,10 +4,14 @@ import 'dart:convert';
 import 'package:cycle_guard_app/pages/leader.dart'; // Import Leader model
 import 'package:http/http.dart' as http;
 import 'package:cycle_guard_app/data/user_profile_accessor.dart';
+import 'package:cycle_guard_app/data/user_daily_goal_provider.dart';
+import 'package:cycle_guard_app/data/user_daily_goal_accessor.dart';
 import 'package:cycle_guard_app/data/friends_list_accessor.dart';
 import 'package:cycle_guard_app/data/friend_requests_accessor.dart';
 import 'package:cycle_guard_app/data/health_info_accessor.dart';
 import 'package:cycle_guard_app/pages/settings_page.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:provider/provider.dart';
 
 class SocialPage extends StatefulWidget {
   @override
@@ -16,13 +20,15 @@ class SocialPage extends StatefulWidget {
 
 class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  int numOfTabs = 3;
   bool isPublic = true; // Move isPublic to the state class
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: numOfTabs, vsync: this);
     _loadUserProfile(); // Load profile data including isPublic
+    Future.microtask(() => Provider.of<UserDailyGoalProvider>(context, listen: false).fetchDailyGoals());
   }
 
   /// **Load User Profile Data**
@@ -123,24 +129,48 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
 
   @override
   Widget build(BuildContext context) {
+    bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
     return DefaultTabController(
-      length: 3,
+      length: numOfTabs,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Social'),
+          title: Text(
+            'Social',
+            style: TextStyle(
+              color: isDarkMode ? Colors.white70 : Colors.black,
+            ),
+          ),
+          backgroundColor: isDarkMode ? Colors.black12 : null,
           bottom: TabBar(
             controller: _tabController,
+            unselectedLabelColor: isDarkMode ? Colors.white70 : null,
             tabs: const [
               Tab(icon: Icon(Icons.person), text: "Profile"),
               Tab(icon: Icon(Icons.search), text: "Bikers"),
               Tab(icon: Icon(Icons.people), text: "Requests"),
             ],
           ),
+          actions: [
+            Padding(
+              padding: const EdgeInsets.only(right: 32.0),
+              child: SvgPicture.asset(
+                'assets/cg_logomark.svg',
+                height: 30,
+                width: 30,
+                colorFilter: ColorFilter.mode( 
+                  isDarkMode ? Colors.white70 : Colors.black,
+                  BlendMode.srcIn,
+                ),
+              ),
+            )
+          ],
         ),
         body: TabBarView(
           controller: _tabController,
           children: [
-            _buildProfileTab(),
+            SingleChildScrollView(
+              child: _buildProfileTab(),
+            ),
             _buildSearchTab(),
             RequestsTab(),
           ],
@@ -153,7 +183,9 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
   Widget _buildProfileTab() {
     TextEditingController nameController = TextEditingController();
     TextEditingController bioController = TextEditingController();
+    bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
     String profileImageUrl = "https://via.placeholder.com/150"; // Replace with actual image URL
+    //final userGoals = Provider.of<UserDailyGoalProvider>(context);
 
     return FutureBuilder<UserProfile>(
       future: UserProfileAccessor.getOwnProfile(),
@@ -197,7 +229,7 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
                           Icon(
                             Icons.settings,
                             size: 40,
-                            color: Theme.of(context).brightness == Brightness.dark
+                            color: isDarkMode
                               ? Theme.of(context).colorScheme.secondaryFixedDim
                               : Theme.of(context).colorScheme.secondary, 
                           ),
@@ -206,7 +238,7 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
                             'Settings',
                             style: TextStyle(
                               fontSize: 14,
-                              color: Theme.of(context).brightness == Brightness.dark
+                              color: isDarkMode
                                 ? Theme.of(context).colorScheme.secondaryFixedDim
                                 : Theme.of(context).colorScheme.secondary, 
                             ),
@@ -239,29 +271,151 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
                 ],
               ),
               SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () async {
-                  try {
-                    UserProfile updatedProfile = UserProfile(
-                      username: "", // The backend handles this, but I'll find a way on the frontend too
-                      displayName: nameController.text.trim(),
-                      bio: bioController.text.trim(),
-                      isPublic: isPublic, // Save public/private status
-                    );
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  ElevatedButton(
+                    onPressed: () async {
+                      try {
+                        UserProfile updatedProfile = UserProfile(
+                          username: "", // The backend handles this, but I'll find a way on the frontend too
+                          displayName: nameController.text.trim(),
+                          bio: bioController.text.trim(),
+                          isPublic: isPublic, // Save public/private status
+                        );
 
-                    await UserProfileAccessor.updateOwnProfile(updatedProfile);
+                        await UserProfileAccessor.updateOwnProfile(updatedProfile);
 
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text("Profile updated successfully!")),
-                    );
-                  } catch (e) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text("Failed to update profile: $e")),
-                    );
-                  }
-                },
-                child: Text("Update Profile"),
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text("Profile updated successfully!")),
+                        );
+                      } catch (e) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text("Failed to update profile: $e")),
+                        );
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: isDarkMode
+                          ? Theme.of(context).colorScheme.secondary
+                          : Theme.of(context).colorScheme.onInverseSurface,
+                    ),
+                    child: Text(
+                      "Update Profile",
+                      style: TextStyle(
+                        color: isDarkMode ? Colors.white70 : null,
+                      ),
+                    ),
+                  ),
+                  ElevatedButton(
+                    onPressed: () async {
+                      final healthInfo = await HealthInfoAccessor.getHealthInfo();
+                      final heightController = TextEditingController(text: healthInfo.heightInches.toString());
+                      final weightController = TextEditingController(text: healthInfo.weightPounds.toString());
+                      final ageController = TextEditingController(text: healthInfo.ageYears.toString());
+
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return AlertDialog(
+                            backgroundColor: isDarkMode ? Colors.grey[900] : Colors.white,
+                             title: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  "Set Health Information",
+                                  style: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
+                                ),
+                                SizedBox(height: 8),
+                                Text(
+                                  "Health information is kept private and will be used to estimate how many calories are burned on a ride.",
+                                  style: TextStyle(
+                                    color: isDarkMode ? Colors.white70 : Colors.black87,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            content: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                TextField(
+                                  controller: heightController,
+                                  keyboardType: TextInputType.number,
+                                  style: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
+                                  decoration: InputDecoration(
+                                    labelText: "Height (inches)",
+                                    labelStyle: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black),
+                                  ),
+                                ),
+                                TextField(
+                                  controller: weightController,
+                                  keyboardType: TextInputType.number,
+                                  style: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
+                                  decoration: InputDecoration(
+                                    labelText: "Weight (pounds)",
+                                    labelStyle: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black),
+                                  ),
+                                ),
+                                TextField(
+                                  controller: ageController,
+                                  keyboardType: TextInputType.number,
+                                  style: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
+                                  decoration: InputDecoration(
+                                    labelText: "Age (years)",
+                                    labelStyle: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context),
+                                child: Text("Cancel", style: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black)),
+                              ),
+                              TextButton(
+                                onPressed: () async {
+                                  try {
+                                    await HealthInfoAccessor.setHealthInfoInts(
+                                      int.parse(heightController.text.trim()),
+                                      int.parse(weightController.text.trim()),
+                                      int.parse(ageController.text.trim()),
+                                    );
+
+                                    Navigator.pop(context);
+
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text('Health info updated successfully!')),
+                                    );
+                                  } catch (e) {
+                                    Navigator.pop(context);
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text('Failed to update health info: $e')),
+                                    );
+                                  }
+                                },
+                                child: Text("Submit", style: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black)),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: isDarkMode
+                          ? Theme.of(context).colorScheme.secondary
+                          : Theme.of(context).colorScheme.onInverseSurface,
+                    ),
+                    child: Text(
+                      "Set Health Information",
+                      style: TextStyle(
+                        color: isDarkMode ? Colors.white70 : null,
+                      ),
+                    ),
+                  ),
+                ],
               ),
+              UserDailyGoalsSection(),
             ],
           ),
         );
@@ -273,6 +427,7 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
   Widget _buildSearchTab() {
     TextEditingController searchController = TextEditingController();
     List<String> _friends = []; // Stores the user's friends
+    bool isDarkMode = Theme.of(context).brightness == Brightness.dark; 
 
     return Column(
       children: [
@@ -319,13 +474,27 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
 
                     return Card(
                       margin: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      color: isDarkMode ? Theme.of(context).colorScheme.onSecondaryFixedVariant : Colors.white,
                       child: ListTile(
                         leading: CircleAvatar(child: Text(user[0].toUpperCase())),
-                        title: Text(user),
+                        title: Text(
+                          user,
+                          style: TextStyle(
+                            color: isDarkMode ? Colors.white70 : null,
+                          ),
+                        ),
                         subtitle: isFriend ? Text("Friend", style: TextStyle(color: Colors.green)) : null,
                         trailing: isFriend
                             ? null // Don't show add friend button for existing friends
                             : ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: isDarkMode
+                                    ? Theme.of(context).colorScheme.secondary
+                                    : Theme.of(context).colorScheme.onInverseSurface,
+                                foregroundColor: isDarkMode
+                                    ? Colors.white70
+                                    : Theme.of(context).colorScheme.primary,
+                              ),
                                 onPressed: () => _sendFriendRequest(user),
                                 child: Text("Add Friend"),
                               ),
@@ -338,6 +507,118 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
           ),
         ),
       ],
+    );
+  }
+}
+
+class UserDailyGoalsSection extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<UserDailyGoalProvider>(
+      builder: (context, userGoals, child) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Divider(height: 40),
+            Text(
+              "Daily Goals",
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
+            ),
+            Text(" • Time: ${userGoals.dailyTimeGoal} min"),
+            Text(" • Distance: ${userGoals.dailyDistanceGoal} mi"),
+            Text(" • Calories: ${userGoals.dailyCaloriesGoal} cal"),
+            SizedBox(height: 8),
+            OutlinedButton(
+              onPressed: () => _showChangeGoalsDialog(context, userGoals),
+              child: Text("Change Goals"),
+            ),
+            SizedBox(height: 20),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showChangeGoalsDialog(BuildContext context, UserDailyGoalProvider userGoals) {
+    bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final distanceController = TextEditingController(text: userGoals.dailyDistanceGoal.toString());
+    final timeController = TextEditingController(text: userGoals.dailyTimeGoal.toString());
+    final caloriesController = TextEditingController(text: userGoals.dailyCaloriesGoal.toString());
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: isDarkMode ? Colors.grey[900] : Colors.white,
+          title: Text(
+            "Set New Daily Goals",
+            style: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: timeController,
+                keyboardType: TextInputType.numberWithOptions(decimal: true),
+                style: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
+                decoration: InputDecoration(
+                  labelText: "Time (mins)",
+                  labelStyle: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black),
+                ),
+              ),
+              TextField(
+                controller: distanceController,
+                keyboardType: TextInputType.numberWithOptions(decimal: true),
+                style: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
+                decoration: InputDecoration(
+                  labelText: "Distance (mi)",
+                  labelStyle: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black),
+                ),
+              ),
+              TextField(
+                controller: caloriesController,
+                keyboardType: TextInputType.numberWithOptions(decimal: true),
+                style: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
+                decoration: InputDecoration(
+                  labelText: "Calories",
+                  labelStyle: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text("Cancel", style: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black)),
+            ),
+            TextButton(
+              onPressed: () async {
+                try {
+                  final newDistance = double.tryParse(distanceController.text.trim()) ?? 0;
+                  final newTime = double.tryParse(timeController.text.trim()) ?? 0;
+                  final newCalories = double.tryParse(caloriesController.text.trim()) ?? 0;
+
+                  await userGoals.updateUserGoals(newDistance, newTime, newCalories);
+
+                  Navigator.pop(context);
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text("Goals updated!")),
+                  );
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text("Failed to update goals: $e")),
+                  );
+                }
+              },
+              child: Text("Submit", style: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black)),
+            ),
+          ],
+        );
+      },
     );
   }
 }
@@ -410,6 +691,7 @@ class _RequestsTabState extends State<RequestsTab> {
 
   @override
   Widget build(BuildContext context) {
+    bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
     if (_isLoading) {
       return Center(child: CircularProgressIndicator());
     } else if (_requests.isEmpty) {
@@ -423,10 +705,22 @@ class _RequestsTabState extends State<RequestsTab> {
 
         return Card(
           margin: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          color: isDarkMode ? Theme.of(context).colorScheme.onSecondaryFixedVariant : Colors.white,
           child: ListTile(
             leading: CircleAvatar(child: Text(requester[0].toUpperCase())),
-            title: Text(requester),
-            subtitle: Text("Sent you a friend request"),
+            title: Text(
+              requester,
+              style: TextStyle(
+                color: isDarkMode ? Colors.white70 : null,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            subtitle: Text(
+              "Sent you a friend request",
+              style: TextStyle(
+                color: isDarkMode ? Colors.white70 : null,
+              ),
+            ),
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [

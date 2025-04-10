@@ -13,6 +13,7 @@ import 'package:cycle_guard_app/data/user_stats_accessor.dart';
 import 'package:cycle_guard_app/data/week_history_accessor.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import './ble.dart';
 
 import '../main.dart';
 
@@ -190,7 +191,7 @@ class TestingPage extends StatelessWidget {
     dayHistoryMap.forEach((day, history) {
       DateTime dateTime = DateTime.fromMillisecondsSinceEpoch(day * 1000);
       print("Day: $day");
-      print("Day: ${["M", "T", "W", "R", "F", "Sa", "Su"][dateTime.weekday]}");
+      print("Day: ${["M", "T", "W", "R", "F", "Sa", "Su"][dateTime.weekday - 1]}");
       print("Distance: ${history.distance}");
       print("Calories: ${history.calories}");
       print("Time: ${history.time}\n");
@@ -366,6 +367,14 @@ class TestingPage extends StatelessWidget {
                     padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
                   ),
                   child: Text("user/all"),
+                ),
+                ElevatedButton(
+                  onPressed: () => showCustomDialog(context),
+                  style: ElevatedButton.styleFrom(
+                    elevation: 5,
+                    padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
+                  ),
+                  child: Text("BLUETOOTH"),
                 ),
               ],
             ),

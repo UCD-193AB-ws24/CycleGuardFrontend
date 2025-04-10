@@ -96,7 +96,7 @@ class _HomePageState extends State<HomePage> {
             ),
           ],
         ),
-        backgroundColor: isDarkMode ? Colors.black12 : null, 
+        backgroundColor: isDarkMode ? Theme.of(context).colorScheme.onSecondaryFixedVariant : Theme.of(context).colorScheme.surfaceContainer, 
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 32.0),

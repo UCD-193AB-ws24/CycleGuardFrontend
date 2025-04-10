@@ -310,7 +310,7 @@ class _MyHomePageState extends State<MyHomePage> {
   Color getNavBarBackgroundColor(BuildContext context) {
     return Theme.of(context).brightness == Brightness.dark
         ? Colors.black12
-        : Colors.white; 
+        : Theme.of(context).colorScheme.surface; 
   }
 
   @override
@@ -364,7 +364,7 @@ AppBar createAppBar(BuildContext context, String titleText) {
   return AppBar(
     iconTheme: IconThemeData(
         color: isDarkMode ? Colors.white70 : null
-      ),
+    ),
     title: Text(
       titleText,
       style: TextStyle(
@@ -372,7 +372,7 @@ AppBar createAppBar(BuildContext context, String titleText) {
         color: isDarkMode ? Colors.white70 : Colors.black,
       ),
     ),
-    backgroundColor: isDarkMode ? Colors.black12 : null,
+    backgroundColor: isDarkMode ? Theme.of(context).colorScheme.onSecondaryFixedVariant : Theme.of(context).colorScheme.surfaceContainer,
     actions: [
       Padding(
         padding: const EdgeInsets.only(right: 32.0),

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ffi';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
@@ -22,13 +23,17 @@ class RoutesPage extends StatefulWidget {
 class mapState extends State<RoutesPage> {
 
   List<dynamic> listForSuggestions = [];
+  MapType currentMapType = MapType.terrain;
   Map<PolylineId,Polyline> polylines = {};
   late GoogleMapController mapController;
   bool dstFound = false;
+  bool offCenter = false;
+  bool mapType = true;
   final locationController = Location();
   final TextEditingController textController = TextEditingController();
   LatLng? center;
   LatLng? dest = LatLng(0.0, 0.0);
+
 
   @override
   void initState() {
@@ -41,10 +46,28 @@ class mapState extends State<RoutesPage> {
     mapController = controller;
   }
 
+  void changeMapType(){
+    setState(() {
+     currentMapType = currentMapType == MapType.normal
+          ? MapType.terrain
+          : MapType.normal;
+    });
+  }
+  void recenterMap() {
+    if(offCenter) offCenter = false;
+  }
+
+
 
   Widget mainMap() =>
       GoogleMap(
         onMapCreated: onMapCreated,
+        onCameraMove: (CameraPosition position) {
+          setState(() {
+            offCenter = true;
+          });
+        },
+        mapType: currentMapType,
         initialCameraPosition: CameraPosition(
             target: center!,
             zoom: 13.0),
@@ -61,8 +84,11 @@ class mapState extends State<RoutesPage> {
               visible: dstFound ? true : false
           )
         },
+
         polylines: Set<Polyline>.of(polylines.values),
       );
+
+
 
   Widget locationTextInput() =>
       Positioned(
@@ -134,6 +160,28 @@ class mapState extends State<RoutesPage> {
       body: Stack(
         children: [
           center == null ? const Center(child: CircularProgressIndicator()) : mainMap(),
+          Positioned(
+            bottom:  DimUtil.safeHeight(context)*1/8,
+            left:  DimUtil.safeWidth(context)*1/20,
+            child: FloatingActionButton(
+              onPressed: changeMapType,
+              child: Icon(Icons.compass_calibration_sharp),
+              backgroundColor: Colors.white,
+              foregroundColor: Colors.black,
+              elevation: 4,
+            ),
+          ),
+          Positioned(
+            bottom:  DimUtil.safeHeight(context)*1/20,
+            left:  DimUtil.safeWidth(context)*1/20,
+            child: FloatingActionButton(
+              onPressed: recenterMap,
+              child: Icon(Icons.my_location),
+              backgroundColor: Colors.white,
+              foregroundColor: Colors.black,
+              elevation: 4,
+            ),
+          ),
           locationTextInput(),
 
         ],
@@ -165,7 +213,7 @@ class mapState extends State<RoutesPage> {
       if(currentLocation.latitude!=null && currentLocation.longitude!=null){
         setState(() {
           center = LatLng(currentLocation.latitude!, currentLocation.longitude!);
-          centerCamera(center!);
+          if(!offCenter) centerCamera(center!);
         });
       }
     });

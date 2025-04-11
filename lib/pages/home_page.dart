@@ -14,6 +14,9 @@ import 'package:cycle_guard_app/data/single_trip_history.dart';
 import '../auth/dim_util.dart';
 import 'package:draggable_scrollbar/draggable_scrollbar.dart';
 
+// for local notifications
+import 'package:cycle_guard_app/pages/local_notifications.dart';
+
 class HomePage extends StatefulWidget {
   @override
   _HomePageState createState() => _HomePageState();
@@ -133,6 +136,15 @@ class _HomePageState extends State<HomePage> {
             controller: _controller,
             padding: const EdgeInsets.all(8.0),
             children: [
+              ElevatedButton(
+                onPressed: () {
+                  LocalNotificationService().showScheduledNotification(
+                    title: "Title",
+                    body: "Body",
+                  );
+                }, 
+                child: const Text("Send Notification"),
+              ), 
               Center(
                 child: Text(
                   'Past Week of Biking',

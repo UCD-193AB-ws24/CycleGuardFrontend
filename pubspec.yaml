@@ -58,6 +58,9 @@ dependencies:
   flutter_markdown: ^0.7.7
   percent_indicator: ^4.2.2
   table_calendar: ^3.0.0
+  flutter_local_notifications: ^19.0.0
+  timezone: ^0.10.0
+  flutter_timezone: ^4.1.0
 
 dev_dependencies:
   flutter_test:

@@ -30,10 +30,16 @@ import 'pages/leader_page.dart';
 import 'pages/settings_page.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
+// notifications
+import 'pages/local_notifications.dart';
+
 //const MethodChannel platform = MethodChannel('com.cycleguard.channel'); // Must match iOS
 
 void main() async {
+  // for local notifications
   WidgetsFlutterBinding.ensureInitialized();
+  // init notifications 
+  LocalNotificationService().initNotification();
 
   await dotenv.load(fileName: ".env");
 

@@ -4,9 +4,11 @@ import 'package:cycle_guard_app/data/friend_requests_accessor.dart';
 import 'package:cycle_guard_app/data/friends_list_accessor.dart';
 import 'package:cycle_guard_app/data/global_leaderboards_accessor.dart';
 import 'package:cycle_guard_app/data/health_info_accessor.dart';
+import 'package:cycle_guard_app/data/packs_accessor.dart';
 import 'package:cycle_guard_app/data/single_trip_history.dart';
 import 'package:cycle_guard_app/data/submit_ride_service.dart';
 import 'package:cycle_guard_app/data/trip_history_accessor.dart';
+import 'package:cycle_guard_app/data/user_daily_goal_accessor.dart';
 import 'package:cycle_guard_app/data/user_profile_accessor.dart';
 import 'package:cycle_guard_app/data/user_settings_accessor.dart';
 import 'package:cycle_guard_app/data/user_stats_accessor.dart';
@@ -175,6 +177,43 @@ class TestingPage extends StatelessWidget {
     print(res);
   }
 
+  Future<void> _testDailyGoals() async {
+    print("Testing daily goals");
+    print("Starting goals: ${await UserDailyGoalAccessor.getUserDailyGoal()}");
+    await UserDailyGoalAccessor.updateUserDailyGoal(UserDailyGoal(distance: 5, time: 30, calories: 100));
+    print("Updated goals: ${await UserDailyGoalAccessor.getUserDailyGoal()}");
+    await UserDailyGoalAccessor.deleteUserDailyGoal();
+    print("Deleted goals: ${await UserDailyGoalAccessor.getUserDailyGoal()}");
+  }
+
+  Future<void> _testPacks() async {
+    print("Testing packsgoals");
+    print("Initially in pack: ${await PacksAccessor.getPackData()}");
+    String packName = "${(await UserProfileAccessor.getOwnProfile()).username}'s Pack";
+
+
+    await PacksAccessor.createPack(packName, "123456");
+    print("Now in pack: ${await PacksAccessor.getPackData()}");
+
+    // One day for the pack to bike 1 mile in total (no decimals allowed)
+    await PacksAccessor.setPackGoal(86400, PacksAccessor.GOAL_DISTANCE, 1);
+    print("Setting new goal: ${await PacksAccessor.getPackData()}");
+
+    await SubmitRideService.addRideRaw(2, 20, 25, [123], [456]);
+    print("Completing new goal: ${await PacksAccessor.getPackData()}");
+
+    await PacksAccessor.cancelPackGoal();
+    print("Cancelled goal: ${await PacksAccessor.getPackData()}");
+
+    // Leave Pack as Owner needs to set a new owner before leaving.
+    // NO_NEW_OWNER is only usable if the owner is the only remaining account in the pack.
+    await PacksAccessor.leavePackAsOwner(PacksAccessor.NO_NEW_OWNER);
+    print("Left pack: ${await PacksAccessor.getPackData()}");
+
+    // Standard non-owner members of a pack must use:
+    // PacksAccessor.leavePack();
+  }
+
   Future<void> _getWeekHistory() async {
     final weekHistory = await WeekHistoryAccessor.getWeekHistory();
 
@@ -280,22 +319,22 @@ class TestingPage extends StatelessWidget {
                   ),
                   child: Text("Add Ride Info"),
                 ),
-                ElevatedButton(
-                  onPressed: () => _getAchievementInfo(),
-                  style: ElevatedButton.styleFrom(
-                    elevation: 5,
-                    padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
-                  ),
-                  child: Text("Get Achievement Info"),
-                ),
-                ElevatedButton(
-                  onPressed: () => _getWeekHistory(),
-                  style: ElevatedButton.styleFrom(
-                    elevation: 5,
-                    padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
-                  ),
-                  child: Text("Get Week History"),
-                ),
+                // ElevatedButton(
+                //   onPressed: () => _getAchievementInfo(),
+                //   style: ElevatedButton.styleFrom(
+                //     elevation: 5,
+                //     padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
+                //   ),
+                //   child: Text("Get Achievement Info"),
+                // ),
+                // ElevatedButton(
+                //   onPressed: () => _getWeekHistory(),
+                //   style: ElevatedButton.styleFrom(
+                //     elevation: 5,
+                //     padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
+                //   ),
+                //   child: Text("Get Week History"),
+                // ),
                 ElevatedButton(
                   onPressed: () => _getAllUsers(),
                   style: ElevatedButton.styleFrom(
@@ -312,14 +351,14 @@ class TestingPage extends StatelessWidget {
                   ),
                   child: Text("Get User Stats"),
                 ),
-                ElevatedButton(
-                  onPressed: () => _getTripHistory(),
-                  style: ElevatedButton.styleFrom(
-                    elevation: 5,
-                    padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
-                  ),
-                  child: Text("Get All Trip History"),
-                ),
+                // ElevatedButton(
+                //   onPressed: () => _getTripHistory(),
+                //   style: ElevatedButton.styleFrom(
+                //     elevation: 5,
+                //     padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
+                //   ),
+                //   child: Text("Get All Trip History"),
+                // ),
                 ElevatedButton(
                   onPressed: () => _getCoordinates(1741060234),
                   style: ElevatedButton.styleFrom(
@@ -375,6 +414,14 @@ class TestingPage extends StatelessWidget {
                     padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
                   ),
                   child: Text("BLUETOOTH"),
+                ),
+                ElevatedButton(
+                  onPressed: () => _testPacks(),
+                  style: ElevatedButton.styleFrom(
+                    elevation: 5,
+                    padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
+                  ),
+                  child: Text("Test Packs"),
                 ),
               ],
             ),

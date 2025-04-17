@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:cycle_guard_app/auth/requests_util.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 enum CreateAccountStatus {
   duplicateUsername,
@@ -13,6 +14,21 @@ enum CreateAccountStatus {
 
 class AuthUtil {
   AuthUtil._();
+
+  static Future<bool?> loadToken() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    if (prefs.containsKey('authToken')) {
+      _token = prefs.getString('authToken')!;
+      return true;
+    }
+    return false;
+  }
+
+  static Future<void> _setToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('authToken', _token);
+  }
 
   static String _token = "";
   static String _username = "";
@@ -55,6 +71,8 @@ class AuthUtil {
 
     _token = newToken;
     _username = username;
+
+    await _setToken();
 
     return CreateAccountStatus.success;
   }

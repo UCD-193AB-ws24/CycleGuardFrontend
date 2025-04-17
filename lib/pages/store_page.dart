@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:provider/provider.dart';
 import 'package:cycle_guard_app/pages/rocket_screen.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../main.dart';
 
 class StorePage extends StatelessWidget {
@@ -86,10 +87,7 @@ class StorePage extends StatelessWidget {
                           context: context,
                           title: "Profile Icon",
                           cost: "50 CycleCoins",
-                          onBuy: () {
-                            print("Opening icon menu...");
-                            _showIconMenu(context, appState);
-                          },
+                          onBuy: () => _showIconMenu(context, appState),
                           icon: Icons.person, 
                         ),
                       ],
@@ -299,8 +297,14 @@ class StorePage extends StatelessWidget {
               ? Column(
                   mainAxisSize: MainAxisSize.min,
                   children: purchasableIcons.map((iconName) {
+                    final iconPath = 'assets/$iconName.svg';
                     return ListTile(
-                      leading: Icon(Icons.person), //  replace with actual SVG previews later
+                      leading: SvgPicture.asset(
+                        iconPath,
+                        width: 40,
+                        height: 40,
+                        placeholderBuilder: (context) => CircularProgressIndicator(),
+                      ),
                       title: Text(iconName),
                       onTap: () async {
                         final success = await appState.purchaseIcon(iconName);

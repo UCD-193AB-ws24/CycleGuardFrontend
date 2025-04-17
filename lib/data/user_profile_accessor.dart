@@ -58,13 +58,14 @@ class UserProfileAccessor {
 }
 
 class UserProfile {
-  final String username, displayName, bio;
+  final String username, displayName, bio, profileIcon;
   final bool isPublic, isNewAccount;
 
   const UserProfile({
     required this.username,
     required this.displayName,
     required this.bio,
+    required this.profileIcon,
     required this.isPublic,
     required this.isNewAccount
   });
@@ -76,11 +77,13 @@ class UserProfile {
         "displayName": String displayName,
         "bio": String bio,
         "isPublic": bool isPublic,
-        "isNewAccount": bool isNewAccount
+        "isNewAccount": bool isNewAccount,
+        "profileIcon": String profileIcon
       } => UserProfile(
           username: username,
           displayName: displayName,
           bio: bio,
+          profileIcon: profileIcon,
           isPublic: isPublic,
           isNewAccount: isNewAccount
       ),

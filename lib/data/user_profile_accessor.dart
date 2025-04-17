@@ -59,13 +59,14 @@ class UserProfileAccessor {
 
 class UserProfile {
   final String username, displayName, bio;
-  final bool isPublic;
+  final bool isPublic, isNewAccount;
 
   const UserProfile({
     required this.username,
     required this.displayName,
     required this.bio,
     required this.isPublic,
+    required this.isNewAccount
   });
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
@@ -74,12 +75,14 @@ class UserProfile {
         "username": String username,
         "displayName": String displayName,
         "bio": String bio,
-        "isPublic": bool isPublic
+        "isPublic": bool isPublic,
+        "isNewAccount": bool isNewAccount
       } => UserProfile(
           username: username,
           displayName: displayName,
           bio: bio,
-          isPublic: isPublic
+          isPublic: isPublic,
+          isNewAccount: isNewAccount
       ),
       _ => throw const FormatException("failed to load UserProfile"),
     };

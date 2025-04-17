@@ -29,7 +29,7 @@ class StorePage extends StatelessWidget {
 
   void _getOwnedItems() async {
     print("Showing owned items...");
-    final items = await PurchaseInfo.getOwnedItems();
+    final items = await PurchaseInfoAccessor.getPurchaseInfo();
 
     Fluttertoast.cancel();
     Fluttertoast.showToast(

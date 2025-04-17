@@ -282,6 +282,7 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
                           displayName: nameController.text.trim(),
                           bio: bioController.text.trim(),
                           isPublic: isPublic, // Save public/private status
+                          isNewAccount: false
                         );
 
                         await UserProfileAccessor.updateOwnProfile(updatedProfile);

@@ -86,9 +86,11 @@ class StorePage extends StatelessWidget {
                           context: context,
                           title: "Profile Icon",
                           cost: "50 CycleCoins",
-                          onBuy: () {},
+                          onBuy: () {
+                            print("Opening icon menu...");
+                            _showIconMenu(context, appState);
+                          },
                           icon: Icons.person, 
-                          isPlaceholder: false, 
                         ),
                       ],
                     ),
@@ -185,13 +187,12 @@ class StorePage extends StatelessWidget {
     required String cost,
     required VoidCallback onBuy,
     required IconData icon,
-    bool isPlaceholder = false,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
     bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return GestureDetector(
-      onTap: isPlaceholder ? null : onBuy,
+      onTap: onBuy,
       child: Card(
         elevation: 5,
         color: isDarkMode
@@ -273,6 +274,44 @@ class StorePage extends StatelessWidget {
                   }).toList(),
                 )
               : Text("No more themes available!"),
+        );
+      },
+    );
+  }
+
+  void _showIconMenu(BuildContext context, MyAppState appState) async {
+    print('Opening icon menu...');
+    await appState.fetchOwnedIcons();
+
+    final purchasableIcons = appState.storeIcons.where(
+      (icon) => !appState.ownedIcons.contains(icon)
+    ).toList();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(
+            "Choose an Icon",
+            style: TextStyle(color: Colors.black),
+          ),
+          content: purchasableIcons.isNotEmpty
+              ? Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: purchasableIcons.map((iconName) {
+                    return ListTile(
+                      leading: Icon(Icons.person), //  replace with actual SVG previews later
+                      title: Text(iconName),
+                      onTap: () async {
+                        final success = await appState.purchaseIcon(iconName);
+                        if (success) {
+                          Navigator.pop(context);
+                        }
+                      },
+                    );
+                  }).toList(),
+                )
+              : Text("No more icons available!"),
         );
       },
     );

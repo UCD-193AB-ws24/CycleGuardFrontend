@@ -1,17 +1,44 @@
+import 'package:cycle_guard_app/auth/auth_util.dart';
 import 'package:cycle_guard_app/pages/login_page.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:provider/provider.dart';
 import '../auth/dim_util.dart';
+import '../main.dart';
 // import '../main.dart'; 
 
 class StartPage extends StatelessWidget {
   final PageController pageController;
   StartPage(this.pageController);
 
+  void _handlePress() async {
+    pageController.nextPage(
+      duration: Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
+  }
+
+  void _afterLoadToken(BuildContext context) {
+    print("Logged in? ${AuthUtil.isLoggedIn()}");
+    print("Token found: ${AuthUtil.token}");
+
+    if (!AuthUtil.isLoggedIn()) return;
+
+    final appState = Provider.of<MyAppState>(context, listen: false);
+    if (context.mounted) {
+      appState.loadUserSettings().then(
+              (onValue) => appState.fetchOwnedThemes().then(
+                  (onValue) => Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => MyHomePage()))
+              )
+      );
+
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-
+    AuthUtil.loadToken().then((onValue) => _afterLoadToken(context));
     return Scaffold(
       backgroundColor: Color(0xFFF5E7C4),
       body: Stack(
@@ -59,10 +86,7 @@ class StartPage extends StatelessWidget {
 
                 ElevatedButton(
                   onPressed: () {
-                    pageController.nextPage(
-                      duration: Duration(milliseconds: 300),
-                      curve: Curves.easeInOut,
-                    );
+                    _handlePress();
                   },
                   style: ElevatedButton.styleFrom(
                     elevation: 10,

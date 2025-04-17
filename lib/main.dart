@@ -155,7 +155,7 @@ class MyAppState extends ChangeNotifier {
   final Map<String, Color> ownedThemes = {};
 
   Future<void> fetchOwnedThemes() async {
-    final ownedThemeNames = await PurchaseInfo.getOwnedItems();
+    final ownedThemeNames = (await PurchaseInfoAccessor.getPurchaseInfo()).themesOwned;
 
     for (var themeName in ownedThemeNames) {
       if (storeThemes.containsKey(themeName)) {
@@ -246,7 +246,7 @@ class MyAppState extends ChangeNotifier {
       return false; // Return false if not enough coins
     }
 
-    final response = await PurchaseInfo.buyItem(themeName);
+    final response = await PurchaseInfoAccessor.buyTheme(themeName);
     switch (response) {
       case BuyResponse.success:
         final color = storeThemes.remove(themeName);
@@ -276,10 +276,9 @@ class MyAppState extends ChangeNotifier {
       return false; // Return false if not enough coins
     }
 
-    final response = await PurchaseInfo.buyItem("Rocket Boost");
+    final response = await PurchaseInfoAccessor.buyMisc("Rocket Boost");
     switch (response) {
       case BuyResponse.success:
-        await CycleCoinInfo.addCycleCoins(-100);
         Fluttertoast.showToast(msg: "Rocket Boost purchased!");
         notifyListeners();
         return true; // Return true if purchase is successful

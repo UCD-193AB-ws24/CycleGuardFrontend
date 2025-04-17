@@ -141,7 +141,7 @@ class TestingPage extends StatelessWidget {
 
   Future<void> _testUserProfile() async {
     // print("Previous profile: ${await UserProfileAccessor.getOwnProfile()}");
-    await UserProfileAccessor.updateOwnProfile(UserProfile(username: "", displayName: "Jason Feng", bio: "God of Java", isPublic: true));
+    await UserProfileAccessor.updateOwnProfile(UserProfile(username: "", displayName: "", bio: "God of Java", isPublic: true, isNewAccount: false));
     print(await UserProfileAccessor.getOwnProfile());
     print(await UserProfileAccessor.getPublicProfile("javagod123"));
   }

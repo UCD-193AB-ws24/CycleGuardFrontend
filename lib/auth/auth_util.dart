@@ -106,7 +106,7 @@ class AuthUtil {
     return true;
   }
 
-  static Future<void> logout() async {
+  static Future<void> clearPersistentToken() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('authToken');
   }

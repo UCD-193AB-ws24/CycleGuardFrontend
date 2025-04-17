@@ -1,3 +1,4 @@
+import 'package:cycle_guard_app/auth/auth_util.dart';
 import 'package:cycle_guard_app/data/achievements_accessor.dart';
 import 'package:cycle_guard_app/data/coordinates_accessor.dart';
 import 'package:cycle_guard_app/data/friend_requests_accessor.dart';
@@ -13,6 +14,7 @@ import 'package:cycle_guard_app/data/user_profile_accessor.dart';
 import 'package:cycle_guard_app/data/user_settings_accessor.dart';
 import 'package:cycle_guard_app/data/user_stats_accessor.dart';
 import 'package:cycle_guard_app/data/week_history_accessor.dart';
+import 'package:cycle_guard_app/pages/start_page.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import './ble.dart';
@@ -212,6 +214,11 @@ class TestingPage extends StatelessWidget {
 
     // Standard non-owner members of a pack must use:
     // PacksAccessor.leavePack();
+  }
+
+  Future<void> _clearPersistentToken(BuildContext context) async {
+    await AuthUtil.clearPersistentToken();
+    // Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => StartPage()));
   }
 
   Future<void> _getWeekHistory() async {
@@ -422,6 +429,14 @@ class TestingPage extends StatelessWidget {
                     padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
                   ),
                   child: Text("Test Packs"),
+                ),
+                ElevatedButton(
+                  onPressed: () => _clearPersistentToken(context),
+                  style: ElevatedButton.styleFrom(
+                    elevation: 5,
+                    padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
+                  ),
+                  child: Text("Clear token from persistent storage"),
                 ),
               ],
             ),

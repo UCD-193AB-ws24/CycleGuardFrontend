@@ -1,3 +1,4 @@
+import 'package:cycle_guard_app/auth/auth_util.dart';
 import 'package:cycle_guard_app/pages/login_page.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -16,17 +17,28 @@ class StartPage extends StatelessWidget {
       duration: Duration(milliseconds: 300),
       curve: Curves.easeInOut,
     );
-    // final appState = Provider.of<MyAppState>(context, listen: false);
-    // await appState.loadUserSettings();
-    // await appState.fetchOwnedThemes();
-    // setState(() {
-    //   Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => MyHomePage()));
-    // });
+  }
+
+  void _afterLoadToken(BuildContext context) {
+    print("Logged in? ${AuthUtil.isLoggedIn()}");
+    print("Token found: ${AuthUtil.token}");
+
+    if (!AuthUtil.isLoggedIn()) return;
+
+    final appState = Provider.of<MyAppState>(context, listen: false);
+    if (context.mounted) {
+      appState.loadUserSettings().then(
+              (onValue) => appState.fetchOwnedThemes().then(
+                  (onValue) => Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => MyHomePage()))
+              )
+      );
+
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-
+    AuthUtil.loadToken().then((onValue) => _afterLoadToken(context));
     return Scaffold(
       backgroundColor: Color(0xFFF5E7C4),
       body: Stack(

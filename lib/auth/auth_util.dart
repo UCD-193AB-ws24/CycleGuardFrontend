@@ -106,7 +106,8 @@ class AuthUtil {
     return true;
   }
 
-  static void logout() {
-
+  static Future<void> logout() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('authToken');
   }
 }

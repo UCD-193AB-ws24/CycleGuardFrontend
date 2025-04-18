@@ -6,6 +6,8 @@ import 'package:http/http.dart' as http;
 class RequestsUtil {
   RequestsUtil._();
 
+  static final Map<String, String> noParams = {};
+
   static final _host = "cycleguardbackend-638241752910.us-central1.run.app";
   // static final _host = "immortal-hot-cat.ngrok-free.app";
   static final _scheme = "https";

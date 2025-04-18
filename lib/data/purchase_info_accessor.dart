@@ -26,33 +26,37 @@ class CycleCoinInfo {
 }
 
 class PurchaseInfo {
-  PurchaseInfo._();
+  final List<String> themesOwned, miscOwned, iconsOwned;
 
-  static Future<List<String>> getOwnedItems() async {
-    final response = await RequestsUtil.getWithToken("/purchaseInfo/ownedItems");
+  const PurchaseInfo({
+    required this.themesOwned,
+    required this.miscOwned,
+    required this.iconsOwned
+  });
 
-    if (response.statusCode == 200) {
-      // print(json.decode(response.body));
-      return List<String>.from(json.decode(response.body));
-    } else {
-      throw Exception('Failed to get owned items');
-    }
+  static List<String> _parseStringList(List<dynamic> list) {
+    return List<String>.from(List<String>.from(list).map((e) => e.toString()));
   }
 
-  static Future<BuyResponse> buyItem(String item) async {
-    final response = await RequestsUtil.postWithToken("/purchaseInfo/buy", {"item": item});
+  factory PurchaseInfo.fromJson(Map<String, dynamic> jsonInit) {
+    return switch (jsonInit) {
+      {
+      "themesOwned": List<dynamic> themesOwned,
+      "miscOwned": List<dynamic> miscOwned,
+      "iconsOwned": List<dynamic> iconsOwned,
+      } => PurchaseInfo(
+        // username: username,
+          themesOwned: _parseStringList(themesOwned),
+          miscOwned: _parseStringList(miscOwned),
+          iconsOwned: _parseStringList(iconsOwned)
+      ),
+      _ => throw const FormatException("failed to load Coordinates"),
+    };
+  }
 
-    switch (response.statusCode) {
-      case 200: return BuyResponse.success;
-      case 401: return BuyResponse.unauthorized;
-      case 409: 
-        if (response.body == "ALREADY OWNED") {
-          return item == "Rocket Boost" ? BuyResponse.success : BuyResponse.alreadyOwned;
-        }
-        return BuyResponse.notEnoughCoins;
-        //return response.body == "ALREADY OWNED"?BuyResponse.alreadyOwned : BuyResponse.notEnoughCoins;
-      default: return BuyResponse.serverError;
-    }
+  @override
+  String toString() {
+    return 'PurchaseInfo{themesOwned: $themesOwned, miscOwned: $miscOwned, iconsOwned: $iconsOwned}';
   }
 }
 
@@ -62,4 +66,51 @@ enum BuyResponse {
   alreadyOwned,
   notEnoughCoins,
   serverError
+}
+
+
+
+class PurchaseInfoAccessor {
+  static Future<PurchaseInfo> getPurchaseInfo() async {
+    final response = await RequestsUtil.getWithToken("/purchaseInfo/getPurchaseInfo");
+
+    if (response.statusCode == 200) {
+      return PurchaseInfo.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
+    } else {
+      throw Exception('Failed to get purchase info');
+    }
+  }
+
+  static Future<BuyResponse> buyTheme(String theme) async {
+    final response = await RequestsUtil.postWithToken("/purchaseInfo/buyTheme", {"item": theme});
+
+    switch (response.statusCode) {
+      case 200: return BuyResponse.success;
+      case 401: return BuyResponse.unauthorized;
+      case 409: return BuyResponse.notEnoughCoins;
+      default: return BuyResponse.serverError;
+    }
+  }
+
+  static Future<BuyResponse> buyMisc(String misc) async {
+    final response = await RequestsUtil.postWithToken("/purchaseInfo/buyMisc", {"item": misc});
+
+    switch (response.statusCode) {
+      case 200: return BuyResponse.success;
+      case 401: return BuyResponse.unauthorized;
+      case 409: return BuyResponse.notEnoughCoins;
+      default: return BuyResponse.serverError;
+    }
+  }
+
+  static Future<BuyResponse> buyIcon(String icon) async {
+    final response = await RequestsUtil.postWithToken("/purchaseInfo/buyIcon", {"item": icon});
+
+    switch (response.statusCode) {
+      case 200: return BuyResponse.success;
+      case 401: return BuyResponse.unauthorized;
+      case 409: return BuyResponse.notEnoughCoins;
+      default: return BuyResponse.serverError;
+    }
+  }
 }

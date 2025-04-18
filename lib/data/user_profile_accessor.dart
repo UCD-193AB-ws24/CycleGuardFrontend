@@ -95,7 +95,9 @@ class UserProfile {
     'username': username,
     'displayName': displayName,
     'bio': bio,
-    'isPublic': isPublic
+    'isPublic': isPublic,
+    'isNewAccount': isNewAccount,
+    'profileIcon': profileIcon
   };
 
   /// **Converts a List of JSON user entries into a List<UserProfile>**
@@ -110,7 +112,7 @@ class UserProfile {
 
   @override
   String toString() {
-    return 'UserProfile{displayName: $displayName, bio: $bio, isPublic: $isPublic}';
+    return 'UserProfile{username: $username, displayName: $displayName, bio: $bio, profileIcon: $profileIcon, isPublic: $isPublic, isNewAccount: $isNewAccount}';
   }
 }
 

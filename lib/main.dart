@@ -133,6 +133,7 @@ class MyApp extends StatelessWidget {
 
 class MyAppState extends ChangeNotifier {
   Color selectedColor = Colors.orange;
+  String selectedIcon = "icon_default";
   bool isDarkMode = false;
 
   final Map<String, Color> availableThemes = {
@@ -152,7 +153,12 @@ class MyAppState extends ChangeNotifier {
     'Indigo': Colors.indigo,
   };
 
+
   final Map<String, Color> ownedThemes = {};
+
+  final List<String> availableIcons = ['icon_default'];
+  final List<String> storeIcons = ['icon_1_F', 'icon_1_M', 'icon_2_F', 'icon_2_M'];
+  final List<String> ownedIcons = [];
 
   Future<void> fetchOwnedThemes() async {
     final ownedThemeNames = (await PurchaseInfoAccessor.getPurchaseInfo()).themesOwned;
@@ -164,6 +170,18 @@ class MyAppState extends ChangeNotifier {
     }
 
     notifyListeners(); 
+  }
+  
+  Future<void> fetchOwnedIcons() async {
+    final ownedIconNames = (await PurchaseInfoAccessor.getPurchaseInfo()).iconsOwned;
+
+    for (var iconName in ownedIconNames) {
+      if (storeIcons.contains(iconName) && !ownedIcons.contains(iconName)) {
+        ownedIcons.add(iconName);
+      }
+    }
+
+    notifyListeners();
   }
 
   void toggleDarkMode(bool isEnabled) async {
@@ -185,7 +203,7 @@ class MyAppState extends ChangeNotifier {
     }
   }
 
-    void updateThemeColor(Color newColor) async {
+  void updateThemeColor(Color newColor) async {
     selectedColor = newColor;
     String themeName = _getThemeNameFromColor(selectedColor);
     UserSettings updatedSettings = UserSettings(
@@ -263,6 +281,39 @@ class MyAppState extends ChangeNotifier {
       default:
         Fluttertoast.showToast(msg: "Purchase failed. Try again later.");
         return false; // Return false for any other failure
+    }
+  }
+
+  Future<bool> purchaseIcon(String iconName) async {
+    final coins = await CycleCoinInfo.getCycleCoins();
+    if (coins < 10) {
+      Fluttertoast.showToast(
+        msg: "Not enough CycleCoins!",
+        backgroundColor: Colors.red,
+      );
+      return false;
+    }
+
+    final response = await PurchaseInfoAccessor.buyIcon(iconName);
+    switch (response) {
+      case BuyResponse.success:
+        if (storeIcons.contains(iconName)) {
+          storeIcons.remove(iconName);
+          availableIcons.add(iconName);
+          ownedIcons.add(iconName);
+        }
+        Fluttertoast.showToast(msg: "Icon purchased successfully!");
+        notifyListeners();
+        return true;
+      case BuyResponse.notEnoughCoins:
+        Fluttertoast.showToast(msg: "Not enough CycleCoins!");
+        return false;
+      case BuyResponse.alreadyOwned:
+        Fluttertoast.showToast(msg: "You already own this icon!");
+        return false;
+      default:
+        Fluttertoast.showToast(msg: "Purchase failed. Try again later.");
+        return false;
     }
   }
 

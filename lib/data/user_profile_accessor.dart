@@ -112,7 +112,7 @@ class UserProfile {
 
   @override
   String toString() {
-    return 'UserProfile{displayName: $displayName, bio: $bio, isPublic: $isPublic, profileIcon: $profileIcon, isPublic: $isPublic, isNewAccount: $isNewAccount}';
+    return 'UserProfile{username: $username, displayName: $displayName, bio: $bio, profileIcon: $profileIcon, isPublic: $isPublic, isNewAccount: $isNewAccount}';
   }
 }
 

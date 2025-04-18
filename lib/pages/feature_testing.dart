@@ -5,6 +5,7 @@ import 'package:cycle_guard_app/data/friend_requests_accessor.dart';
 import 'package:cycle_guard_app/data/friends_list_accessor.dart';
 import 'package:cycle_guard_app/data/global_leaderboards_accessor.dart';
 import 'package:cycle_guard_app/data/health_info_accessor.dart';
+import 'package:cycle_guard_app/data/notifications_accessor.dart' as notif_accessor;
 import 'package:cycle_guard_app/data/packs_accessor.dart';
 import 'package:cycle_guard_app/data/single_trip_history.dart';
 import 'package:cycle_guard_app/data/submit_ride_service.dart';
@@ -221,6 +222,19 @@ class TestingPage extends StatelessWidget {
     // Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => StartPage()));
   }
 
+  Future<void> _testNotifications() async {
+    print("Testing notifications");
+
+    // import 'package:cycle_guard_app/data/notifications_accessor.dart' as notif_accessor;
+    final notif = notif_accessor.Notification(title: "Test Notification", body: "Hello World!", hour: 12, minute: 30);
+    print("Starting notifications: ${await notif_accessor.NotificationsAccessor.getNotifications()}");
+    // All notifs are unique
+    print("Adding notification: ${await notif_accessor.NotificationsAccessor.addNotification(notif)}");
+    print("Adding duplicate notification: ${await notif_accessor.NotificationsAccessor.addNotification(notif)}");
+    // Deletes notif from list, if any notif matches all four parameters
+    print("Removing notification: ${await notif_accessor.NotificationsAccessor.deleteNotification(notif)}");
+  }
+
   Future<void> _getWeekHistory() async {
     final weekHistory = await WeekHistoryAccessor.getWeekHistory();
 
@@ -374,46 +388,46 @@ class TestingPage extends StatelessWidget {
                   ),
                   child: Text("Get Timestamp (edit value in code)"),
                 ),
-                ElevatedButton(
-                  onPressed: () => _testUserProfile(),
-                  style: ElevatedButton.styleFrom(
-                    elevation: 5,
-                    padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
-                  ),
-                  child: Text("User Profile tests"),
-                ),
-                ElevatedButton(
-                  onPressed: () => _testUserSettings(),
-                  style: ElevatedButton.styleFrom(
-                    elevation: 5,
-                    padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
-                  ),
-                  child: Text("User Settings tests"),
-                ),
-                ElevatedButton(
-                  onPressed: () => _testDistanceTimeLeaderboards(),
-                  style: ElevatedButton.styleFrom(
-                    elevation: 5,
-                    padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
-                  ),
-                  child: Text("Leaderboards tests"),
-                ),
-                ElevatedButton(
-                  onPressed: () => _testFriendsList(),
-                  style: ElevatedButton.styleFrom(
-                    elevation: 5,
-                    padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
-                  ),
-                  child: Text("Friend List tests"),
-                ),
-                ElevatedButton(
-                  onPressed: () => _testAllUsers(),
-                  style: ElevatedButton.styleFrom(
-                    elevation: 5,
-                    padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
-                  ),
-                  child: Text("user/all"),
-                ),
+                // ElevatedButton(
+                //   onPressed: () => _testUserProfile(),
+                //   style: ElevatedButton.styleFrom(
+                //     elevation: 5,
+                //     padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
+                //   ),
+                //   child: Text("User Profile tests"),
+                // ),
+                // ElevatedButton(
+                //   onPressed: () => _testUserSettings(),
+                //   style: ElevatedButton.styleFrom(
+                //     elevation: 5,
+                //     padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
+                //   ),
+                //   child: Text("User Settings tests"),
+                // ),
+                // ElevatedButton(
+                //   onPressed: () => _testDistanceTimeLeaderboards(),
+                //   style: ElevatedButton.styleFrom(
+                //     elevation: 5,
+                //     padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
+                //   ),
+                //   child: Text("Leaderboards tests"),
+                // ),
+                // ElevatedButton(
+                //   onPressed: () => _testFriendsList(),
+                //   style: ElevatedButton.styleFrom(
+                //     elevation: 5,
+                //     padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
+                //   ),
+                //   child: Text("Friend List tests"),
+                // ),
+                // ElevatedButton(
+                //   onPressed: () => _testAllUsers(),
+                //   style: ElevatedButton.styleFrom(
+                //     elevation: 5,
+                //     padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
+                //   ),
+                //   child: Text("user/all"),
+                // ),
                 ElevatedButton(
                   onPressed: () => showCustomDialog(context),
                   style: ElevatedButton.styleFrom(
@@ -429,6 +443,14 @@ class TestingPage extends StatelessWidget {
                     padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
                   ),
                   child: Text("Test Packs"),
+                ),
+                ElevatedButton(
+                  onPressed: () => _testNotifications(),
+                  style: ElevatedButton.styleFrom(
+                    elevation: 5,
+                    padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
+                  ),
+                  child: Text("Test notifications"),
                 ),
                 ElevatedButton(
                   onPressed: () => _clearPersistentToken(context),

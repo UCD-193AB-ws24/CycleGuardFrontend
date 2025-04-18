@@ -133,6 +133,7 @@ class MyApp extends StatelessWidget {
 
 class MyAppState extends ChangeNotifier {
   Color selectedColor = Colors.orange;
+  String selectedIcon = "icon_default";
   bool isDarkMode = false;
 
   final Map<String, Color> availableThemes = {
@@ -144,8 +145,6 @@ class MyAppState extends ChangeNotifier {
     'Orange': Colors.orange,
   };
 
-  final List<String> availableIcons = ['icon_default'];
-
   final Map<String, Color> storeThemes = {
     'Teal': Colors.teal,
     'Lime': Colors.lime,
@@ -154,9 +153,11 @@ class MyAppState extends ChangeNotifier {
     'Indigo': Colors.indigo,
   };
 
-  final List<String> storeIcons = ['icon_1_F', 'icon_1_M', 'icon_2_F', 'icon_2_M'];
 
   final Map<String, Color> ownedThemes = {};
+
+  final List<String> availableIcons = ['icon_default'];
+  final List<String> storeIcons = ['icon_1_F', 'icon_1_M', 'icon_2_F', 'icon_2_M'];
   final List<String> ownedIcons = [];
 
   Future<void> fetchOwnedThemes() async {
@@ -170,7 +171,7 @@ class MyAppState extends ChangeNotifier {
 
     notifyListeners(); 
   }
-
+  
   Future<void> fetchOwnedIcons() async {
     final ownedIconNames = (await PurchaseInfoAccessor.getPurchaseInfo()).iconsOwned;
 

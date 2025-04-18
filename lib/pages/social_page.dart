@@ -12,6 +12,7 @@ import 'package:cycle_guard_app/data/health_info_accessor.dart';
 import 'package:cycle_guard_app/pages/settings_page.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
+import '../main.dart';
 
 class SocialPage extends StatefulWidget {
   @override
@@ -22,6 +23,7 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
   late TabController _tabController;
   int numOfTabs = 3;
   bool isPublic = true; // Move isPublic to the state class
+  bool _hasFetchedIcons = false;
 
   @override
   void initState() {
@@ -184,7 +186,7 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
     TextEditingController nameController = TextEditingController();
     TextEditingController bioController = TextEditingController();
     bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    String profileImageUrl = "https://via.placeholder.com/150"; // Replace with actual image URL
+    //String profileImageUrl = "https://via.placeholder.com/150"; // Replace with actual image URL
     //final userGoals = Provider.of<UserDailyGoalProvider>(context);
 
     return FutureBuilder<UserProfile>(
@@ -202,6 +204,40 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
         nameController.text = profile.displayName;
         bioController.text = profile.bio;
 
+        print("------");
+        print(profile);
+
+        final appState = Provider.of<MyAppState>(context);
+        if (!_hasFetchedIcons && appState.ownedIcons.isEmpty) {
+          _hasFetchedIcons = true;
+          print("-------------here-------------");
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            appState.fetchOwnedIcons(); 
+          });
+        }
+
+        if (profile.profileIcon.isNotEmpty && appState.selectedIcon != profile.profileIcon) {
+          // Use post frame callback to avoid setState during build
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              appState.selectedIcon = profile.profileIcon;
+            }
+          });
+        }
+
+        final allIcons = [
+          ...{
+            ...appState.availableIcons,
+            ...appState.ownedIcons,
+          }
+        ];
+        
+        print("---------");
+        print(allIcons);
+        print(appState.selectedIcon);
+        print("----");
+        print(profile.profileIcon);
+
         return Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
@@ -210,9 +246,21 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
               Stack(
                 clipBehavior: Clip.none, // Allow the button to overflow
                 children: [
-                  CircleAvatar(
-                    radius: 50,
-                    backgroundImage: NetworkImage(profileImageUrl),
+                  Consumer<MyAppState>(
+                    builder: (context, appState, child) {
+                      return Container(
+                        width: 125,
+                        height: 125,
+                        padding: EdgeInsets.all(15),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Theme.of(context).colorScheme.primaryContainer,
+                        ),
+                        child: SvgPicture.asset(
+                          'assets/${appState.selectedIcon}.svg',
+                        ),
+                      );
+                    }
                   ),
                   Align(
                     alignment: Alignment.topRight, 
@@ -249,6 +297,65 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
                   ),
                 ],
               ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 20),
+                  const Text("Select Profile Icon", style: TextStyle(fontSize: 16)),
+                  const SizedBox(height: 8),
+
+                  Consumer<MyAppState>(
+                    builder: (context, appState, child) {
+                      final allIcons = [...{...appState.availableIcons, ...appState.ownedIcons}];
+                      return DropdownButton<String>(
+                        value: allIcons.contains(appState.selectedIcon) ? appState.selectedIcon : 
+                          (allIcons.isNotEmpty ? allIcons.first : null),
+                        items: allIcons.map((iconName) {
+                          return DropdownMenuItem<String>(
+                            value: iconName,
+                            child: Row(
+                              children: [
+                                SvgPicture.asset(
+                                  'assets/$iconName.svg',
+                                  height: 30,
+                                  width: 30,
+                                ),
+                                const SizedBox(width: 10),
+                                Text(iconName),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                        onChanged: (String? newIcon) {
+                          if (newIcon != null) {
+                            setState(() {
+                              appState.selectedIcon = newIcon;
+                            });
+                          
+                            UserProfile updatedProfile = UserProfile(
+                              username: profile.username,  
+                              displayName: profile.displayName,
+                              bio: profile.bio,
+                              isPublic: isPublic,
+                              isNewAccount: false,
+                              profileIcon: newIcon,
+                            );
+                            
+                            print("---------");
+                            print(updatedProfile);
+
+                            UserProfileAccessor.updateOwnProfile(updatedProfile).catchError((error) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text("Failed to update profile icon: $error")),
+                              );
+                            });
+                          }
+                        },
+                      );
+                    },
+                  ),
+                ],
+              ),
               TextField(
                 controller: nameController,
                 decoration: InputDecoration(labelText: "Name"),
@@ -282,8 +389,12 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
                           displayName: nameController.text.trim(),
                           bio: bioController.text.trim(),
                           isPublic: isPublic, // Save public/private status
-                          isNewAccount: false
+                          isNewAccount: false,
+                          profileIcon: appState.selectedIcon,
                         );
+
+                        print("---------");
+                        print(updatedProfile);
 
                         await UserProfileAccessor.updateOwnProfile(updatedProfile);
 

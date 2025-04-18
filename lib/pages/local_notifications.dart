@@ -1,8 +1,11 @@
 import 'dart:async';
-import 'dart:developer';
-
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
+
+import 'package:android_intent_plus/android_intent.dart';
+//import 'package:android_intent_plus/intent.dart';
+import 'package:permission_handler/permission_handler.dart';
+
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest_all.dart' as tz;
 
@@ -13,32 +16,12 @@ class LocalNotificationService {
 
   bool get isInitialized => _isInitialized; 
 
-  /*static FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-      FlutterLocalNotificationsPlugin();
-  static StreamController<NotificationResponse> streamController =
-      StreamController();
-  static onTap(NotificationResponse notificationResponse) {
-    // log(notificationResponse.id!.toString());
-    // log(notificationResponse.payload!.toString());
-    streamController.add(notificationResponse);
-    // Navigator.push(context, route);
-  }*/
-
   Future<void> initNotification() async {
     if (_isInitialized) return;
 
-    /*tz.initializeTimeZones();
+    tz.initializeTimeZones();
     final String currentTimeZone = await FlutterTimezone.getLocalTimezone();
-    tz.setLocalLocation(tz.getLocation(currentTimeZone));*/
-
-    /*InitializationSettings settings = const InitializationSettings(
-      android: AndroidInitializationSettings('@mipmap/ic_launcher'),
-      iOS: DarwinInitializationSettings(
-        requestAlertPermission: true,
-        requestBadgePermission: true,
-        requestSoundPermission: true,
-      ),
-    );*/
+    tz.setLocalLocation(tz.getLocation(currentTimeZone));
 
     const settings = InitializationSettings(
       android: AndroidInitializationSettings('@mipmap/ic_launcher'),
@@ -48,11 +31,6 @@ class LocalNotificationService {
         requestSoundPermission: true,
       ),
     );
-    /*flutterLocalNotificationsPlugin.initialize(
-      settings,
-      onDidReceiveNotificationResponse: onTap,
-      onDidReceiveBackgroundNotificationResponse: onTap,
-    );*/
 
     await _notifications.initialize(settings);
 
@@ -60,7 +38,14 @@ class LocalNotificationService {
       .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
       ?.requestNotificationsPermission(); 
 
-    //_isInitialized = true;
+    _isInitialized = true;
+  }
+
+  void requestExactAlarmPermission() async {
+    const intent = AndroidIntent(
+      action: 'android.settings.REQUEST_SCHEDULE_EXACT_ALARM',
+    );
+    await intent.launch();
   }
 
   NotificationDetails notificationDetails() {
@@ -71,12 +56,12 @@ class LocalNotificationService {
         channelDescription: 'Daily Notificaiton Channel',
         importance: Importance.max,
         priority: Priority.high,
-        ),
+      ),
       iOS: DarwinNotificationDetails(),
     );
   }
 
-  Future<void> showScheduledNotification({
+  Future<void> showImmediateNotification({
     int id = 0,
     String? title,
     String? body,
@@ -89,29 +74,44 @@ class LocalNotificationService {
     );
   }
 
-  /*static void showSchduledNotificationEx() async {
-    const AndroidNotificationDetails android = AndroidNotificationDetails(
-      'schduled notification',
-      'id 3',
-      importance: Importance.max,
-      priority: Priority.high,
+  Future<void> scheduleNotification({
+    required int hour,
+    required int minute,
+    String? title,
+    String? body,
+    int id = 1,
+  }) async {
+    final permissionStatus = await Permission.notification.status;
+    if (!permissionStatus.isGranted) {
+      // Request permission if not granted
+      requestExactAlarmPermission();
+      return;
+    }
+
+    final now = tz.TZDateTime.now(tz.local);
+    var scheduledDate = tz.TZDateTime(
+      tz.local,
+      now.year,
+      now.month,
+      now.day,
+      hour,
+      minute,
     );
-    NotificationDetails details = const NotificationDetails(
-      android: android,
-    );
-    tz.initializeTimeZones();
-    final String currentTimeZone = await FlutterTimezone.getLocalTimezone();
-    tz.setLocalLocation(tz.getLocation(currentTimeZone));
-    await flutterLocalNotificationsPlugin.zonedSchedule(
-      2,
-      'Schduled Notification',
-      'body',
-      tz.TZDateTime.now(tz.local).add(const Duration(seconds: 10)),
-      details,
+
+    if (scheduledDate.isBefore(now)) {
+      scheduledDate = scheduledDate.add(const Duration(days: 1));
+    }
+
+    await _notifications.cancel(id);
+
+    await _notifications.zonedSchedule(
+      id,
+      title,
+      body,
+      scheduledDate,
+      notificationDetails(),
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      payload: 'zonedSchedule',
-      //uiLocalNotificationDateInterpretation:
-      //    UILocalNotificationDateInterpretation.absoluteTime,
+      matchDateTimeComponents: DateTimeComponents.time,
     );
-  }*/
+  }
 }

@@ -32,6 +32,9 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 // notifications
 import 'pages/local_notifications.dart';
+import 'package:android_intent_plus/android_intent.dart';
+//import 'package:android_intent_plus/intent.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 //const MethodChannel platform = MethodChannel('com.cycleguard.channel'); // Must match iOS
 

@@ -14,8 +14,6 @@ import 'package:cycle_guard_app/data/single_trip_history.dart';
 import '../auth/dim_util.dart';
 import 'package:draggable_scrollbar/draggable_scrollbar.dart';
 
-// for local notifications
-import 'package:cycle_guard_app/pages/local_notifications.dart';
 
 class HomePage extends StatefulWidget {
   @override
@@ -136,15 +134,6 @@ class _HomePageState extends State<HomePage> {
             controller: _controller,
             padding: const EdgeInsets.all(8.0),
             children: [
-              ElevatedButton(
-                onPressed: () {
-                  LocalNotificationService().showScheduledNotification(
-                    title: "Title",
-                    body: "Body",
-                  );
-                }, 
-                child: const Text("Send Notification"),
-              ), 
               Center(
                 child: Text(
                   'Past Week of Biking',
@@ -358,15 +347,15 @@ class _HomePageState extends State<HomePage> {
               SizedBox(height: DimUtil.safeWidth(context)*1/40),
               Row(
                 children: [
-                  Expanded(
+                  Flexible(
                     child: _buildStatCard(Icons.timer, 'Time', '${weekHistory.averageTime.round()} min', Colors.blueAccent),
                   ),
                   SizedBox(width: 8),
-                  Expanded(
+                  Flexible(
                     child: _buildStatCard(Icons.directions_bike, 'Distance', '${weekHistory.averageDistance.round()} mi', Colors.orangeAccent),
                   ),
                   SizedBox(width: 8),
-                  Expanded(
+                  Flexible(
                     child: _buildStatCard(Icons.local_fire_department, 'Calories', '${weekHistory.averageCalories.round()} cal', Colors.redAccent),
                   ),
                 ],

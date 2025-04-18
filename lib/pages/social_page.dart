@@ -319,6 +319,10 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
                                   'assets/$iconName.svg',
                                   height: 30,
                                   width: 30,
+                                  colorFilter: ColorFilter.mode(
+                                    isDarkMode ? Colors.white70 : Colors.black,
+                                    BlendMode.srcIn,
+                                  ),
                                 ),
                                 const SizedBox(width: 10),
                                 Text(iconName),

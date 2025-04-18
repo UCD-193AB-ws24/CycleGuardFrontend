@@ -38,6 +38,7 @@ class _HistoryPageState extends State<HistoryPage> {
       firstDate: firstDay,
       lastDate: DateTime.now(), 
       initialDateRange: _selectedDateRange,
+      keyboardType: TextInputType.text,
       builder: (BuildContext context, Widget? child) {
         return Theme(
          data: ThemeData(

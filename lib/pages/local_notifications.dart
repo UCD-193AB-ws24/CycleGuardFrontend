@@ -77,9 +77,9 @@ class LocalNotificationService {
   Future<void> scheduleNotification({
     required int hour,
     required int minute,
+    required int id, 
     String? title,
     String? body,
-    int id = 1,
   }) async {
     final permissionStatus = await Permission.notification.status;
     if (!permissionStatus.isGranted) {

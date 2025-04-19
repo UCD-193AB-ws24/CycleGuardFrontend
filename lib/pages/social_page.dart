@@ -15,8 +15,10 @@ import 'package:provider/provider.dart';
 
 // for local notifications
 import 'dart:developer';
-import 'package:cycle_guard_app/pages/local_notifications.dart';
+/*import 'package:cycle_guard_app/pages/local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:cycle_guard_app/data/notifications_accessor.dart';*/
+import 'package:cycle_guard_app/widgets/notification_scheduler.dart';
 
 class SocialPage extends StatefulWidget {
   @override
@@ -638,7 +640,7 @@ class UserDailyGoalsSection extends StatelessWidget {
   }
 }
 
-class NotificationScheduler extends StatelessWidget {
+/*class NotificationScheduler extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final notificationService = LocalNotificationService();
@@ -756,7 +758,7 @@ class NotificationScheduler extends StatelessWidget {
       },
     );
   }
-}
+}*/
 
 class RequestsTab extends StatefulWidget {
   @override

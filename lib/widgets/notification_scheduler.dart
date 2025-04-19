@@ -17,11 +17,12 @@ class _NotificationScheduler extends State<NotificationScheduler> {
   TimeOfDay _selectedTime = TimeOfDay.now();
   app_notifications.Notification? _selectedNotification;
   List<app_notifications.Notification> _notifications = [];
+  final LocalNotificationService _notificationService = LocalNotificationService();
 
   @override
   void initState() {
     super.initState();
-    _getNotifications();
+    //_getNotifications();
   }
 
   @override
@@ -43,6 +44,10 @@ class _NotificationScheduler extends State<NotificationScheduler> {
     }
   }
 
+
+  /*
+    To use getNotifications uncomment the button in build and the line in init
+  */
   Future<void> _getNotifications() async {
     try {
       final result = await app_notifications.NotificationsAccessor.getNotifications();
@@ -53,10 +58,10 @@ class _NotificationScheduler extends State<NotificationScheduler> {
       });
       
       // Show a snackbar to indicate success
-      if (!mounted) return;
+      /*if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Retrieved ${result.notifications.length} notifications')),
-      );
+      );*/
     } catch (e) {
       developer.log('Error getting notifications: $e', name: 'NotificationButtons');
       if (!mounted) return;
@@ -86,6 +91,15 @@ class _NotificationScheduler extends State<NotificationScheduler> {
       developer.log('Added notification: ${notification.toString()}', name: 'NotificationButtons');
       developer.log('Updated notification list: ${result.toString()}', name: 'NotificationButtons');
       
+      // Schedule local notification
+      await _notificationService.scheduleNotification(
+        id: notification.hour * 60 + notification.minute, // unique ID
+        title: notification.title,
+        body: notification.body,
+        hour: notification.hour,
+        minute: notification.minute,
+      );
+
       setState(() {
         _notifications = result.notifications;
         _titleController.clear();
@@ -114,6 +128,8 @@ class _NotificationScheduler extends State<NotificationScheduler> {
     }
 
     try {
+      await _notificationService.cancelNotification(_selectedNotification!.hour * 60 + _selectedNotification!.minute);
+
       final result = await app_notifications.NotificationsAccessor.deleteNotification(_selectedNotification!);
       developer.log('Deleted notification: ${_selectedNotification.toString()}', name: 'NotificationButtons');
       developer.log('Updated notification list: ${result.toString()}', name: 'NotificationButtons');
@@ -144,7 +160,7 @@ class _NotificationScheduler extends State<NotificationScheduler> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const Text(
-            'Notification Manager',
+            'Daily Notification Manager',
             style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             textAlign: TextAlign.center,
           ),
@@ -200,7 +216,7 @@ class _NotificationScheduler extends State<NotificationScheduler> {
                   backgroundColor: Colors.red,
                 ),
               ),
-              ElevatedButton.icon(
+              /*ElevatedButton.icon(
                 onPressed: _getNotifications,
                 icon: const Icon(Icons.refresh),
                 label: const Text('Get'),
@@ -208,7 +224,7 @@ class _NotificationScheduler extends State<NotificationScheduler> {
                   foregroundColor: Colors.white,
                   backgroundColor: Colors.blue,
                 ),
-              ),
+              ),*/
             ],
           ),
           const SizedBox(height: 20),

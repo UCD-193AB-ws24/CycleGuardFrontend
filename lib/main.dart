@@ -194,7 +194,7 @@ class MyAppState extends ChangeNotifier {
     }
   }
 
-    void updateThemeColor(Color newColor) async {
+  void updateThemeColor(Color newColor) async {
     selectedColor = newColor;
     String themeName = _getThemeNameFromColor(selectedColor);
     UserSettings updatedSettings = UserSettings(

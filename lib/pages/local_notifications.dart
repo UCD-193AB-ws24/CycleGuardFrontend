@@ -48,6 +48,10 @@ class LocalNotificationService {
     await intent.launch();
   }
 
+  Future<void> cancelNotification(int id) async {
+    await _notifications.cancel(id);
+  }
+
   NotificationDetails notificationDetails() {
     return const NotificationDetails(
       android: AndroidNotificationDetails(

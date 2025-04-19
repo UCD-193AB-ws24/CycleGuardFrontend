@@ -1,10 +1,248 @@
-import 'dart:developer';
+import 'dart:developer' as developer;
 import 'package:cycle_guard_app/pages/local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:cycle_guard_app/data/notifications_accessor.dart' as model;
+import 'package:cycle_guard_app/data/notifications_accessor.dart' as app_notifications;
 import 'package:flutter/material.dart';
 
 class NotificationScheduler extends StatefulWidget {
+  const NotificationScheduler({Key? key}) : super(key: key);
+
+  @override
+  State<NotificationScheduler> createState() => _NotificationScheduler();
+}
+
+class _NotificationScheduler extends State<NotificationScheduler> {
+  final TextEditingController _titleController = TextEditingController();
+  final TextEditingController _bodyController = TextEditingController();
+  TimeOfDay _selectedTime = TimeOfDay.now();
+  app_notifications.Notification? _selectedNotification;
+  List<app_notifications.Notification> _notifications = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _getNotifications();
+  }
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _bodyController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _selectTime(BuildContext context) async {
+    final TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: _selectedTime,
+    );
+    if (picked != null && picked != _selectedTime) {
+      setState(() {
+        _selectedTime = picked;
+      });
+    }
+  }
+
+  Future<void> _getNotifications() async {
+    try {
+      final result = await app_notifications.NotificationsAccessor.getNotifications();
+      developer.log('Retrieved notifications: ${result.toString()}', name: 'NotificationButtons');
+      
+      setState(() {
+        _notifications = result.notifications;
+      });
+      
+      // Show a snackbar to indicate success
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Retrieved ${result.notifications.length} notifications')),
+      );
+    } catch (e) {
+      developer.log('Error getting notifications: $e', name: 'NotificationButtons');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error getting notifications: $e')),
+      );
+    }
+  }
+
+  Future<void> _addNotification() async {
+    if (_titleController.text.isEmpty || _bodyController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter a title and body')),
+      );
+      return;
+    }
+
+    final notification = app_notifications.Notification(
+      title: _titleController.text,
+      body: _bodyController.text,
+      hour: _selectedTime.hour,
+      minute: _selectedTime.minute,
+    );
+
+    try {
+      final result = await app_notifications.NotificationsAccessor.addNotification(notification);
+      developer.log('Added notification: ${notification.toString()}', name: 'NotificationButtons');
+      developer.log('Updated notification list: ${result.toString()}', name: 'NotificationButtons');
+      
+      setState(() {
+        _notifications = result.notifications;
+        _titleController.clear();
+        _bodyController.clear();
+      });
+      
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Notification added successfully')),
+      );
+    } catch (e) {
+      developer.log('Error adding notification: $e', name: 'NotificationButtons');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error adding notification: $e')),
+      );
+    }
+  }
+
+  Future<void> _deleteNotification() async {
+    if (_selectedNotification == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select a notification to delete')),
+      );
+      return;
+    }
+
+    try {
+      final result = await app_notifications.NotificationsAccessor.deleteNotification(_selectedNotification!);
+      developer.log('Deleted notification: ${_selectedNotification.toString()}', name: 'NotificationButtons');
+      developer.log('Updated notification list: ${result.toString()}', name: 'NotificationButtons');
+      
+      setState(() {
+        _notifications = result.notifications;
+        _selectedNotification = null;
+      });
+      
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Notification deleted successfully')),
+      );
+    } catch (e) {
+      developer.log('Error deleting notification: $e', name: 'NotificationButtons');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error deleting notification: $e')),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text(
+            'Notification Manager',
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 10),
+
+          const Text(
+            'Existing Notifications:',
+            style: TextStyle(fontSize: 16),
+            textAlign: TextAlign.center,
+          ),
+          SizedBox(
+            height: MediaQuery.of(context).size.height * 0.2,
+            child: ListView.builder(
+              itemCount: _notifications.length,
+              itemBuilder: (context, index) {
+                final notification = _notifications[index];
+                final isSelected = _selectedNotification == notification;
+
+                return ListTile(
+                  title: Text(notification.title),
+                  subtitle: Text(notification.body),
+                  trailing: Text('${notification.hour}:${notification.minute.toString().padLeft(2, '0')}'),
+                  tileColor: isSelected ? Colors.blue.withOpacity(0.2) : null,
+                  onTap: () {
+                    setState(() {
+                      _selectedNotification = notification;
+                    });
+                  },
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              ElevatedButton.icon(
+                onPressed: _addNotification,
+                icon: const Icon(Icons.add),
+                label: const Text('Add'),
+                style: ElevatedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  backgroundColor: Colors.green,
+                ),
+              ),
+              ElevatedButton.icon(
+                onPressed: _deleteNotification,
+                icon: const Icon(Icons.delete),
+                label: const Text('Delete'),
+                style: ElevatedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  backgroundColor: Colors.red,
+                ),
+              ),
+              ElevatedButton.icon(
+                onPressed: _getNotifications,
+                icon: const Icon(Icons.refresh),
+                label: const Text('Get'),
+                style: ElevatedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  backgroundColor: Colors.blue,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+
+          TextField(
+            controller: _titleController,
+            decoration: const InputDecoration(
+              labelText: 'Notification Title',
+              border: OutlineInputBorder(),
+            ),
+          ),
+          const SizedBox(height: 10),
+          TextField(
+            controller: _bodyController,
+            decoration: const InputDecoration(
+              labelText: 'Notification Body',
+              border: OutlineInputBorder(),
+            ),
+            maxLines: 3,
+          ),
+          const SizedBox(height: 10),
+
+          ListTile(
+            title: Text('Notification Time: ${_selectedTime.format(context)}'),
+            trailing: const Icon(Icons.access_time),
+            onTap: () => _selectTime(context),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/*class NotificationScheduler extends StatefulWidget {
   @override
   State<NotificationScheduler> createState() => _NotificationSchedulerState();
 }
@@ -220,4 +458,4 @@ class _NotificationSchedulerState extends State<NotificationScheduler> {
     );
   }
 
-}
+}*/

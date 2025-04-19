@@ -61,19 +61,6 @@ class LocalNotificationService {
     );
   }
 
-  Future<void> showImmediateNotification({
-    int id = 0,
-    String? title,
-    String? body,
-  }) async {
-    return _notifications.show(
-      id,
-      title,
-      body,
-      notificationDetails(),
-    );
-  }
-
   Future<void> scheduleNotification({
     required int hour,
     required int minute,

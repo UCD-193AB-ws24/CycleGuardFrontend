@@ -426,10 +426,10 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
               ),
               SizedBox(height: 40),
               Divider(),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
+              Column(
                 children: [
                   UserDailyGoalsSection(),
+                  Divider(),
                   NotificationScheduler(),
                 ],
               ),

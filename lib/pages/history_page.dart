@@ -397,109 +397,117 @@ class _HistoryPageState extends State<HistoryPage> {
               ),
             )
           : Expanded(
-              child: CustomScrollView(
+              child: Scrollbar(
                 controller: _controller,
-                slivers: [
-                  SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        final date = sortedDates[index];
-                        final timestamps = groupedTrips[date]!;
-                        final sortedTimestamps = getSortedTimestamps(timestamps);
-
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                          child: Card(
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            elevation: 4,
-                            color: isDarkMode ? colorScheme.onSecondaryFixedVariant : colorScheme.surfaceContainerLow,
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 6.0),
-                              child: ExpansionTile(
-                                shape: Border(),
-                                title: Row(
-                                  children: [
-                                    SizedBox(width: DimUtil.safeWidth(context) * 1 / 80),
-                                    Text(
-                                      '$date',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 18,
-                                        color: isDarkMode ? colorScheme.surfaceContainerLow : Colors.black,
+                thumbVisibility: true,
+                trackVisibility: true,
+                radius: const Radius.circular(8),
+                thickness: 8,
+                interactive: true,
+                child: CustomScrollView(
+                  controller: _controller,
+                  slivers: [
+                    SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) {
+                          final date = sortedDates[index];
+                          final timestamps = groupedTrips[date]!;
+                          final sortedTimestamps = getSortedTimestamps(timestamps);
+                
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                            child: Card(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              elevation: 4,
+                              color: isDarkMode ? colorScheme.onSecondaryFixedVariant : colorScheme.surfaceContainerLow,
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 6.0),
+                                child: ExpansionTile(
+                                  shape: Border(),
+                                  title: Row(
+                                    children: [
+                                      SizedBox(width: DimUtil.safeWidth(context) * 1 / 80),
+                                      Text(
+                                        '$date',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 18,
+                                          color: isDarkMode ? colorScheme.surfaceContainerLow : Colors.black,
+                                        ),
                                       ),
-                                    ),
-                                    Spacer(),
-                                    Text(
-                                      '${sortedTimestamps.length} ride${sortedTimestamps.length > 1 ? 's' : ''}',
-                                      style: TextStyle(
-                                        fontSize: 16,
+                                      Spacer(),
+                                      Text(
+                                        '${sortedTimestamps.length} ride${sortedTimestamps.length > 1 ? 's' : ''}',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          color: isDarkMode
+                                              ? colorScheme.surfaceContainerLow
+                                              : colorScheme.onPrimaryFixed,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  collapsedIconColor: isDarkMode
+                                      ? colorScheme.surfaceContainerLow
+                                      : colorScheme.onPrimaryFixed,
+                                  iconColor: isDarkMode
+                                      ? colorScheme.surfaceContainerLow
+                                      : colorScheme.onPrimaryFixed,
+                                  children: sortedTimestamps.map((timestamp) {
+                                    final trip = tripHistoryProvider.getTripByTimestamp(timestamp);
+                                    if (trip == null) {
+                                      return ListTile(title: Text('Trip data not available.'));
+                                    }
+                                    final tripDate =
+                                        DateTime.fromMillisecondsSinceEpoch(timestamp * 1000);
+                                    final formattedTime = DateFormat('h:mm a').format(tripDate);
+                
+                                    return Padding(
+                                      padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
+                                      child: Card(
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                        elevation: 4,
                                         color: isDarkMode
-                                            ? colorScheme.surfaceContainerLow
-                                            : colorScheme.onPrimaryFixed,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                collapsedIconColor: isDarkMode
-                                    ? colorScheme.surfaceContainerLow
-                                    : colorScheme.onPrimaryFixed,
-                                iconColor: isDarkMode
-                                    ? colorScheme.surfaceContainerLow
-                                    : colorScheme.onPrimaryFixed,
-                                children: sortedTimestamps.map((timestamp) {
-                                  final trip = tripHistoryProvider.getTripByTimestamp(timestamp);
-                                  if (trip == null) {
-                                    return ListTile(title: Text('Trip data not available.'));
-                                  }
-                                  final tripDate =
-                                      DateTime.fromMillisecondsSinceEpoch(timestamp * 1000);
-                                  final formattedTime = DateFormat('h:mm a').format(tripDate);
-
-                                  return Padding(
-                                    padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
-                                    child: Card(
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      elevation: 4,
-                                      color: isDarkMode
-                                          ? colorScheme.secondary
-                                          : colorScheme.onTertiary,
-                                      child: ListTile(
-                                        contentPadding: EdgeInsets.all(16),
-                                        title: Text(
-                                          'Ride ${sortedTimestamps.indexOf(timestamp) + 1}',
-                                          style: TextStyle(
-                                            fontSize: 16,
-                                            color: isDarkMode
-                                                ? Colors.grey[300]
-                                                : colorScheme.onPrimaryFixed,
+                                            ? colorScheme.secondary
+                                            : colorScheme.onTertiary,
+                                        child: ListTile(
+                                          contentPadding: EdgeInsets.all(16),
+                                          title: Text(
+                                            'Ride ${sortedTimestamps.indexOf(timestamp) + 1}',
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              color: isDarkMode
+                                                  ? Colors.grey[300]
+                                                  : colorScheme.onPrimaryFixed,
+                                            ),
+                                          ),
+                                          subtitle: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              _buildDetailRow(Icons.access_time, 'Time: $formattedTime', Colors.green),
+                                              _buildDetailRow(Icons.directions_bike, '${trip.distance} km', Colors.blueAccent),
+                                              _buildDetailRow(Icons.timer, '${trip.time} min', Colors.orange),
+                                              _buildDetailRow(Icons.local_fire_department, '${trip.calories} cal', Colors.red),
+                                            ],
                                           ),
                                         ),
-                                        subtitle: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            _buildDetailRow(Icons.access_time, 'Time: $formattedTime', Colors.green),
-                                            _buildDetailRow(Icons.directions_bike, '${trip.distance} km', Colors.blueAccent),
-                                            _buildDetailRow(Icons.timer, '${trip.time} min', Colors.orange),
-                                            _buildDetailRow(Icons.local_fire_department, '${trip.calories} cal', Colors.red),
-                                          ],
-                                        ),
                                       ),
-                                    ),
-                                  );
-                                }).toList(),
+                                    );
+                                  }).toList(),
+                                ),
                               ),
                             ),
-                          ),
-                        );
-                      },
-                      childCount: groupedTrips.length,
+                          );
+                        },
+                        childCount: groupedTrips.length,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
 

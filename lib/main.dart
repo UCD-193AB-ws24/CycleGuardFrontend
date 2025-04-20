@@ -36,6 +36,9 @@ import 'package:android_intent_plus/android_intent.dart';
 //import 'package:android_intent_plus/intent.dart';
 import 'package:permission_handler/permission_handler.dart';
 
+// tutorial
+import 'package:showcaseview/showcaseview.dart';
+
 //const MethodChannel platform = MethodChannel('com.cycleguard.channel'); // Must match iOS
 
 void main() async {
@@ -120,19 +123,22 @@ class MyApp extends StatelessWidget {
       create: (context) => MyAppState(),
       child: Consumer6<MyAppState, UserStatsProvider, AchievementsProgressProvider, WeekHistoryProvider, TripHistoryProvider, UserDailyGoalProvider>(
         builder: (context, appState, userStats, achievementsProgress, weekHistory, tripHistory, userDailyGoal, child) {
-          return MaterialApp(
-            title: 'Cycle Guard App',
-            debugShowCheckedModeBanner: false,
-            themeMode: appState.isDarkMode ? ThemeMode.dark : ThemeMode.light,
-            theme: ThemeData(
-              useMaterial3: true,
-              colorScheme: ColorScheme.fromSeed(seedColor: appState.selectedColor),
+          return ShowCaseWidget(
+            enableAutoScroll: true,
+            builder: (context) => MaterialApp(
+              title: 'Cycle Guard App',
+              debugShowCheckedModeBanner: false,
+              themeMode: appState.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+              theme: ThemeData(
+                useMaterial3: true,
+                colorScheme: ColorScheme.fromSeed(seedColor: appState.selectedColor),
+              ),
+              darkTheme: ThemeData.dark().copyWith(
+                brightness: Brightness.dark,
+                colorScheme: ColorScheme.fromSeed(seedColor: appState.selectedColor),
+              ),
+              home: OnBoardStart(),
             ),
-            darkTheme: ThemeData.dark().copyWith(
-              brightness: Brightness.dark,
-              colorScheme: ColorScheme.fromSeed(seedColor: appState.selectedColor),
-            ),
-            home: OnBoardStart(),
           );
         },
       ),

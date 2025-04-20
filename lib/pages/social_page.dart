@@ -12,6 +12,7 @@ import 'package:cycle_guard_app/data/health_info_accessor.dart';
 import 'package:cycle_guard_app/pages/settings_page.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
+import '../main.dart';
 
 class SocialPage extends StatefulWidget {
   @override
@@ -22,25 +23,73 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
   late TabController _tabController;
   int numOfTabs = 3;
   bool isPublic = true; // Move isPublic to the state class
+  bool _hasFetchedIcons = false;
+  late TextEditingController nameController;
+  late TextEditingController bioController;
+  late Future<UserProfile> _profileFuture;
+  UserProfile? _profile;
+  bool _isLoading = true;
+  bool _hasError = false;
+
+  bool _hasLocalProfileChanges = false;
+  String _currentIconSelection = '';
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: numOfTabs, vsync: this);
-    _loadUserProfile(); // Load profile data including isPublic
+    _profileFuture = UserProfileAccessor.getOwnProfile();
     Future.microtask(() => Provider.of<UserDailyGoalProvider>(context, listen: false).fetchDailyGoals());
+    nameController = TextEditingController();
+    bioController = TextEditingController();
+    _loadProfile();
   }
 
-  /// **Load User Profile Data**
-  Future<void> _loadUserProfile() async {
+
+  Future<void> _loadProfile() async {
     try {
-      UserProfile profile = await UserProfileAccessor.getOwnProfile();
+      final profile = await UserProfileAccessor.getOwnProfile();
+      final appState = Provider.of<MyAppState>(context, listen: false);
+
+      // Update controllers after profile is fetched
+      nameController.text = profile.displayName;
+      bioController.text = profile.bio;
+
+      _currentIconSelection = profile.profileIcon;
+
+      // Post-frame icon fetching logic
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!_hasFetchedIcons && appState.ownedIcons.isEmpty) {
+          _hasFetchedIcons = true;
+          appState.fetchOwnedIcons();
+        }
+
+        if (profile.profileIcon.isNotEmpty && appState.selectedIcon != profile.profileIcon) {
+          if (mounted) {
+            appState.selectedIcon = profile.profileIcon;
+          }
+        }
+      });
+
       setState(() {
+        _profile = profile;
         isPublic = profile.isPublic;
+        _isLoading = false;
       });
     } catch (e) {
-      print("Error fetching profile: $e");
+      setState(() {
+        _hasError = true;
+        _isLoading = false;
+      });
     }
+  }
+
+  @override
+  void dispose() {
+    nameController.dispose();
+    bioController.dispose();
+    _tabController.dispose();
+    super.dispose();
   }
 
     /// **Fetch all users & friend list separately**
@@ -130,65 +179,66 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
   @override
   Widget build(BuildContext context) {
     bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    return DefaultTabController(
-      length: numOfTabs,
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text(
-            'Social',
-            style: TextStyle(
-              color: isDarkMode ? Colors.white70 : Colors.black,
-            ),
+
+    if (_isLoading) {
+      return Center(child: CircularProgressIndicator());
+    } else if (_hasError || _profile == null) {
+      return Center(child: Text("Error loading profile"));
+    }
+
+    // Only build the full scaffold when we have data
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          'Social',
+          style: TextStyle(
+            color: isDarkMode ? Colors.white70 : Colors.black,
           ),
-          backgroundColor: isDarkMode ? Colors.black12 : null,
-          bottom: TabBar(
-            controller: _tabController,
-            unselectedLabelColor: isDarkMode ? Colors.white70 : null,
-            tabs: const [
-              Tab(icon: Icon(Icons.person), text: "Profile"),
-              Tab(icon: Icon(Icons.search), text: "Bikers"),
-              Tab(icon: Icon(Icons.people), text: "Requests"),
-            ],
-          ),
-          actions: [
-            Padding(
-              padding: const EdgeInsets.only(right: 32.0),
-              child: SvgPicture.asset(
-                'assets/cg_logomark.svg',
-                height: 30,
-                width: 30,
-                colorFilter: ColorFilter.mode( 
-                  isDarkMode ? Colors.white70 : Colors.black,
-                  BlendMode.srcIn,
-                ),
-              ),
-            )
-          ],
         ),
-        body: TabBarView(
+        backgroundColor: isDarkMode ? Colors.black12 : null,
+        bottom: TabBar(
           controller: _tabController,
-          children: [
-            SingleChildScrollView(
-              child: _buildProfileTab(),
-            ),
-            _buildSearchTab(),
-            RequestsTab(),
+          unselectedLabelColor: isDarkMode ? Colors.white70 : null,
+          tabs: const [
+            Tab(icon: Icon(Icons.person), text: "Profile"),
+            Tab(icon: Icon(Icons.search), text: "Bikers"),
+            Tab(icon: Icon(Icons.people), text: "Requests"),
           ],
         ),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 32.0),
+            child: SvgPicture.asset(
+              'assets/cg_logomark.svg',
+              height: 30,
+              width: 30,
+              colorFilter: ColorFilter.mode(
+                isDarkMode ? Colors.white70 : Colors.black,
+                BlendMode.srcIn,
+              ),
+            ),
+          )
+        ],
+      ),
+      body: TabBarView(
+        controller: _tabController,
+        children: [
+          SingleChildScrollView(
+            child: _buildProfileTab(),
+          ),
+          _buildSearchTab(),
+          RequestsTab(),
+        ],
       ),
     );
   }
 
   /// **1️⃣ Profile Tab - View & Edit Profile**
   Widget _buildProfileTab() {
-    TextEditingController nameController = TextEditingController();
-    TextEditingController bioController = TextEditingController();
     bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    String profileImageUrl = "https://via.placeholder.com/150"; // Replace with actual image URL
-    //final userGoals = Provider.of<UserDailyGoalProvider>(context);
 
     return FutureBuilder<UserProfile>(
-      future: UserProfileAccessor.getOwnProfile(),
+      future: _profileFuture,//UserProfileAccessor.getOwnProfile(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Center(child: CircularProgressIndicator());
@@ -202,17 +252,33 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
         nameController.text = profile.displayName;
         bioController.text = profile.bio;
 
+
+        final appState = Provider.of<MyAppState>(context);
+
         return Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start, // Align checkbox to the left
+            crossAxisAlignment: CrossAxisAlignment.start, 
             children: [
               Stack(
-                clipBehavior: Clip.none, // Allow the button to overflow
+                clipBehavior: Clip.none, 
                 children: [
-                  CircleAvatar(
-                    radius: 50,
-                    backgroundImage: NetworkImage(profileImageUrl),
+                  Consumer<MyAppState>(
+                    builder: (context, appState, child) {
+                      String displayIcon = _hasLocalProfileChanges ? _currentIconSelection : appState.selectedIcon;
+                      return Container(
+                        width: 125,
+                        height: 125,
+                        padding: EdgeInsets.all(15),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Theme.of(context).colorScheme.primaryContainer,
+                        ),
+                        child: SvgPicture.asset(
+                          'assets/$displayIcon.svg',
+                        ),
+                      );
+                    }
                   ),
                   Align(
                     alignment: Alignment.topRight, 
@@ -249,6 +315,69 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
                   ),
                 ],
               ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 20),
+                  const Text("Select Profile Icon", style: TextStyle(fontSize: 16)),
+                  const SizedBox(height: 8),
+
+                  Consumer<MyAppState>(
+                    builder: (context, appState, child) {
+                      final allIcons = [...{...appState.availableIcons, ...appState.ownedIcons}];
+                      String displayedIcon = _hasLocalProfileChanges ? _currentIconSelection : appState.selectedIcon;
+                      return DropdownButton<String>(
+                        value: allIcons.contains(displayedIcon) ? displayedIcon : 
+                          (allIcons.isNotEmpty ? allIcons.first : null),
+                        items: allIcons.map((iconName) {
+                          return DropdownMenuItem<String>(
+                            value: iconName,
+                            child: Row(
+                              children: [
+                                SvgPicture.asset(
+                                  'assets/$iconName.svg',
+                                  height: 30,
+                                  width: 30,
+                                  colorFilter: ColorFilter.mode(
+                                    isDarkMode ? Colors.white70 : Colors.black,
+                                    BlendMode.srcIn,
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Text(iconName),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                        onChanged: (String? newIcon) {
+                          if (newIcon != null) {
+                            setState(() {
+                              appState.selectedIcon = newIcon;
+                              _currentIconSelection = newIcon;
+                              _hasLocalProfileChanges = true; 
+                            });
+                          
+                            UserProfile updatedProfile = UserProfile(
+                              username: profile.username,  
+                              displayName: profile.displayName,
+                              bio: profile.bio,
+                              isPublic: isPublic,
+                              isNewAccount: false,
+                              profileIcon: newIcon,
+                            );
+                            
+                            UserProfileAccessor.updateOwnProfile(updatedProfile).catchError((error) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text("Failed to update profile icon: $error")),
+                              );
+                            });
+                          }
+                        },
+                      );
+                    },
+                  ),
+                ],
+              ),
               TextField(
                 controller: nameController,
                 decoration: InputDecoration(labelText: "Name"),
@@ -263,7 +392,7 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
                     value: isPublic,
                     onChanged: (bool? newValue) {
                       setState(() {
-                        isPublic = newValue ?? true; // Update state
+                        isPublic = newValue ?? true;
                       });
                     },
                   ),
@@ -281,9 +410,13 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
                           username: "", // The backend handles this, but I'll find a way on the frontend too
                           displayName: nameController.text.trim(),
                           bio: bioController.text.trim(),
-                          isPublic: isPublic, // Save public/private status
-                          isNewAccount: false
+                          isPublic: isPublic, 
+                          isNewAccount: false,
+                          profileIcon: appState.selectedIcon,
                         );
+
+                        print("---------");
+                        print(updatedProfile);
 
                         await UserProfileAccessor.updateOwnProfile(updatedProfile);
 
@@ -650,6 +783,7 @@ class _RequestsTabState extends State<RequestsTab> {
       });
     } catch (e) {
       print("Error loading friend requests: $e");
+      if (!mounted) return;
       setState(() {
         _isLoading = false;
       });

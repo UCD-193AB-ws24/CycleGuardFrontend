@@ -425,7 +425,6 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
                 ],
               ),
               SizedBox(height: 40),
-              Divider(),
               Column(
                 children: [
                   UserDailyGoalsSection(),

@@ -22,7 +22,7 @@ class _NotificationScheduler extends State<NotificationScheduler> {
   @override
   void initState() {
     super.initState();
-    //_getNotifications();
+    _getNotifications();
   }
 
   @override
@@ -154,6 +154,7 @@ class _NotificationScheduler extends State<NotificationScheduler> {
 
   @override
   Widget build(BuildContext context) {
+    bool isDarkMode = Theme.of(context).colorScheme.brightness == Brightness.dark; 
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Column(
@@ -172,35 +173,66 @@ class _NotificationScheduler extends State<NotificationScheduler> {
             textAlign: TextAlign.center,
           ),
           SizedBox(
-            height: MediaQuery.of(context).size.height * 0.2,
-            child: ListView.builder(
-              itemCount: _notifications.length,
-              itemBuilder: (context, index) {
-                final notification = _notifications[index];
+            child: Column(
+              children: _notifications.map((notification) {
                 final isSelected = _selectedNotification == notification;
 
-                return ListTile(
-                  title: Text(notification.title),
-                  subtitle: Text(notification.body),
-                  trailing: Text('${notification.hour}:${notification.minute.toString().padLeft(2, '0')}'),
-                  tileColor: isSelected ? Colors.blue.withOpacity(0.2) : null,
-                  onTap: () {
-                    setState(() {
-                      _selectedNotification = notification;
-                    });
-                  },
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 8.0),
+                  child: Material(
+                    elevation: 4,
+                    color: isSelected
+                        ? Theme.of(context).colorScheme.primary
+                        : isDarkMode
+                            ? Theme.of(context).colorScheme.secondary
+                            : Theme.of(context).colorScheme.onInverseSurface,
+                    borderRadius: BorderRadius.circular(12.0),
+                    child: ListTile(
+                      title: Text(
+                        notification.title,
+                        style: TextStyle(
+                          color: isDarkMode ? Colors.white70 : Colors.black,
+                        ),
+                      ),
+                      subtitle: Text(
+                        notification.body,
+                        style: TextStyle(
+                          color: isDarkMode ? Colors.white70 : Colors.black,
+                        ),
+                      ),
+                      trailing: Text(
+                        '${notification.hour}:${notification.minute.toString().padLeft(2, '0')}',
+                        style: TextStyle(
+                          color: isDarkMode ? Colors.white70 : Colors.black,
+                        ),
+                      ),
+                      onTap: () {
+                        setState(() {
+                          _selectedNotification = notification;
+                        });
+                      },
+                    ),
+                  ),
                 );
-              },
+              }).toList(),
             ),
           ),
           const SizedBox(height: 20),
-
+          Text(
+            'Add or Delete Notifications:',
+            style: TextStyle(fontSize: 16, color: isDarkMode ? Colors.white70 : Colors.black),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 5),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               ElevatedButton.icon(
                 onPressed: _addNotification,
-                icon: const Icon(Icons.add),
+                icon: Icon(
+                  Icons.add,
+                  color: Colors.white70,
+                ),
                 label: const Text('Add'),
                 style: ElevatedButton.styleFrom(
                   foregroundColor: Colors.white,
@@ -209,7 +241,10 @@ class _NotificationScheduler extends State<NotificationScheduler> {
               ),
               ElevatedButton.icon(
                 onPressed: _deleteNotification,
-                icon: const Icon(Icons.delete),
+                icon: Icon(
+                  Icons.delete,
+                  color: Colors.white70,
+                ),
                 label: const Text('Delete'),
                 style: ElevatedButton.styleFrom(
                   foregroundColor: Colors.white,
@@ -233,7 +268,9 @@ class _NotificationScheduler extends State<NotificationScheduler> {
             controller: _titleController,
             decoration: const InputDecoration(
               labelText: 'Notification Title',
-              border: OutlineInputBorder(),
+              border: OutlineInputBorder(
+                //borderSide: BorderSide(color: isDarkMode ? Colors.white70 : null ),
+              ),
             ),
           ),
           const SizedBox(height: 10),
@@ -248,8 +285,13 @@ class _NotificationScheduler extends State<NotificationScheduler> {
           const SizedBox(height: 10),
 
           ListTile(
-            title: Text('Notification Time: ${_selectedTime.format(context)}'),
-            trailing: const Icon(Icons.access_time),
+            title: Text('Notification Time: ${_selectedTime.format(context)}',
+              style: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black),
+            ),
+            trailing: Icon(
+              Icons.access_time,
+              color: isDarkMode ? Colors.white70 : Colors.black,
+            ),
             onTap: () => _selectTime(context),
           ),
         ],

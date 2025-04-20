@@ -21,6 +21,12 @@ class _HistoryPageState extends State<HistoryPage> {
   ScrollController _controller = ScrollController();
 
   @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   void initState() {
     super.initState();
     Future.microtask(() {
@@ -195,7 +201,7 @@ class _HistoryPageState extends State<HistoryPage> {
                               style: TextStyle(fontSize: 16, color: isDarkMode ?colorScheme.surfaceContainerLow : colorScheme.onPrimaryFixed),
                             ),
                             Text(
-                              '${userStatsProvider.totalDistance} km',
+                              '${userStatsProvider.totalDistance} mi',
                               style: TextStyle(fontSize: 16, color: isDarkMode ? colorScheme.surfaceContainerLow : colorScheme.onPrimaryFixed),
                             ),
                           ],
@@ -287,7 +293,7 @@ class _HistoryPageState extends State<HistoryPage> {
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: isDarkMode
-                  ? colorScheme.onSecondaryFixedVariant
+                  ? colorScheme.onPrimaryFixedVariant
                   : colorScheme.surfaceContainerLow,
             ),
             child: Text(
@@ -349,7 +355,7 @@ class _HistoryPageState extends State<HistoryPage> {
                 borderRadius: BorderRadius.circular(8), 
                 child: Container(
                   decoration: BoxDecoration(
-                    color: isDarkMode ? colorScheme.onSecondaryFixedVariant : colorScheme.surfaceContainerLow,
+                    color: isDarkMode ? colorScheme.onPrimaryFixedVariant : colorScheme.surfaceContainerLow,
                     borderRadius: BorderRadius.circular(8),
                     border: _selectedDateRange != null
                         ? Border.all(color: colorScheme.outline, width: 2)

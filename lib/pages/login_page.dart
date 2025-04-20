@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:cycle_guard_app/main.dart';
+import 'package:cycle_guard_app/data/notifications_accessor.dart' as app_notifications;
+import 'package:cycle_guard_app/pages/local_notifications.dart';
 
 import 'package:fluttertoast/fluttertoast.dart';
 
@@ -53,6 +55,29 @@ class LoginFormState extends State<LoginPage> {
       final appState = Provider.of<MyAppState>(context, listen: false);
       await appState.loadUserSettings();
       await appState.fetchOwnedThemes();
+
+
+      try {
+        final notificationList = await app_notifications.NotificationsAccessor.getNotifications();
+        final notifications = notificationList.notifications;
+        final LocalNotificationService _notificationService = LocalNotificationService();
+
+        for (final notification in notifications) {
+          await _notificationService.scheduleNotification(
+            id: notification.hour * 60 + notification.minute,
+            title: notification.title,
+            body: notification.body,
+            hour: notification.hour,
+            minute: notification.minute,
+          );
+        }
+
+        print("[Login] Scheduled ${notifications.length} notifications.");
+      } catch (e) {
+        print("[Login] Failed to schedule notifications: $e");
+      }
+
+
       setState(() {
         Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => MyHomePage()));
       });

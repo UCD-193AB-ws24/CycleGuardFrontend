@@ -13,12 +13,18 @@ android {
     android.buildFeatures.buildConfig true
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        //sourceCompatibility = JavaVersion.VERSION_1_8
+        //targetCompatibility = JavaVersion.VERSION_1_8
+        // local notifications
+        coreLibraryDesugaringEnabled true
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
     }
 
     kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_1_8
+        //jvmTarget = JavaVersion.VERSION_1_8
+        // local notifications
+        jvmTarget = "11"
     }
 
     defaultConfig {
@@ -31,6 +37,9 @@ android {
         versionCode = flutter.versionCode
         versionName = flutter.versionName
         resValue "string", "api_key", project.API_KEY
+        // local notificaitons
+        multiDexEnabled true
+        targetSdkVersion = 33
     }
 
     buildTypes {
@@ -44,4 +53,9 @@ android {
 
 flutter {
     source = "../.."
+}
+
+// local notifications
+dependencies {
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.4'
 }

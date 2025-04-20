@@ -14,6 +14,13 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import '../main.dart';
 
+// for local notifications
+import 'dart:developer';
+/*import 'package:cycle_guard_app/pages/local_notifications.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:cycle_guard_app/data/notifications_accessor.dart';*/
+import 'package:cycle_guard_app/widgets/notification_scheduler.dart';
+
 class SocialPage extends StatefulWidget {
   @override
   _SocialPageState createState() => _SocialPageState();
@@ -549,7 +556,14 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
                   ),
                 ],
               ),
-              UserDailyGoalsSection(),
+              SizedBox(height: 40),
+              Column(
+                children: [
+                  UserDailyGoalsSection(),
+                  Divider(),
+                  NotificationScheduler(),
+                ],
+              ),
             ],
           ),
         );
@@ -756,6 +770,126 @@ class UserDailyGoalsSection extends StatelessWidget {
     );
   }
 }
+
+/*class NotificationScheduler extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final notificationService = LocalNotificationService();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Divider(height: 40),
+        Text(
+          "Daily Reminder",
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+          ),
+        ),
+        SizedBox(height: 8),
+        OutlinedButton(
+          onPressed: () => _showScheduleNotificationDialog(context, notificationService),
+          child: Text("Schedule"),
+        ),
+        SizedBox(height: 20),
+      ],
+    );
+  }
+
+  void _showScheduleNotificationDialog(BuildContext context, LocalNotificationService notificationService) {
+    bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final titleController = TextEditingController();
+    final bodyController = TextEditingController();
+    TimeOfDay? selectedTime;
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: isDarkMode ? Colors.grey[900] : Colors.white,
+          title: Text(
+            "Schedule Daily Reminder",
+            style: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: titleController,
+                decoration: InputDecoration(
+                  labelText: "Notification Title",
+                  labelStyle: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black),
+                ),
+              ),
+              TextField(
+                controller: bodyController,
+                decoration: InputDecoration(
+                  labelText: "Notification Body",
+                  labelStyle: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black),
+                ),
+              ),
+              SizedBox(height: 10),
+              ElevatedButton(
+                onPressed: () async {
+                  final TimeOfDay? picked = await showTimePicker(
+                    context: context,
+                    initialTime: TimeOfDay.now(),
+                  );
+                  if (picked != null) {
+                    selectedTime = picked;
+                  }
+                },
+                child: Text("Pick Time"),
+              ),
+              if (selectedTime != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8.0),
+                  child: Text(
+                    "Selected time: ${selectedTime!.format(context)}",
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text("Cancel", style: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black)),
+            ),
+            TextButton(
+              onPressed: () async {
+                final title = titleController.text;
+                final body = bodyController.text;
+
+                if (selectedTime == null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Please pick a time')),
+                  );
+                  return;
+                }
+
+                // Schedule the notification
+                await notificationService.scheduleNotification(
+                  title: title,
+                  body: body,
+                  hour: selectedTime!.hour,
+                  minute: selectedTime!.minute,
+                );
+
+                Navigator.pop(context);
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Notification Scheduled')),
+                );
+              },
+              child: Text("Submit", style: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}*/
 
 class RequestsTab extends StatefulWidget {
   @override

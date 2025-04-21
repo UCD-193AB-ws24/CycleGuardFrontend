@@ -44,7 +44,7 @@ void main() async {
   // init notifications 
   LocalNotificationService().initNotification();
 
-  await dotenv.load(fileName: ".env");
+  await dotenv.load(fileName: "env");
 
   String? apiKey = dotenv.env['API_KEY'];
 

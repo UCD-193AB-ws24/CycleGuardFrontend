@@ -28,6 +28,10 @@
 	<string>$(API_KEY)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>Bluetooth capabilities are used to connect to BLE devices.</string>
+	<key>NSBluetoothPeripheralUsageDescription</key>
+	<string>Bluetooth peripheral usage permissions are used to discover and interact with BLE devices.</string>
 	<key>NSLocationAlwaysUsageDescription</key>
 	<string>We need your location to provide background tracking.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
@@ -36,8 +40,17 @@
 	<true/>
 	<key>UIBackgroundModes</key>
 	<array>
-		<string>bluetooth-peripheral</string>
 		<string>bluetooth-central</string>
+		<string>bluetooth-peripheral</string>
+		<string>nearby-interaction</string>
+		<string>fetch</string>
+		<string>processing</string>
+		<string>remote-notification</string>
+		<string>push-to-talk</string>
+		<string>location</string>
+		<string>external-accessory</string>
+		<string>voip</string>
+		<string>audio</string>
 	</array>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>

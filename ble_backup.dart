@@ -9,7 +9,7 @@ class BluetoothController extends GetxController {
   static BluetoothController get to => Get.find();
   Stream<List<ScanResult>> get scanResults => FlutterBluePlus.scanResults;
 
-  Future<void> scanDevices() async {
+  Future<List<ScanResult>> scanDevices() async {
     await requestBluetoothPermissions();
     PermissionStatus bluetoothScanStatus = await Permission.bluetoothScan.status;
     await FlutterBluePlus.turnOn();
@@ -19,11 +19,27 @@ class BluetoothController extends GetxController {
       print("State:");
       print((await FlutterBluePlus.adapterState.first).name);
 
-      FlutterBluePlus.startScan(timeout: const Duration(seconds: 1));
+      await FlutterBluePlus.startScan(timeout: const Duration(seconds: 1));
+      List<ScanResult> scanResults = [];
+      var subscription = FlutterBluePlus.onScanResults.listen((results) {
+        // print("Scan complete");
+        // print(results);
+        scanResults = results;
+      });
 
-      print(await FlutterBluePlus.scanResults.first);
+      await FlutterBluePlus.isScanning.where((e)=>e==false).first;
+      await subscription.cancel();
+
+      print("Stopped scanning");
+
+      // final res = await FlutterBluePlus.scanResults.last;
+      print(scanResults);
+      print(scanResults.length);
+
+      return scanResults;
     } catch(e) {
       e.printError();
+      return [];
     }
     
     
@@ -71,54 +87,44 @@ Future<void> _connectAndRead(BluetoothDevice device) async {
 
 void showCustomDialog(BuildContext context) async {
   await requestBluetoothPermissions();
+  Get.put(BluetoothController());
+  var scanResults = await BluetoothController.to.scanDevices();
+
   showDialog(
     context: context,
     builder: (BuildContext context) {
       return AlertDialog(
         contentPadding: EdgeInsets.symmetric(horizontal: 100,vertical: 10),
         title: Text('Select Your Helmet'),
-        content: Container(
-
+        content:
+        Container(
           height: 500,
           width: 300,
           padding: EdgeInsets.symmetric(horizontal: 4,vertical: 5),
-          child: StreamBuilder<List<ScanResult>>(
-            
-            stream: Get.put(BluetoothController()).scanResults,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
-              }
-              if (snapshot.hasData && snapshot.data!.isNotEmpty) {
-                return ListView.builder(
-                  shrinkWrap: true,
-                  itemCount: snapshot.data!.length,
-                  itemBuilder: (context, index) {
-                    final data = snapshot.data![index];
-                    return Card(
-                      elevation: 2,
-                      child: ListTile(
-                        title: Text(data.device.platformName),
-                        subtitle: Text(data.device.remoteId.str),
-                        trailing: Text(data.rssi.toString()),
-                        onTap: () => _connectAndRead(data.device),
-                      ),
-                    );
-
-                  },
-                );
-              } else {
-                return const Center(child: Text("No devices found"));
-              }
+          child: ListView.builder(
+            itemCount: scanResults.length,
+            itemBuilder: (context, index) {
+              final data = scanResults[index];
+              // print(data);
+              // return Text("INDEX $index");
+              return Card(
+                elevation: 2,
+                child: ListTile(
+                  title: Text(data.device.platformName),
+                  subtitle: Text(data.device.remoteId.str),
+                  trailing: Text(data.rssi.toString()),
+                  onTap: () => _connectAndRead(data.device),
+                ),
+              );
             },
-          ),
+          )
         ),
         actions: <Widget>[
           const SizedBox(height: 20),
           Center(
             child: ElevatedButton(
               onPressed: () async {
-                Get.put(BluetoothController());
+                // Get.put(BluetoothController());
                 await BluetoothController.to.scanDevices();
               },
               child: Text(

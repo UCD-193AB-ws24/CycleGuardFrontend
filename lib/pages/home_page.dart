@@ -15,7 +15,6 @@ import '../auth/dim_util.dart';
 import 'package:draggable_scrollbar/draggable_scrollbar.dart';
 import 'package:cycle_guard_app/main.dart';
 import 'package:cycle_guard_app/data/user_profile_accessor.dart';
-
 import 'package:showcaseview/showcaseview.dart';
 
 class HomePage extends StatefulWidget {
@@ -35,6 +34,7 @@ class _HomePageState extends State<HomePage> {
   final GlobalKey _rideHistoryKey = GlobalKey();
   final GlobalKey _achievementsKey = GlobalKey();
   final GlobalKey _storeKey = GlobalKey();
+  final GlobalKey _finalMessageKey = GlobalKey();
 
   @override
   void dispose() {
@@ -42,53 +42,44 @@ class _HomePageState extends State<HomePage> {
     super.dispose();
   }
 
-@override
-void initState() {
-  super.initState();
+  @override
+  void initState() {
+    super.initState();
 
-  // Trigger async providers
-  Future.microtask(() {
-    Provider.of<UserStatsProvider>(context, listen: false).fetchUserStats();
-    Provider.of<WeekHistoryProvider>(context, listen: false).fetchWeekHistory();
-    Provider.of<AchievementsProgressProvider>(context, listen: false).fetchAchievementProgress();
-    Provider.of<UserDailyGoalProvider>(context, listen: false).fetchDailyGoals();
-  });
+    // Trigger async providers
+    Future.microtask(() {
+      Provider.of<UserStatsProvider>(context, listen: false).fetchUserStats();
+      Provider.of<WeekHistoryProvider>(context, listen: false)
+          .fetchWeekHistory();
+      Provider.of<AchievementsProgressProvider>(context, listen: false)
+          .fetchAchievementProgress();
+      Provider.of<UserDailyGoalProvider>(context, listen: false)
+          .fetchDailyGoals();
+    });
 
-  // Wait until after first frame to check tutorial status
-  WidgetsBinding.instance.addPostFrameCallback((_) async {
-    final appState = Provider.of<MyAppState>(context, listen: false);
+    // Wait until after first frame to check tutorial status
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final appState = Provider.of<MyAppState>(context, listen: false);
 
-    if (appState.isTutorialActive) {
-      // Start the tutorial
-      ShowCaseWidget.of(context).startShowCase([
-        _pastWeekKey,
-        _todayGoalKey,
-        _avgRideKey,
-        _dailyChallengeKey,
-        _achievementProgressKey,
-        _rideHistoryKey,
-        _achievementsKey,
-        _storeKey,
-      ]);
+      if (appState.isHomeTutorialActive) {
+        // Start the tutorial
+        ShowCaseWidget.of(context).startShowCase([
+          _pastWeekKey,
+          _todayGoalKey,
+          _avgRideKey,
+          _dailyChallengeKey,
+          _achievementProgressKey,
+          _rideHistoryKey,
+          _achievementsKey,
+          _storeKey,
+          _finalMessageKey,
+        ]);
 
-      // Mark tutorial as completed (update profile and app state)
-      final profile = await UserProfileAccessor.getOwnProfile();
-
-      final updatedProfile = UserProfile(
-        username: profile.username,
-        displayName: profile.displayName,
-        bio: profile.bio,
-        profileIcon: profile.profileIcon,
-        isPublic: profile.isPublic,
-        isNewAccount: false,
-      );
-
-      await UserProfileAccessor.updateOwnProfile(updatedProfile);
-
-      appState.isTutorialActive = false;
-    }
-  });
-}
+        appState.isHomeTutorialActive = false;
+        appState.isSocialTutorialActive = true;
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -195,350 +186,367 @@ void initState() {
             controller: _controller,
             padding: const EdgeInsets.all(8.0),
             children: [
-              ElevatedButton(
-                onPressed: () async {
-                  final profile = await UserProfileAccessor.getOwnProfile();
-                  print("Is new account? ${profile.isNewAccount}");
-                },
-                child: Text("Check if New Account"),
-              ),
-              Center(
-                child: Text(
-                  'Past Week of Biking',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-              ),
-              SizedBox(height: DimUtil.safeHeight(context) * 1 / 40),
               Showcase(
                 key: _pastWeekKey,
                 title: 'Past Week of Biking',
                 description:
-                    'This chart shows how many miles you biked each day this week',
-                child: SizedBox(
-                  height: DimUtil.safeHeight(context) * 1 / 4,
-                  child: BarChart(
-                    BarChartData(
-                      alignment: BarChartAlignment.spaceAround,
-                      maxY: 1.2 *
-                          rotatedDistances.reduce((a, b) => a > b
-                              ? a
-                              : b), // 1.2 * the max value in rotatedDistances
-                      barGroups: [
-                        BarChartGroupData(x: 0, barRods: [
-                          BarChartRodData(
-                              fromY: 0,
-                              toY: rotatedDistances[0],
-                              color: selectedColor,
-                              width: 30.0)
-                        ]),
-                        BarChartGroupData(x: 1, barRods: [
-                          BarChartRodData(
-                              fromY: 0,
-                              toY: rotatedDistances[1],
-                              color: selectedColor,
-                              width: 30.0)
-                        ]),
-                        BarChartGroupData(x: 2, barRods: [
-                          BarChartRodData(
-                              fromY: 0,
-                              toY: rotatedDistances[2],
-                              color: selectedColor,
-                              width: 30.0)
-                        ]),
-                        BarChartGroupData(x: 3, barRods: [
-                          BarChartRodData(
-                              fromY: 0,
-                              toY: rotatedDistances[3],
-                              color: selectedColor,
-                              width: 30.0)
-                        ]),
-                        BarChartGroupData(x: 4, barRods: [
-                          BarChartRodData(
-                              fromY: 0,
-                              toY: rotatedDistances[4],
-                              color: selectedColor,
-                              width: 30.0)
-                        ]),
-                        BarChartGroupData(x: 5, barRods: [
-                          BarChartRodData(
-                              fromY: 0,
-                              toY: rotatedDistances[5],
-                              color: selectedColor,
-                              width: 30.0)
-                        ]),
-                        BarChartGroupData(x: 6, barRods: [
-                          BarChartRodData(
-                              fromY: 0,
-                              toY: rotatedDistances[6],
-                              color: selectedColor,
-                              width: 30.0)
-                        ]),
-                      ],
-                      titlesData: FlTitlesData(
-                        leftTitles: AxisTitles(
-                          axisNameWidget: Text('Miles',
-                              style: TextStyle(
-                                  fontSize: 14, fontWeight: FontWeight.bold)),
-                          sideTitles: SideTitles(
-                            showTitles: true,
-                            reservedSize: 20,
-                            getTitlesWidget: (double value, TitleMeta meta) {
-                              return Text(value.toInt().toString(),
-                                  style: TextStyle(fontSize: 12));
-                            },
-                          ),
-                        ),
-                        bottomTitles: AxisTitles(
-                          sideTitles: SideTitles(
-                            showTitles: true,
-                            getTitlesWidget: (double value, TitleMeta meta) {
-                              const days = [
-                                'M',
-                                'T',
-                                'W',
-                                'R',
-                                'F',
-                                'Sa',
-                                'Su'
-                              ];
-                              List<String> rotatedDays =
-                                  getRotatedArray(days, DateTime.now().weekday);
-                              return Text(rotatedDays[value.toInt()],
-                                  style: TextStyle(fontSize: 12));
-                            },
-                          ),
-                        ),
-                        rightTitles: AxisTitles(
-                            sideTitles: SideTitles(showTitles: false)),
-                        topTitles: AxisTitles(
-                            sideTitles: SideTitles(showTitles: false)),
+                    'Shows how many miles you biked each day this week.',
+                child: Column(
+                  children: [
+                    Center(
+                      child: Text(
+                        'Past Week of Biking',
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold),
                       ),
-                      gridData: FlGridData(
-                        drawHorizontalLine: false,
-                        drawVerticalLine: false,
-                      ),
-                      barTouchData: BarTouchData(
-                        touchTooltipData: BarTouchTooltipData(
-                          getTooltipColor: (group) => isDarkMode
-                              ? colorScheme.secondary
-                              : colorScheme.secondaryFixed,
-                          getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                            return BarTooltipItem(
-                              '${rod.toY.toStringAsFixed(1)}',
-                              TextStyle(
-                                color:
-                                    isDarkMode ? Colors.white : selectedColor,
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                      borderData: FlBorderData(show: false),
                     ),
-                  ),
-                ),
-              ),
-              SizedBox(height: DimUtil.safeWidth(context) * 1 / 40),
-              buildStreakDisplay(context, userStats.rideStreak),
-              SizedBox(height: DimUtil.safeWidth(context) * 1 / 20),
-              Stack(
-                alignment: Alignment.center,
-                children: [
-                  Center(
-                    child: Text(
-                      "Today's Goal Progress",
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                  Positioned(
-                    right: 0,
-                    bottom: 0,
-                    top: 2,
-                    child: IconButton(
-                      icon: Icon(Icons.help_outline,
-                          color: isDarkMode ? Colors.white70 : Colors.black),
-                      padding: EdgeInsets.zero,
-                      constraints: BoxConstraints(),
-                      onPressed: () {
-                        showDialog(
-                          context: context,
-                          builder: (context) => AlertDialog(
-                            backgroundColor:
-                                isDarkMode ? colorScheme.secondary : null,
-                            title: Text(
-                              'Daily Goals',
-                              style: TextStyle(
-                                color:
-                                    isDarkMode ? Colors.white70 : Colors.black,
+                    SizedBox(height: DimUtil.safeHeight(context) * 1 / 40),
+                    SizedBox(
+                      height: DimUtil.safeHeight(context) * 1 / 4,
+                      child: BarChart(
+                        BarChartData(
+                          alignment: BarChartAlignment.spaceAround,
+                          maxY: 1.2 *
+                              rotatedDistances.reduce((a, b) => a > b
+                                  ? a
+                                  : b), // 1.2 * the max value in rotatedDistances
+                          barGroups: [
+                            BarChartGroupData(x: 0, barRods: [
+                              BarChartRodData(
+                                  fromY: 0,
+                                  toY: rotatedDistances[0],
+                                  color: selectedColor,
+                                  width: 30.0)
+                            ]),
+                            BarChartGroupData(x: 1, barRods: [
+                              BarChartRodData(
+                                  fromY: 0,
+                                  toY: rotatedDistances[1],
+                                  color: selectedColor,
+                                  width: 30.0)
+                            ]),
+                            BarChartGroupData(x: 2, barRods: [
+                              BarChartRodData(
+                                  fromY: 0,
+                                  toY: rotatedDistances[2],
+                                  color: selectedColor,
+                                  width: 30.0)
+                            ]),
+                            BarChartGroupData(x: 3, barRods: [
+                              BarChartRodData(
+                                  fromY: 0,
+                                  toY: rotatedDistances[3],
+                                  color: selectedColor,
+                                  width: 30.0)
+                            ]),
+                            BarChartGroupData(x: 4, barRods: [
+                              BarChartRodData(
+                                  fromY: 0,
+                                  toY: rotatedDistances[4],
+                                  color: selectedColor,
+                                  width: 30.0)
+                            ]),
+                            BarChartGroupData(x: 5, barRods: [
+                              BarChartRodData(
+                                  fromY: 0,
+                                  toY: rotatedDistances[5],
+                                  color: selectedColor,
+                                  width: 30.0)
+                            ]),
+                            BarChartGroupData(x: 6, barRods: [
+                              BarChartRodData(
+                                  fromY: 0,
+                                  toY: rotatedDistances[6],
+                                  color: selectedColor,
+                                  width: 30.0)
+                            ]),
+                          ],
+                          titlesData: FlTitlesData(
+                            leftTitles: AxisTitles(
+                              axisNameWidget: Text('Miles',
+                                  style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold)),
+                              sideTitles: SideTitles(
+                                showTitles: true,
+                                reservedSize: 20,
+                                getTitlesWidget:
+                                    (double value, TitleMeta meta) {
+                                  return Text(value.toInt().toString(),
+                                      style: TextStyle(fontSize: 12));
+                                },
                               ),
                             ),
-                            content: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  userGoals.dailyDistanceGoal == 0 &&
-                                          userGoals.dailyTimeGoal == 0 &&
-                                          userGoals.dailyCaloriesGoal == 0
-                                      ? Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              'Your goals are currently unset.',
-                                              style: TextStyle(
-                                                color: isDarkMode
-                                                    ? Colors.white70
-                                                    : Colors.black,
-                                              ),
-                                            ),
-                                          ],
-                                        )
-                                      : Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              'Your goals are currently : ',
-                                              style: TextStyle(
-                                                color: isDarkMode
-                                                    ? Colors.white70
-                                                    : Colors.black,
-                                              ),
-                                            ),
-                                            Text(
-                                              ' • ${userGoals.dailyTimeGoal} minutes',
-                                              style: TextStyle(
-                                                color: isDarkMode
-                                                    ? Colors.white70
-                                                    : Colors.black,
-                                              ),
-                                            ),
-                                            Text(
-                                              ' • ${userGoals.dailyDistanceGoal} miles',
-                                              style: TextStyle(
-                                                color: isDarkMode
-                                                    ? Colors.white70
-                                                    : Colors.black,
-                                              ),
-                                            ),
-                                            Text(
-                                              ' • ${userGoals.dailyCaloriesGoal} calories',
-                                              style: TextStyle(
-                                                color: isDarkMode
-                                                    ? Colors.white70
-                                                    : Colors.black,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                  SizedBox(height: 8),
-                                  Text(
-                                    'You can update daily goals in your profile.',
+                            bottomTitles: AxisTitles(
+                              sideTitles: SideTitles(
+                                showTitles: true,
+                                getTitlesWidget:
+                                    (double value, TitleMeta meta) {
+                                  const days = [
+                                    'M',
+                                    'T',
+                                    'W',
+                                    'R',
+                                    'F',
+                                    'Sa',
+                                    'Su'
+                                  ];
+                                  List<String> rotatedDays = getRotatedArray(
+                                      days, DateTime.now().weekday);
+                                  return Text(rotatedDays[value.toInt()],
+                                      style: TextStyle(fontSize: 12));
+                                },
+                              ),
+                            ),
+                            rightTitles: AxisTitles(
+                                sideTitles: SideTitles(showTitles: false)),
+                            topTitles: AxisTitles(
+                                sideTitles: SideTitles(showTitles: false)),
+                          ),
+                          gridData: FlGridData(
+                            drawHorizontalLine: false,
+                            drawVerticalLine: false,
+                          ),
+                          barTouchData: BarTouchData(
+                            touchTooltipData: BarTouchTooltipData(
+                              getTooltipColor: (group) => isDarkMode
+                                  ? colorScheme.secondary
+                                  : colorScheme.secondaryFixed,
+                              getTooltipItem:
+                                  (group, groupIndex, rod, rodIndex) {
+                                return BarTooltipItem(
+                                  '${rod.toY.toStringAsFixed(1)}',
+                                  TextStyle(
+                                    color: isDarkMode
+                                        ? Colors.white
+                                        : selectedColor,
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                          borderData: FlBorderData(show: false),
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: DimUtil.safeWidth(context) * 1 / 40),
+                    buildStreakDisplay(context, userStats.rideStreak),
+                  ],
+                ),
+              ),
+              SizedBox(height: DimUtil.safeWidth(context) * 1 / 20),
+              Showcase(
+                key: _todayGoalKey,
+                title: 'Daily Goals',
+                description:
+                    'See your progress towards daily goals. Goals can be set in profile settings.',
+                child: Column(
+                  children: [
+                    Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Center(
+                          child: Text(
+                            "Today's Goal Progress",
+                            style: TextStyle(
+                                fontSize: 18, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                        Positioned(
+                          right: 0,
+                          bottom: 0,
+                          top: 2,
+                          child: IconButton(
+                            icon: Icon(Icons.help_outline,
+                                color:
+                                    isDarkMode ? Colors.white70 : Colors.black),
+                            padding: EdgeInsets.zero,
+                            constraints: BoxConstraints(),
+                            onPressed: () {
+                              showDialog(
+                                context: context,
+                                builder: (context) => AlertDialog(
+                                  backgroundColor:
+                                      isDarkMode ? colorScheme.secondary : null,
+                                  title: Text(
+                                    'Daily Goals',
                                     style: TextStyle(
                                       color: isDarkMode
                                           ? Colors.white70
                                           : Colors.black,
                                     ),
                                   ),
-                                ]),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.pop(context),
-                                child: Text(
-                                  'OK',
-                                  style: TextStyle(
-                                    color: isDarkMode ? Colors.white70 : null,
-                                  ),
+                                  content: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        userGoals.dailyDistanceGoal == 0 &&
+                                                userGoals.dailyTimeGoal == 0 &&
+                                                userGoals.dailyCaloriesGoal == 0
+                                            ? Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    'Your goals are currently unset.',
+                                                    style: TextStyle(
+                                                      color: isDarkMode
+                                                          ? Colors.white70
+                                                          : Colors.black,
+                                                    ),
+                                                  ),
+                                                ],
+                                              )
+                                            : Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    'Your goals are currently : ',
+                                                    style: TextStyle(
+                                                      color: isDarkMode
+                                                          ? Colors.white70
+                                                          : Colors.black,
+                                                    ),
+                                                  ),
+                                                  Text(
+                                                    ' • ${userGoals.dailyTimeGoal} minutes',
+                                                    style: TextStyle(
+                                                      color: isDarkMode
+                                                          ? Colors.white70
+                                                          : Colors.black,
+                                                    ),
+                                                  ),
+                                                  Text(
+                                                    ' • ${userGoals.dailyDistanceGoal} miles',
+                                                    style: TextStyle(
+                                                      color: isDarkMode
+                                                          ? Colors.white70
+                                                          : Colors.black,
+                                                    ),
+                                                  ),
+                                                  Text(
+                                                    ' • ${userGoals.dailyCaloriesGoal} calories',
+                                                    style: TextStyle(
+                                                      color: isDarkMode
+                                                          ? Colors.white70
+                                                          : Colors.black,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                        SizedBox(height: 8),
+                                        Text(
+                                          'You can update daily goals in your profile.',
+                                          style: TextStyle(
+                                            color: isDarkMode
+                                                ? Colors.white70
+                                                : Colors.black,
+                                          ),
+                                        ),
+                                      ]),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(context),
+                                      child: Text(
+                                        'OK',
+                                        style: TextStyle(
+                                          color: isDarkMode
+                                              ? Colors.white70
+                                              : null,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ),
-                            ],
+                              );
+                            },
                           ),
-                        );
-                      },
+                        ),
+                      ],
                     ),
-                  ),
-                ],
-              ),
-              SizedBox(height: DimUtil.safeWidth(context) * 1 / 40),
-              Showcase(
-                key: _todayGoalKey,
-                title: 'Daily Goals',
-                description:
-                    'Here you can see your progress towards daily goals. Goals can be set in profile settings.',
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    _buildCircularStat(
-                      context,
-                      title: 'Time',
-                      value: '$todayTime min',
-                      goal: '${userGoals.dailyTimeGoal} min',
-                      percent: userGoals.dailyTimeGoal == 0
-                          ? 0
-                          : todayTime / userGoals.dailyTimeGoal,
-                      color: Colors.blueAccent,
-                    ),
-                    _buildCircularStat(
-                      context,
-                      title: 'Distance',
-                      value: '$todayDistance mi',
-                      goal: '${userGoals.dailyDistanceGoal} mi',
-                      percent: userGoals.dailyDistanceGoal == 0
-                          ? 0
-                          : todayDistance / userGoals.dailyDistanceGoal,
-                      color: Colors.orangeAccent,
-                    ),
-                    _buildCircularStat(
-                      context,
-                      title: 'Calories',
-                      value: '$todayCalories cal',
-                      goal: '${userGoals.dailyCaloriesGoal} cal',
-                      percent: userGoals.dailyCaloriesGoal == 0
-                          ? 0
-                          : todayCalories / userGoals.dailyCaloriesGoal,
-                      color: Colors.redAccent,
+                    SizedBox(height: DimUtil.safeWidth(context) * 1 / 40),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        _buildCircularStat(
+                          context,
+                          title: 'Time',
+                          value: '$todayTime min',
+                          goal: '${userGoals.dailyTimeGoal} min',
+                          percent: userGoals.dailyTimeGoal == 0
+                              ? 0
+                              : todayTime / userGoals.dailyTimeGoal,
+                          color: Colors.blueAccent,
+                        ),
+                        _buildCircularStat(
+                          context,
+                          title: 'Distance',
+                          value: '$todayDistance mi',
+                          goal: '${userGoals.dailyDistanceGoal} mi',
+                          percent: userGoals.dailyDistanceGoal == 0
+                              ? 0
+                              : todayDistance / userGoals.dailyDistanceGoal,
+                          color: Colors.orangeAccent,
+                        ),
+                        _buildCircularStat(
+                          context,
+                          title: 'Calories',
+                          value: '$todayCalories cal',
+                          goal: '${userGoals.dailyCaloriesGoal} cal',
+                          percent: userGoals.dailyCaloriesGoal == 0
+                              ? 0
+                              : todayCalories / userGoals.dailyCaloriesGoal,
+                          color: Colors.redAccent,
+                        ),
+                      ],
                     ),
                   ],
                 ),
               ),
               SizedBox(height: DimUtil.safeWidth(context) * 1 / 20),
-              Center(
-                child: Text(
-                  'Average Ride this Week',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-              ),
-              SizedBox(height: DimUtil.safeWidth(context) * 1 / 40),
               Showcase(
                 key: _avgRideKey,
                 title: 'Average Daily Ride',
                 description:
-                    'Statistics about what your average ride this week has been.',
-                child: Row(
+                    'Your average ride statistics this week.',
+                child: Column(
                   children: [
-                    Flexible(
-                      child: _buildStatCard(
-                          Icons.timer,
-                          'Time',
-                          '${weekHistory.averageTime.round()} min',
-                          Colors.blueAccent),
+                    Center(
+                      child: Text(
+                        'Average Ride this Week',
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
                     ),
-                    SizedBox(width: 8),
-                    Flexible(
-                      child: _buildStatCard(
-                          Icons.directions_bike,
-                          'Distance',
-                          '${weekHistory.averageDistance.round()} mi',
-                          Colors.orangeAccent),
-                    ),
-                    SizedBox(width: 8),
-                    Flexible(
-                      child: _buildStatCard(
-                          Icons.local_fire_department,
-                          'Calories',
-                          '${weekHistory.averageCalories.round()} cal',
-                          Colors.redAccent),
+                    SizedBox(height: DimUtil.safeWidth(context) * 1 / 40),
+                    Row(
+                      children: [
+                        Flexible(
+                          child: _buildStatCard(
+                              Icons.timer,
+                              'Time',
+                              '${weekHistory.averageTime.round()} min',
+                              Colors.blueAccent),
+                        ),
+                        SizedBox(width: 8),
+                        Flexible(
+                          child: _buildStatCard(
+                              Icons.directions_bike,
+                              'Distance',
+                              '${weekHistory.averageDistance.round()} mi',
+                              Colors.orangeAccent),
+                        ),
+                        SizedBox(width: 8),
+                        Flexible(
+                          child: _buildStatCard(
+                              Icons.local_fire_department,
+                              'Calories',
+                              '${weekHistory.averageCalories.round()} cal',
+                              Colors.redAccent),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -548,7 +556,7 @@ void initState() {
                 key: _dailyChallengeKey,
                 title: 'Daily Challenge',
                 description:
-                    'Ride five miles a day to receive 5 CycleCoins for purchasing items in the store',
+                    'Ride five miles a day to receive 5 CycleCoins for purchasing items in the store!',
                 child: _buildDailyChallenge(context, isDailyChallengeComplete),
               ),
               SizedBox(height: DimUtil.safeWidth(context) * 1 / 20),
@@ -562,7 +570,7 @@ void initState() {
                       key: _rideHistoryKey,
                       title: 'Ride History',
                       description:
-                          'Takes you to a page with your all time ride history',
+                          'Takes you to a page with your all time ride history.',
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
                           elevation: 6,
@@ -600,29 +608,33 @@ void initState() {
                 ),
               ),
               SizedBox(height: DimUtil.safeWidth(context) * 1 / 20),
-              Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'Almost There!',
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                    Text(
-                      'Achievements in progress',
-                      style: TextStyle(fontSize: 16),
-                    ),
-                  ],
-                ),
-              ),
-              SizedBox(height: DimUtil.safeWidth(context) * 1 / 80),
               Showcase(
                 key: _achievementProgressKey,
                 title: 'Achievement Progress',
                 description:
                     'Displays the achievements you are closest to completing!',
-                child: _buildAchievementProgress(context, isDarkMode),
+                child: Column(
+                  children: [
+                    Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'Almost There!',
+                            style: TextStyle(
+                                fontSize: 18, fontWeight: FontWeight.bold),
+                          ),
+                          Text(
+                            'Achievements in progress',
+                            style: TextStyle(fontSize: 16),
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: DimUtil.safeWidth(context) * 1 / 80),
+                    _buildAchievementProgress(context, isDarkMode),
+                  ],
+                ),
               ),
               SizedBox(height: DimUtil.safeWidth(context) * 1 / 80),
               Align(
@@ -672,6 +684,17 @@ void initState() {
                   ),
                 ),
               ),
+              Positioned(
+                bottom: 0,
+                left: 0,
+                child: Showcase(
+                  key: _finalMessageKey,
+                  title: 'Great job!',
+                  description:
+                      'When you are ready, go to the Social tab (navigation bar person icon) to continue the tutorial.',
+                  child: SizedBox(width: 1, height: 1),
+                ),
+              ),
             ],
           ),
         ),
@@ -679,7 +702,7 @@ void initState() {
       floatingActionButton: Showcase(
         key: _storeKey,
         title: 'Open Store',
-        description: 'Tap here to check out items in the store',
+        description: 'Tap here to check out items in the store!',
         child: FloatingActionButton(
           onPressed: () {
             Navigator.push(

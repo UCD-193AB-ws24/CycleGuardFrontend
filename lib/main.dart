@@ -151,7 +151,8 @@ class MyAppState extends ChangeNotifier {
   Color selectedColor = Colors.orange;
   String selectedIcon = "icon_default";
   bool isDarkMode = false;
-  bool isTutorialActive = false;
+  bool isHomeTutorialActive = false;
+  bool isSocialTutorialActive = false;
 
   final Map<String, Color> availableThemes = {
     'Yellow': Colors.yellow,
@@ -191,12 +192,12 @@ class MyAppState extends ChangeNotifier {
 
   Future<void> loadUserProfile() async {
     final profile = await UserProfileAccessor.getOwnProfile();
-    isTutorialActive = profile.isNewAccount;
+    isHomeTutorialActive = profile.isNewAccount;
     notifyListeners();
   }
 
   void enableTutorial() {
-    isTutorialActive = true;
+    isHomeTutorialActive = true;
     notifyListeners();
   }
 

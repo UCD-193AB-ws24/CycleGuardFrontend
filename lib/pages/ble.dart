@@ -12,19 +12,35 @@ class BluetoothController extends GetxController {
   Future<void> scanDevices() async {
     await requestBluetoothPermissions();
     PermissionStatus bluetoothScanStatus = await Permission.bluetoothScan.status;
-    if (bluetoothScanStatus.isGranted) {
-      FlutterBluePlus.startScan(timeout: const Duration(seconds: 5));
+    await FlutterBluePlus.turnOn();
 
-      // Listen to scan results
-      FlutterBluePlus.scanResults.listen((results) {
-        print("Scan Results: $results");
-      });
+    try {
+      print("Starting scan");
+      print("State:");
+      print((await FlutterBluePlus.adapterState.first).name);
 
-      await Future.delayed(const Duration(seconds: 5));
-      FlutterBluePlus.stopScan();
-    } else {
-      print("Bluetooth scan permission is not granted");
+      FlutterBluePlus.startScan(timeout: const Duration(seconds: 1));
+
+      print(await FlutterBluePlus.scanResults.first);
+    } catch(e) {
+      e.printError();
     }
+    
+    
+  //   if (bluetoothScanStatus.isGranted) {
+  //   // if (true) {
+  //     FlutterBluePlus.startScan(timeout: const Duration(seconds: 5));
+
+  //     // Listen to scan results
+  //     FlutterBluePlus.scanResults.listen((results) {
+  //       print("Scan Results: $results");
+  //     });
+
+  //     await Future.delayed(const Duration(seconds: 5));
+  //     FlutterBluePlus.stopScan();
+  //   } else {
+  //     print("Bluetooth scan permission is not granted");
+  //   }
   }
 }
 
@@ -59,10 +75,12 @@ void showCustomDialog(BuildContext context) async {
     context: context,
     builder: (BuildContext context) {
       return AlertDialog(
+        contentPadding: EdgeInsets.symmetric(horizontal: 100,vertical: 10),
         title: Text('Select Your Helmet'),
         content: Container(
           padding: EdgeInsets.symmetric(horizontal: 4,vertical: 5),
           child: StreamBuilder<List<ScanResult>>(
+            
             stream: Get.put(BluetoothController()).scanResults,
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
@@ -97,6 +115,7 @@ void showCustomDialog(BuildContext context) async {
           Center(
             child: ElevatedButton(
               onPressed: () async {
+                Get.put(BluetoothController());
                 await BluetoothController.to.scanDevices();
               },
               child: Text(
@@ -119,6 +138,11 @@ Future<void> requestBluetoothPermissions() async {
   PermissionStatus bluetoothScanPermissionStatus = await Permission.bluetoothScan.request();
   PermissionStatus locationPermissionStatus = await Permission.locationWhenInUse.request();
 
+  print(bluetoothPermissionStatus.isGranted);
+  print(bluetoothConnectPermissionStatus.isGranted);
+  print(bluetoothScanPermissionStatus.isGranted);
+  print(locationPermissionStatus.isGranted);
+
   if (bluetoothPermissionStatus.isGranted &&
       bluetoothConnectPermissionStatus.isGranted &&
       bluetoothScanPermissionStatus.isGranted &&
@@ -126,6 +150,6 @@ Future<void> requestBluetoothPermissions() async {
     print("All required permissions granted");
   } else {
     print("Required permissions not granted");
-    openAppSettings();
+    // openAppSettings();
   }
 }

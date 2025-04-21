@@ -59,10 +59,11 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
       final appState = Provider.of<MyAppState>(context, listen: false);
 
       // Update controllers after profile is fetched
-      nameController.text = profile.displayName;
-      bioController.text = profile.bio;
-
-      _currentIconSelection = profile.profileIcon;
+      if (mounted) {
+        nameController.text = profile.displayName;
+        bioController.text = profile.bio;
+        _currentIconSelection = profile.profileIcon;
+      }
 
       // Post-frame icon fetching logic
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -78,16 +79,20 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
         }
       });
 
-      setState(() {
-        _profile = profile;
-        isPublic = profile.isPublic;
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _profile = profile;
+          isPublic = profile.isPublic;
+          _isLoading = false;
+        });
+      }
     } catch (e) {
-      setState(() {
-        _hasError = true;
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _hasError = true;
+          _isLoading = false;
+        });
+      }
     }
   }
 

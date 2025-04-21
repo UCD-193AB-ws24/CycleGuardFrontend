@@ -13,6 +13,7 @@ import 'package:cycle_guard_app/data/achievements_progress_provider.dart';
 import 'package:cycle_guard_app/data/week_history_provider.dart';
 import 'package:cycle_guard_app/data/trip_history_provider.dart';
 import 'package:cycle_guard_app/data/user_settings_accessor.dart';
+import 'package:cycle_guard_app/data/user_profile_accessor.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'constants.dart';
@@ -150,6 +151,7 @@ class MyAppState extends ChangeNotifier {
   Color selectedColor = Colors.orange;
   String selectedIcon = "icon_default";
   bool isDarkMode = false;
+  bool isTutorialActive = false;
 
   final Map<String, Color> availableThemes = {
     'Yellow': Colors.yellow,
@@ -186,7 +188,18 @@ class MyAppState extends ChangeNotifier {
 
     notifyListeners(); 
   }
-  
+
+  Future<void> loadUserProfile() async {
+    final profile = await UserProfileAccessor.getOwnProfile();
+    isTutorialActive = profile.isNewAccount;
+    notifyListeners();
+  }
+
+  void enableTutorial() {
+    isTutorialActive = true;
+    notifyListeners();
+  }
+
   Future<void> fetchOwnedIcons() async {
     final ownedIconNames = (await PurchaseInfoAccessor.getPurchaseInfo()).iconsOwned;
 

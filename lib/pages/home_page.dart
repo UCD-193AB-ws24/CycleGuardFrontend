@@ -13,6 +13,8 @@ import 'package:percent_indicator/circular_percent_indicator.dart';
 import 'package:cycle_guard_app/data/single_trip_history.dart';
 import '../auth/dim_util.dart';
 import 'package:draggable_scrollbar/draggable_scrollbar.dart';
+import 'package:cycle_guard_app/main.dart';
+import 'package:cycle_guard_app/data/user_profile_accessor.dart';
 
 import 'package:showcaseview/showcaseview.dart';
 
@@ -40,21 +42,24 @@ class _HomePageState extends State<HomePage> {
     super.dispose();
   }
 
-  @override
-  void initState() {
-    super.initState();
+@override
+void initState() {
+  super.initState();
 
-    Future.microtask(() {
-      Provider.of<UserStatsProvider>(context, listen: false).fetchUserStats();
-      Provider.of<WeekHistoryProvider>(context, listen: false)
-          .fetchWeekHistory();
-      Provider.of<AchievementsProgressProvider>(context, listen: false)
-          .fetchAchievementProgress();
-      Provider.of<UserDailyGoalProvider>(context, listen: false)
-          .fetchDailyGoals();
-    });
+  // Trigger async providers
+  Future.microtask(() {
+    Provider.of<UserStatsProvider>(context, listen: false).fetchUserStats();
+    Provider.of<WeekHistoryProvider>(context, listen: false).fetchWeekHistory();
+    Provider.of<AchievementsProgressProvider>(context, listen: false).fetchAchievementProgress();
+    Provider.of<UserDailyGoalProvider>(context, listen: false).fetchDailyGoals();
+  });
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+  // Wait until after first frame to check tutorial status
+  WidgetsBinding.instance.addPostFrameCallback((_) async {
+    final appState = Provider.of<MyAppState>(context, listen: false);
+
+    if (appState.isTutorialActive) {
+      // Start the tutorial
       ShowCaseWidget.of(context).startShowCase([
         _pastWeekKey,
         _todayGoalKey,
@@ -65,8 +70,25 @@ class _HomePageState extends State<HomePage> {
         _achievementsKey,
         _storeKey,
       ]);
-    });
-  }
+
+      // Mark tutorial as completed (update profile and app state)
+      final profile = await UserProfileAccessor.getOwnProfile();
+
+      final updatedProfile = UserProfile(
+        username: profile.username,
+        displayName: profile.displayName,
+        bio: profile.bio,
+        profileIcon: profile.profileIcon,
+        isPublic: profile.isPublic,
+        isNewAccount: false,
+      );
+
+      await UserProfileAccessor.updateOwnProfile(updatedProfile);
+
+      appState.isTutorialActive = false;
+    }
+  });
+}
 
   @override
   Widget build(BuildContext context) {
@@ -173,6 +195,13 @@ class _HomePageState extends State<HomePage> {
             controller: _controller,
             padding: const EdgeInsets.all(8.0),
             children: [
+              ElevatedButton(
+                onPressed: () async {
+                  final profile = await UserProfileAccessor.getOwnProfile();
+                  print("Is new account? ${profile.isNewAccount}");
+                },
+                child: Text("Check if New Account"),
+              ),
               Center(
                 child: Text(
                   'Past Week of Biking',

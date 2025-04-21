@@ -96,6 +96,19 @@ class _SettingsPageState extends State<SettingsPage> {
               Center(
                 child: ElevatedButton(
                   onPressed: () {
+                    Provider.of<MyAppState>(context, listen: false).enableTutorial();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text("Tutorial will start when you go to the home page!")),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(elevation: 10),
+                  child: Text("Restart Tutorial"),
+                ),
+              ),
+              SizedBox(height: 20),
+              Center(
+                child: ElevatedButton(
+                  onPressed: () {
                     final appState = Provider.of<MyAppState>(context, listen: false);
                     appState.updateThemeColor(Colors.orange);
                     appState.toggleDarkMode(false);

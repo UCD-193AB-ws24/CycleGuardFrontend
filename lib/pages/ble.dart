@@ -75,12 +75,12 @@ void showCustomDialog(BuildContext context) async {
     context: context,
     builder: (BuildContext context) {
       return AlertDialog(
-        contentPadding: EdgeInsets.symmetric(horizontal: 100,vertical: 10),
+        contentPadding: EdgeInsets.symmetric(horizontal: 10,vertical: 10),
         title: Text('Select Your Helmet'),
         content: Container(
 
-          height: 500,
-          width: 300,
+          height: 1000,
+          width: 1000,
           padding: EdgeInsets.symmetric(horizontal: 4,vertical: 5),
           child: StreamBuilder<List<ScanResult>>(
             
@@ -91,7 +91,6 @@ void showCustomDialog(BuildContext context) async {
               }
               if (snapshot.hasData && snapshot.data!.isNotEmpty) {
                 return ListView.builder(
-                  shrinkWrap: true,
                   itemCount: snapshot.data!.length,
                   itemBuilder: (context, index) {
                     final data = snapshot.data![index];
@@ -104,7 +103,6 @@ void showCustomDialog(BuildContext context) async {
                         onTap: () => _connectAndRead(data.device),
                       ),
                     );
-
                   },
                 );
               } else {

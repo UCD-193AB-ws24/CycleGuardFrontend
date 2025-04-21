@@ -12,6 +12,8 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:percent_indicator/circular_percent_indicator.dart';
 import 'package:cycle_guard_app/data/single_trip_history.dart';
 import '../auth/dim_util.dart';
+import 'package:draggable_scrollbar/draggable_scrollbar.dart';
+
 
 class HomePage extends StatefulWidget {
   @override
@@ -19,6 +21,14 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  ScrollController _controller = ScrollController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
   @override
   void initState() {
     super.initState();
@@ -96,7 +106,7 @@ class _HomePageState extends State<HomePage> {
             ),
           ],
         ),
-        backgroundColor: isDarkMode ? Colors.black12 : null, 
+        backgroundColor: isDarkMode ? Theme.of(context).colorScheme.onSecondaryFixedVariant : Theme.of(context).colorScheme.surfaceContainer, 
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 32.0),
@@ -114,84 +124,89 @@ class _HomePageState extends State<HomePage> {
           )
         ],
       ),
-      body: SingleChildScrollView( 
-        padding: const EdgeInsets.all(8.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Text(
-                'Past Week of Biking',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-            ),
-            SizedBox(height: DimUtil.safeHeight(context)*1/40),
-            SizedBox(
-              height: DimUtil.safeHeight(context)*1/4,
-              child: BarChart(
-                BarChartData(
-                  alignment: BarChartAlignment.spaceAround,
-                  maxY: 1.2 * rotatedDistances.reduce((a, b) => a > b ? a : b), // 1.2 * the max value in rotatedDistances
-                  barGroups: [
-                    BarChartGroupData(x: 0, barRods: [BarChartRodData(fromY: 0, toY: rotatedDistances[0], color: selectedColor, width: 30.0)]),
-                    BarChartGroupData(x: 1, barRods: [BarChartRodData(fromY: 0, toY: rotatedDistances[1], color: selectedColor, width: 30.0)]),
-                    BarChartGroupData(x: 2, barRods: [BarChartRodData(fromY: 0, toY: rotatedDistances[2], color: selectedColor, width: 30.0)]),
-                    BarChartGroupData(x: 3, barRods: [BarChartRodData(fromY: 0, toY: rotatedDistances[3], color: selectedColor, width: 30.0)]),
-                    BarChartGroupData(x: 4, barRods: [BarChartRodData(fromY: 0, toY: rotatedDistances[4], color: selectedColor, width: 30.0)]),
-                    BarChartGroupData(x: 5, barRods: [BarChartRodData(fromY: 0, toY: rotatedDistances[5], color: selectedColor, width: 30.0)]),
-                    BarChartGroupData(x: 6, barRods: [BarChartRodData(fromY: 0, toY: rotatedDistances[6], color: selectedColor, width: 30.0)]),
-                  ],
-                  titlesData: FlTitlesData(
-                    leftTitles: AxisTitles(
-                      axisNameWidget: Text('Miles', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-                      sideTitles: SideTitles(
-                        showTitles: true,
-                        reservedSize: 20,
-                        getTitlesWidget: (double value, TitleMeta meta) {
-                          return Text(value.toInt().toString(), style: TextStyle(fontSize: 12));
-                        },
-                      ),
-                    ),
-                    bottomTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: true,
-                        getTitlesWidget: (double value, TitleMeta meta) {
-                          const days = ['M', 'T', 'W', 'R', 'F', 'Sa', 'Su'];
-                          List<String> rotatedDays = getRotatedArray(days, DateTime.now().weekday); 
-                          return Text(rotatedDays[value.toInt()], style: TextStyle(fontSize: 12));
-                        },
-                      ),
-                    ),
-                    rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                    topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  ),
-                  gridData: FlGridData(
-                    drawHorizontalLine: false,
-                    drawVerticalLine: false,
-                  ),
-                  barTouchData: BarTouchData(
-                    touchTooltipData: BarTouchTooltipData(
-                      getTooltipColor: (group) => isDarkMode
-                        ? colorScheme.secondary
-                        : colorScheme.secondaryFixed,
-                      getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                        return BarTooltipItem(
-                          '${rod.toY.toStringAsFixed(1)}', 
-                          TextStyle(color: isDarkMode
-                            ? Colors.white
-                            : selectedColor,
-                          ), 
-                        );
-                      },
-                    ),
-                  ),
-                  borderData: FlBorderData(show: false),
+      body: ScrollConfiguration(
+        behavior: ScrollBehavior().copyWith(overscroll: false),
+        child:DraggableScrollbar.arrows(
+          controller: _controller,
+          alwaysVisibleScrollThumb: true,
+          backgroundColor: isDarkMode ? colorScheme.surfaceContainerLow : colorScheme.onSecondaryFixedVariant,
+          child: ListView( 
+            controller: _controller,
+            padding: const EdgeInsets.all(8.0),
+            children: [
+              Center(
+                child: Text(
+                  'Past Week of Biking',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ),
-            ),
-            SizedBox(height: DimUtil.safeWidth(context)*1/40),
-            buildStreakDisplay(context, userStats.rideStreak),
-            SizedBox(height: DimUtil.safeWidth(context)*1/20),
+              SizedBox(height: DimUtil.safeHeight(context)*1/40),
+              SizedBox(
+                height: DimUtil.safeHeight(context)*1/4,
+                child: BarChart(
+                  BarChartData(
+                    alignment: BarChartAlignment.spaceAround,
+                    maxY: 1.2 * rotatedDistances.reduce((a, b) => a > b ? a : b), // 1.2 * the max value in rotatedDistances
+                    barGroups: [
+                      BarChartGroupData(x: 0, barRods: [BarChartRodData(fromY: 0, toY: rotatedDistances[0], color: selectedColor, width: 30.0)]),
+                      BarChartGroupData(x: 1, barRods: [BarChartRodData(fromY: 0, toY: rotatedDistances[1], color: selectedColor, width: 30.0)]),
+                      BarChartGroupData(x: 2, barRods: [BarChartRodData(fromY: 0, toY: rotatedDistances[2], color: selectedColor, width: 30.0)]),
+                      BarChartGroupData(x: 3, barRods: [BarChartRodData(fromY: 0, toY: rotatedDistances[3], color: selectedColor, width: 30.0)]),
+                      BarChartGroupData(x: 4, barRods: [BarChartRodData(fromY: 0, toY: rotatedDistances[4], color: selectedColor, width: 30.0)]),
+                      BarChartGroupData(x: 5, barRods: [BarChartRodData(fromY: 0, toY: rotatedDistances[5], color: selectedColor, width: 30.0)]),
+                      BarChartGroupData(x: 6, barRods: [BarChartRodData(fromY: 0, toY: rotatedDistances[6], color: selectedColor, width: 30.0)]),
+                    ],
+                    titlesData: FlTitlesData(
+                      leftTitles: AxisTitles(
+                        axisNameWidget: Text('Miles', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          reservedSize: 20,
+                          getTitlesWidget: (double value, TitleMeta meta) {
+                            return Text(value.toInt().toString(), style: TextStyle(fontSize: 12));
+                          },
+                        ),
+                      ),
+                      bottomTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          getTitlesWidget: (double value, TitleMeta meta) {
+                            const days = ['M', 'T', 'W', 'R', 'F', 'Sa', 'Su'];
+                            List<String> rotatedDays = getRotatedArray(days, DateTime.now().weekday); 
+                            return Text(rotatedDays[value.toInt()], style: TextStyle(fontSize: 12));
+                          },
+                        ),
+                      ),
+                      rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                      topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    ),
+                    gridData: FlGridData(
+                      drawHorizontalLine: false,
+                      drawVerticalLine: false,
+                    ),
+                    barTouchData: BarTouchData(
+                      touchTooltipData: BarTouchTooltipData(
+                        getTooltipColor: (group) => isDarkMode
+                          ? colorScheme.secondary
+                          : colorScheme.secondaryFixed,
+                        getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                          return BarTooltipItem(
+                            '${rod.toY.toStringAsFixed(1)}', 
+                            TextStyle(color: isDarkMode
+                              ? Colors.white
+                              : selectedColor,
+                            ), 
+                          );
+                        },
+                      ),
+                    ),
+                    borderData: FlBorderData(show: false),
+                  ),
+                ),
+              ),
+              SizedBox(height: DimUtil.safeWidth(context)*1/40),
+              buildStreakDisplay(context, userStats.rideStreak),
+              SizedBox(height: DimUtil.safeWidth(context)*1/20),
               Stack(
                 alignment: Alignment.center,
                 children: [
@@ -292,159 +307,160 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ],
               ),
-            SizedBox(height: DimUtil.safeWidth(context)*1/40),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _buildCircularStat(
-                  context,
-                  title: 'Time',
-                  value: '$todayTime min',
-                  goal: '${userGoals.dailyTimeGoal} min',
-                  percent: userGoals.dailyTimeGoal == 0 ? 0 : todayTime / userGoals.dailyTimeGoal,
-                  color: Colors.blueAccent,
-                ),
-                _buildCircularStat(
-                  context,
-                  title: 'Distance',
-                  value: '$todayDistance mi',
-                  goal: '${userGoals.dailyDistanceGoal} mi',
-                  percent: userGoals.dailyDistanceGoal == 0 ? 0 : todayDistance / userGoals.dailyDistanceGoal,
-                  color: Colors.orangeAccent,
-                ),
-                _buildCircularStat(
-                  context,
-                  title: 'Calories',
-                  value: '$todayCalories cal',
-                  goal: '${userGoals.dailyCaloriesGoal} cal',
-                  percent: userGoals.dailyCaloriesGoal == 0 ? 0 : todayCalories / userGoals.dailyCaloriesGoal,
-                  color: Colors.redAccent,
-                ),
-              ],
-            ),
-            SizedBox(height: DimUtil.safeWidth(context)*1/20),
-            Center(
-              child: Text(
-                'Average Ride this Week',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-            ),
-            SizedBox(height: DimUtil.safeWidth(context)*1/40),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildStatCard(Icons.timer, 'Time', '${weekHistory.averageTime.round()} min', Colors.blueAccent),
-                ),
-                SizedBox(width: 8),
-                Expanded(
-                  child: _buildStatCard(Icons.directions_bike, 'Distance', '${weekHistory.averageDistance.round()} mi', Colors.orangeAccent),
-                ),
-                SizedBox(width: 8),
-                Expanded(
-                  child: _buildStatCard(Icons.local_fire_department, 'Calories', '${weekHistory.averageCalories.round()} cal', Colors.redAccent),
-                ),
-              ],
-            ),
-            SizedBox(height: DimUtil.safeWidth(context)*1/20),
-            _buildDailyChallenge(context, isDailyChallengeComplete),
-            SizedBox(height: DimUtil.safeWidth(context)*1/20),
-            Align(
-              alignment: Alignment.bottomCenter,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 2.0),
-                child: FractionallySizedBox(
-                  widthFactor: 0.8,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      elevation: 6,
-                      backgroundColor: isDarkMode
-                          ? colorScheme.secondary
-                          : colorScheme.onInverseSurface,
-                      foregroundColor: isDarkMode
-                          ? Colors.white
-                          : colorScheme.primary,
-                      padding: EdgeInsets.symmetric(vertical: 8.0),
-                      textStyle: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                    ),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => HistoryPage()),
-                      );
-                    },
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text('Your Ride History'),
-                        SizedBox(width: DimUtil.safeWidth(context)*1/40),
-                        Icon(Icons.calendar_month_outlined, color: isDarkMode
-                          ? Colors.white
-                          : colorScheme.primary
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            SizedBox(height: DimUtil.safeWidth(context)*1/20),
-            Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
+              SizedBox(height: DimUtil.safeWidth(context)*1/40),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  Text(
-                    'Almost There!',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  _buildCircularStat(
+                    context,
+                    title: 'Time',
+                    value: '$todayTime min',
+                    goal: '${userGoals.dailyTimeGoal} min',
+                    percent: userGoals.dailyTimeGoal == 0 ? 0 : todayTime / userGoals.dailyTimeGoal,
+                    color: Colors.blueAccent,
                   ),
-                  Text(
-                    'Achievements in progress',
-                    style: TextStyle(fontSize: 16),
+                  _buildCircularStat(
+                    context,
+                    title: 'Distance',
+                    value: '$todayDistance mi',
+                    goal: '${userGoals.dailyDistanceGoal} mi',
+                    percent: userGoals.dailyDistanceGoal == 0 ? 0 : todayDistance / userGoals.dailyDistanceGoal,
+                    color: Colors.orangeAccent,
+                  ),
+                  _buildCircularStat(
+                    context,
+                    title: 'Calories',
+                    value: '$todayCalories cal',
+                    goal: '${userGoals.dailyCaloriesGoal} cal',
+                    percent: userGoals.dailyCaloriesGoal == 0 ? 0 : todayCalories / userGoals.dailyCaloriesGoal,
+                    color: Colors.redAccent,
                   ),
                 ],
               ),
-            ),
-            SizedBox(height: DimUtil.safeWidth(context)*1/80),
-            _buildAchievementProgress(context, isDarkMode),
-            SizedBox(height: DimUtil.safeWidth(context)*1/80),
-            Align(
-              alignment: Alignment.bottomCenter,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 16.0),
-                child: FractionallySizedBox(
-                  widthFactor: 0.8,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      elevation: 6,
-                      backgroundColor: isDarkMode
-                          ? colorScheme.secondary
-                          : colorScheme.onInverseSurface,
-                      foregroundColor: isDarkMode
-                          ? Colors.white
-                          : colorScheme.primary,
-                      padding: EdgeInsets.symmetric(vertical: 8.0),
-                      textStyle: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                    ),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => AchievementsPage()),
-                      );
-                    },
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text('Your Achievements'),
-                        SizedBox(width: DimUtil.safeWidth(context)*1/80),
-                        Icon(Icons.emoji_events, color: isDarkMode
-                          ? Colors.white
-                          : colorScheme.primary),
-                      ],
+              SizedBox(height: DimUtil.safeWidth(context)*1/20),
+              Center(
+                child: Text(
+                  'Average Ride this Week',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+              ),
+              SizedBox(height: DimUtil.safeWidth(context)*1/40),
+              Row(
+                children: [
+                  Flexible(
+                    child: _buildStatCard(Icons.timer, 'Time', '${weekHistory.averageTime.round()} min', Colors.blueAccent),
+                  ),
+                  SizedBox(width: 8),
+                  Flexible(
+                    child: _buildStatCard(Icons.directions_bike, 'Distance', '${weekHistory.averageDistance.round()} mi', Colors.orangeAccent),
+                  ),
+                  SizedBox(width: 8),
+                  Flexible(
+                    child: _buildStatCard(Icons.local_fire_department, 'Calories', '${weekHistory.averageCalories.round()} cal', Colors.redAccent),
+                  ),
+                ],
+              ),
+              SizedBox(height: DimUtil.safeWidth(context)*1/20),
+              _buildDailyChallenge(context, isDailyChallengeComplete),
+              SizedBox(height: DimUtil.safeWidth(context)*1/20),
+              Align(
+                alignment: Alignment.bottomCenter,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 2.0),
+                  child: FractionallySizedBox(
+                    widthFactor: 0.8,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        elevation: 6,
+                        backgroundColor: isDarkMode
+                            ? colorScheme.onPrimaryFixedVariant
+                            : colorScheme.onInverseSurface,
+                        foregroundColor: isDarkMode
+                            ? Colors.white
+                            : colorScheme.primary,
+                        padding: EdgeInsets.symmetric(vertical: 8.0),
+                        textStyle: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                      ),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => HistoryPage()),
+                        );
+                      },
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text('Your Ride History'),
+                          SizedBox(width: DimUtil.safeWidth(context)*1/40),
+                          Icon(Icons.calendar_month_outlined, color: isDarkMode
+                            ? Colors.white
+                            : colorScheme.primary
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-          ],
+              SizedBox(height: DimUtil.safeWidth(context)*1/20),
+              Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Almost There!',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    Text(
+                      'Achievements in progress',
+                      style: TextStyle(fontSize: 16),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(height: DimUtil.safeWidth(context)*1/80),
+              _buildAchievementProgress(context, isDarkMode),
+              SizedBox(height: DimUtil.safeWidth(context)*1/80),
+              Align(
+                alignment: Alignment.bottomCenter,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 16.0),
+                  child: FractionallySizedBox(
+                    widthFactor: 0.8,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        elevation: 6,
+                        backgroundColor: isDarkMode
+                            ? colorScheme.onPrimaryFixedVariant
+                            : colorScheme.onInverseSurface,
+                        foregroundColor: isDarkMode
+                            ? Colors.white
+                            : colorScheme.primary,
+                        padding: EdgeInsets.symmetric(vertical: 8.0),
+                        textStyle: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                      ),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => AchievementsPage()),
+                        );
+                      },
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text('Your Achievements'),
+                          SizedBox(width: DimUtil.safeWidth(context)*1/80),
+                          Icon(Icons.emoji_events, color: isDarkMode
+                            ? Colors.white
+                            : colorScheme.primary),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
       floatingActionButton: FloatingActionButton(

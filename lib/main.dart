@@ -30,10 +30,19 @@ import 'pages/leader_page.dart';
 import 'pages/settings_page.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
+// notifications
+import 'pages/local_notifications.dart';
+import 'package:android_intent_plus/android_intent.dart';
+//import 'package:android_intent_plus/intent.dart';
+import 'package:permission_handler/permission_handler.dart';
+
 //const MethodChannel platform = MethodChannel('com.cycleguard.channel'); // Must match iOS
 
 void main() async {
+  // for local notifications
   WidgetsFlutterBinding.ensureInitialized();
+  // init notifications 
+  LocalNotificationService().initNotification();
 
   await dotenv.load(fileName: ".env");
 
@@ -133,6 +142,7 @@ class MyApp extends StatelessWidget {
 
 class MyAppState extends ChangeNotifier {
   Color selectedColor = Colors.orange;
+  String selectedIcon = "icon_default";
   bool isDarkMode = false;
 
   final Map<String, Color> availableThemes = {
@@ -152,10 +162,15 @@ class MyAppState extends ChangeNotifier {
     'Indigo': Colors.indigo,
   };
 
+
   final Map<String, Color> ownedThemes = {};
 
+  final List<String> availableIcons = ['icon_default'];
+  final List<String> storeIcons = ['icon_1_F', 'icon_1_M', 'icon_2_F', 'icon_2_M'];
+  final List<String> ownedIcons = [];
+
   Future<void> fetchOwnedThemes() async {
-    final ownedThemeNames = await PurchaseInfo.getOwnedItems();
+    final ownedThemeNames = (await PurchaseInfoAccessor.getPurchaseInfo()).themesOwned;
 
     for (var themeName in ownedThemeNames) {
       if (storeThemes.containsKey(themeName)) {
@@ -164,6 +179,18 @@ class MyAppState extends ChangeNotifier {
     }
 
     notifyListeners(); 
+  }
+  
+  Future<void> fetchOwnedIcons() async {
+    final ownedIconNames = (await PurchaseInfoAccessor.getPurchaseInfo()).iconsOwned;
+
+    for (var iconName in ownedIconNames) {
+      if (storeIcons.contains(iconName) && !ownedIcons.contains(iconName)) {
+        ownedIcons.add(iconName);
+      }
+    }
+
+    notifyListeners();
   }
 
   void toggleDarkMode(bool isEnabled) async {
@@ -185,7 +212,7 @@ class MyAppState extends ChangeNotifier {
     }
   }
 
-    void updateThemeColor(Color newColor) async {
+  void updateThemeColor(Color newColor) async {
     selectedColor = newColor;
     String themeName = _getThemeNameFromColor(selectedColor);
     UserSettings updatedSettings = UserSettings(
@@ -246,7 +273,7 @@ class MyAppState extends ChangeNotifier {
       return false; // Return false if not enough coins
     }
 
-    final response = await PurchaseInfo.buyItem(themeName);
+    final response = await PurchaseInfoAccessor.buyTheme(themeName);
     switch (response) {
       case BuyResponse.success:
         final color = storeThemes.remove(themeName);
@@ -266,6 +293,39 @@ class MyAppState extends ChangeNotifier {
     }
   }
 
+  Future<bool> purchaseIcon(String iconName) async {
+    final coins = await CycleCoinInfo.getCycleCoins();
+    if (coins < 10) {
+      Fluttertoast.showToast(
+        msg: "Not enough CycleCoins!",
+        backgroundColor: Colors.red,
+      );
+      return false;
+    }
+
+    final response = await PurchaseInfoAccessor.buyIcon(iconName);
+    switch (response) {
+      case BuyResponse.success:
+        if (storeIcons.contains(iconName)) {
+          storeIcons.remove(iconName);
+          availableIcons.add(iconName);
+          ownedIcons.add(iconName);
+        }
+        Fluttertoast.showToast(msg: "Icon purchased successfully!");
+        notifyListeners();
+        return true;
+      case BuyResponse.notEnoughCoins:
+        Fluttertoast.showToast(msg: "Not enough CycleCoins!");
+        return false;
+      case BuyResponse.alreadyOwned:
+        Fluttertoast.showToast(msg: "You already own this icon!");
+        return false;
+      default:
+        Fluttertoast.showToast(msg: "Purchase failed. Try again later.");
+        return false;
+    }
+  }
+
   Future<bool> purchaseRocketBoost() async {
     final coins = await CycleCoinInfo.getCycleCoins();
     if (coins < 100) {
@@ -276,10 +336,9 @@ class MyAppState extends ChangeNotifier {
       return false; // Return false if not enough coins
     }
 
-    final response = await PurchaseInfo.buyItem("Rocket Boost");
+    final response = await PurchaseInfoAccessor.buyMisc("Rocket Boost");
     switch (response) {
       case BuyResponse.success:
-        await CycleCoinInfo.addCycleCoins(-100);
         Fluttertoast.showToast(msg: "Rocket Boost purchased!");
         notifyListeners();
         return true; // Return true if purchase is successful
@@ -310,7 +369,7 @@ class _MyHomePageState extends State<MyHomePage> {
   Color getNavBarBackgroundColor(BuildContext context) {
     return Theme.of(context).brightness == Brightness.dark
         ? Colors.black12
-        : Colors.white; 
+        : Theme.of(context).colorScheme.surface; 
   }
 
   @override
@@ -364,7 +423,7 @@ AppBar createAppBar(BuildContext context, String titleText) {
   return AppBar(
     iconTheme: IconThemeData(
         color: isDarkMode ? Colors.white70 : null
-      ),
+    ),
     title: Text(
       titleText,
       style: TextStyle(
@@ -372,7 +431,7 @@ AppBar createAppBar(BuildContext context, String titleText) {
         color: isDarkMode ? Colors.white70 : Colors.black,
       ),
     ),
-    backgroundColor: isDarkMode ? Colors.black12 : null,
+    backgroundColor: isDarkMode ? Theme.of(context).colorScheme.onSecondaryFixedVariant : Theme.of(context).colorScheme.surfaceContainer,
     actions: [
       Padding(
         padding: const EdgeInsets.only(right: 32.0),

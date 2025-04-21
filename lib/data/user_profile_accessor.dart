@@ -58,14 +58,16 @@ class UserProfileAccessor {
 }
 
 class UserProfile {
-  final String username, displayName, bio;
-  final bool isPublic;
+  final String username, displayName, bio, profileIcon;
+  final bool isPublic, isNewAccount;
 
   const UserProfile({
     required this.username,
     required this.displayName,
     required this.bio,
+    required this.profileIcon,
     required this.isPublic,
+    required this.isNewAccount
   });
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
@@ -74,12 +76,16 @@ class UserProfile {
         "username": String username,
         "displayName": String displayName,
         "bio": String bio,
-        "isPublic": bool isPublic
+        "isPublic": bool isPublic,
+        "isNewAccount": bool isNewAccount,
+        "profileIcon": String profileIcon
       } => UserProfile(
           username: username,
           displayName: displayName,
           bio: bio,
-          isPublic: isPublic
+          profileIcon: profileIcon,
+          isPublic: isPublic,
+          isNewAccount: isNewAccount
       ),
       _ => throw const FormatException("failed to load UserProfile"),
     };
@@ -89,7 +95,9 @@ class UserProfile {
     'username': username,
     'displayName': displayName,
     'bio': bio,
-    'isPublic': isPublic
+    'isPublic': isPublic,
+    'isNewAccount': isNewAccount,
+    'profileIcon': profileIcon
   };
 
   /// **Converts a List of JSON user entries into a List<UserProfile>**
@@ -104,7 +112,7 @@ class UserProfile {
 
   @override
   String toString() {
-    return 'UserProfile{displayName: $displayName, bio: $bio, isPublic: $isPublic}';
+    return 'UserProfile{username: $username, displayName: $displayName, bio: $bio, profileIcon: $profileIcon, isPublic: $isPublic, isNewAccount: $isNewAccount}';
   }
 }
 

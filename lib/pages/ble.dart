@@ -5,14 +5,29 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../auth/dim_util.dart';
 
+import 'dart:io' show Platform;
+
+
 class BluetoothController extends GetxController {
   static BluetoothController get to => Get.find();
   Stream<List<ScanResult>> get scanResults => FlutterBluePlus.scanResults;
 
   Future<void> scanDevices() async {
     await requestBluetoothPermissions();
-    PermissionStatus bluetoothScanStatus = await Permission.bluetoothScan.status;
-    await FlutterBluePlus.turnOn();
+
+    if ((await FlutterBluePlus.adapterState.first) != BluetoothAdapterState.on) {
+      if (Platform.isAndroid) {
+        await FlutterBluePlus.turnOn();
+      } else if (Platform.isIOS) {
+        try {
+          print("iOS detected - beginning prelimenary scan to turn on bluetooth");
+          await FlutterBluePlus.startScan(timeout: const Duration(seconds: 1));
+          await FlutterBluePlus.scanResults.first;
+
+        } catch (e) {}
+          await Future.delayed(const Duration(seconds: 1));
+      }
+    }
 
     try {
       print("Starting scan");
@@ -21,7 +36,7 @@ class BluetoothController extends GetxController {
 
       FlutterBluePlus.startScan(timeout: const Duration(seconds: 1));
 
-      print(await FlutterBluePlus.scanResults.first);
+      // print(await FlutterBluePlus.scanResults.first);
     } catch(e) {
       e.printError();
     }

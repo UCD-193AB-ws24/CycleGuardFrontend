@@ -17,6 +17,11 @@ class BluetoothController extends GetxController {
 
     if ((await FlutterBluePlus.adapterState.first) != BluetoothAdapterState.on) {
       if (Platform.isAndroid) {
+        PermissionStatus status = await Permission.bluetoothScan.status;
+        if (!status.isGranted) {
+          print("Android: Bluetooth permission is not granted");
+          return;
+        }
         await FlutterBluePlus.turnOn();
       } else if (Platform.isIOS) {
         try {

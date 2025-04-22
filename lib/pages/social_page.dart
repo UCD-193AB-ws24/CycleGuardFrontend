@@ -13,6 +13,7 @@ import 'package:cycle_guard_app/pages/settings_page.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import '../main.dart';
+import 'package:showcaseview/showcaseview.dart';
 
 // for local notifications
 import 'dart:developer';
@@ -41,6 +42,17 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
   bool _hasLocalProfileChanges = false;
   String _currentIconSelection = '';
 
+  // tutorial keys
+  final GlobalKey _tabsKey = GlobalKey();
+  final GlobalKey _settingsKey = GlobalKey();
+  final GlobalKey _iconKey = GlobalKey();
+  final GlobalKey _bioKey = GlobalKey();
+  final GlobalKey _updateKey = GlobalKey();
+  final GlobalKey _healthInfoKey = GlobalKey();
+  final GlobalKey _dailyGoalsKey = GlobalKey();
+  final GlobalKey _notificationsKey = GlobalKey();
+  final GlobalKey _finalMessageKey = GlobalKey();
+
   @override
   void initState() {
     super.initState();
@@ -50,6 +62,41 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
     nameController = TextEditingController();
     bioController = TextEditingController();
     _loadProfile();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final appState = Provider.of<MyAppState>(context, listen: false);
+
+      if (appState.isSocialTutorialActive) {
+        // Start the tutorial
+        ShowCaseWidget.of(context).startShowCase([
+          _tabsKey,
+          _settingsKey,
+          _iconKey,
+          _bioKey,
+          _updateKey,
+          _healthInfoKey,
+          _dailyGoalsKey,
+          _notificationsKey,
+          _finalMessageKey,
+        ]);
+
+        // Mark tutorial as completed (update profile and app state)
+        final profile = await UserProfileAccessor.getOwnProfile();
+
+        final updatedProfile = UserProfile(
+          username: profile.username,
+          displayName: profile.displayName,
+          bio: profile.bio,
+          profileIcon: profile.profileIcon,
+          isPublic: profile.isPublic,
+          isNewAccount: false,
+        );
+
+        await UserProfileAccessor.updateOwnProfile(updatedProfile);
+
+        appState.isSocialTutorialActive = false;
+      }
+    });
   }
 
 
@@ -59,10 +106,11 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
       final appState = Provider.of<MyAppState>(context, listen: false);
 
       // Update controllers after profile is fetched
-      nameController.text = profile.displayName;
-      bioController.text = profile.bio;
-
-      _currentIconSelection = profile.profileIcon;
+      if (mounted) {
+        nameController.text = profile.displayName;
+        bioController.text = profile.bio;
+        _currentIconSelection = profile.profileIcon;
+      }
 
       // Post-frame icon fetching logic
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -78,16 +126,20 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
         }
       });
 
-      setState(() {
-        _profile = profile;
-        isPublic = profile.isPublic;
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _profile = profile;
+          isPublic = profile.isPublic;
+          _isLoading = false;
+        });
+      }
     } catch (e) {
-      setState(() {
-        _hasError = true;
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _hasError = true;
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -203,16 +255,24 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
           ),
         ),
         backgroundColor: isDarkMode ? Colors.black12 : null,
-        bottom: TabBar(
-          controller: _tabController,
-          unselectedLabelColor: isDarkMode ? Colors.white70 : null,
-          tabs: const [
-            Tab(icon: Icon(Icons.person), text: "Profile"),
-            Tab(icon: Icon(Icons.search), text: "Bikers"),
-            Tab(icon: Icon(Icons.people), text: "Requests"),
-          ],
-        ),
-        actions: [
+        bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(kToolbarHeight),
+            child: Showcase(
+              key: _tabsKey,
+              title: 'Navigation Tabs',
+              description: 'Use these tabs to switch between your profile, find bikers, or check requests.',
+              child: TabBar(
+                controller: _tabController,
+                unselectedLabelColor: isDarkMode ? Colors.white70 : null,
+                tabs: const [
+                  Tab(icon: Icon(Icons.person), text: "Profile"),
+                  Tab(icon: Icon(Icons.search), text: "Bikers"),
+                  Tab(icon: Icon(Icons.people), text: "Requests"),
+                ],
+              ),
+            ),
+          ),
+          actions: [
           Padding(
             padding: const EdgeInsets.only(right: 32.0),
             child: SvgPicture.asset(
@@ -288,269 +348,298 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
                     }
                   ),
                   Align(
-                    alignment: Alignment.topRight, 
-                    child: TextButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => SettingsPage()),
-                        );
-                      },
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min, 
-                        children: [
-                          Icon(
-                            Icons.settings,
-                            size: 40,
-                            color: isDarkMode
-                              ? Theme.of(context).colorScheme.secondaryFixedDim
-                              : Theme.of(context).colorScheme.secondary, 
-                          ),
-                          SizedBox(height: 2), 
-                          Text(
-                            'Settings',
-                            style: TextStyle(
-                              fontSize: 14,
+                    alignment: Alignment.topRight,
+                    child: Showcase(
+                      key: _settingsKey ,
+                      title: 'Settings',
+                      description: 'Tap here to manage your account settings.',
+                      child: TextButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => SettingsPage()),
+                          );
+                        },
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.settings,
+                              size: 40,
                               color: isDarkMode
                                 ? Theme.of(context).colorScheme.secondaryFixedDim
-                                : Theme.of(context).colorScheme.secondary, 
+                                : Theme.of(context).colorScheme.secondary,
                             ),
-                          ),
-                        ],
+                            SizedBox(height: 2),
+                            Text(
+                              'Settings',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: isDarkMode
+                                  ? Theme.of(context).colorScheme.secondaryFixedDim
+                                  : Theme.of(context).colorScheme.secondary,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
                 ],
               ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 20),
-                  const Text("Select Profile Icon", style: TextStyle(fontSize: 16)),
-                  const SizedBox(height: 8),
+              Showcase(
+                key: _iconKey ,
+                title: 'Profile Icon',
+                description: 'More icons can be purchased in the store!',
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 20),
+                    const Text("Select Profile Icon", style: TextStyle(fontSize: 16)),
+                    const SizedBox(height: 8),
 
-                  Consumer<MyAppState>(
-                    builder: (context, appState, child) {
-                      final allIcons = [...{...appState.availableIcons, ...appState.ownedIcons}];
-                      String displayedIcon = _hasLocalProfileChanges ? _currentIconSelection : appState.selectedIcon;
-                      return DropdownButton<String>(
-                        value: allIcons.contains(displayedIcon) ? displayedIcon : 
-                          (allIcons.isNotEmpty ? allIcons.first : null),
-                        items: allIcons.map((iconName) {
-                          return DropdownMenuItem<String>(
-                            value: iconName,
-                            child: Row(
-                              children: [
-                                SvgPicture.asset(
-                                  'assets/$iconName.svg',
-                                  height: 30,
-                                  width: 30,
-                                  colorFilter: ColorFilter.mode(
-                                    isDarkMode ? Colors.white70 : Colors.black,
-                                    BlendMode.srcIn,
+                    Consumer<MyAppState>(
+                      builder: (context, appState, child) {
+                        final allIcons = [...{...appState.availableIcons, ...appState.ownedIcons}];
+                        String displayedIcon = _hasLocalProfileChanges ? _currentIconSelection : appState.selectedIcon;
+                        return DropdownButton<String>(
+                          value: allIcons.contains(displayedIcon) ? displayedIcon : 
+                            (allIcons.isNotEmpty ? allIcons.first : null),
+                          items: allIcons.map((iconName) {
+                            return DropdownMenuItem<String>(
+                              value: iconName,
+                              child: Row(
+                                children: [
+                                  SvgPicture.asset(
+                                    'assets/$iconName.svg',
+                                    height: 30,
+                                    width: 30,
+                                    colorFilter: ColorFilter.mode(
+                                      isDarkMode ? Colors.white70 : Colors.black,
+                                      BlendMode.srcIn,
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(width: 10),
-                                Text(iconName),
-                              ],
-                            ),
-                          );
-                        }).toList(),
-                        onChanged: (String? newIcon) {
-                          if (newIcon != null) {
-                            setState(() {
-                              appState.selectedIcon = newIcon;
-                              _currentIconSelection = newIcon;
-                              _hasLocalProfileChanges = true; 
-                            });
-                          
-                            UserProfile updatedProfile = UserProfile(
-                              username: profile.username,  
-                              displayName: profile.displayName,
-                              bio: profile.bio,
-                              isPublic: isPublic,
-                              isNewAccount: false,
-                              profileIcon: newIcon,
+                                  const SizedBox(width: 10),
+                                  Text(iconName),
+                                ],
+                              ),
                             );
+                          }).toList(),
+                          onChanged: (String? newIcon) {
+                            if (newIcon != null) {
+                              setState(() {
+                                appState.selectedIcon = newIcon;
+                                _currentIconSelection = newIcon;
+                                _hasLocalProfileChanges = true; 
+                              });
                             
-                            UserProfileAccessor.updateOwnProfile(updatedProfile).catchError((error) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text("Failed to update profile icon: $error")),
+                              UserProfile updatedProfile = UserProfile(
+                                username: profile.username,  
+                                displayName: profile.displayName,
+                                bio: profile.bio,
+                                isPublic: isPublic,
+                                isNewAccount: false,
+                                profileIcon: newIcon,
                               );
+                              
+                              UserProfileAccessor.updateOwnProfile(updatedProfile).catchError((error) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text("Failed to update profile icon: $error")),
+                                );
+                              });
+                            }
+                          },
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              Showcase(
+                key: _bioKey,
+                title: 'Bio Information',
+                description: "Update your name, bio, and visibility status.",
+                child: Column(
+                  children: [
+                    TextField(
+                      controller: nameController,
+                      decoration: InputDecoration(labelText: "Name"),
+                    ),
+                    TextField(
+                      controller: bioController,
+                      decoration: InputDecoration(labelText: "Bio"),
+                    ),
+                    Row(
+                      children: [
+                        Checkbox(
+                          value: isPublic,
+                          onChanged: (bool? newValue) {
+                            setState(() {
+                              isPublic = newValue ?? true;
                             });
-                          }
-                        },
-                      );
-                    },
-                  ),
-                ],
-              ),
-              TextField(
-                controller: nameController,
-                decoration: InputDecoration(labelText: "Name"),
-              ),
-              TextField(
-                controller: bioController,
-                decoration: InputDecoration(labelText: "Bio"),
-              ),
-              Row(
-                children: [
-                  Checkbox(
-                    value: isPublic,
-                    onChanged: (bool? newValue) {
-                      setState(() {
-                        isPublic = newValue ?? true;
-                      });
-                    },
-                  ),
-                  Text("Public Profile"),
-                ],
+                          },
+                        ),
+                        Text("Public Profile"),
+                      ],
+                    ),
+                  ],
+                ),
               ),
               SizedBox(height: 20),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  ElevatedButton(
-                    onPressed: () async {
-                      try {
-                        UserProfile updatedProfile = UserProfile(
-                          username: "", // The backend handles this, but I'll find a way on the frontend too
-                          displayName: nameController.text.trim(),
-                          bio: bioController.text.trim(),
-                          isPublic: isPublic, 
-                          isNewAccount: false,
-                          profileIcon: appState.selectedIcon,
-                        );
+                  Showcase(
+                    key: _updateKey ,
+                    title: 'Update Profile',
+                    description: 'Click this to confirm changes to your name and/or bio.',
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        try {
+                          UserProfile updatedProfile = UserProfile(
+                            username: "", // The backend handles this, but I'll find a way on the frontend too
+                            displayName: nameController.text.trim(),
+                            bio: bioController.text.trim(),
+                            isPublic: isPublic, 
+                            isNewAccount: false,
+                            profileIcon: appState.selectedIcon,
+                          );
 
-                        print("---------");
-                        print(updatedProfile);
+                          print("---------");
+                          print(updatedProfile);
 
-                        await UserProfileAccessor.updateOwnProfile(updatedProfile);
+                          await UserProfileAccessor.updateOwnProfile(updatedProfile);
 
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text("Profile updated successfully!")),
-                        );
-                      } catch (e) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text("Failed to update profile: $e")),
-                        );
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: isDarkMode
-                          ? Theme.of(context).colorScheme.secondary
-                          : Theme.of(context).colorScheme.onInverseSurface,
-                    ),
-                    child: Text(
-                      "Update Profile",
-                      style: TextStyle(
-                        color: isDarkMode ? Colors.white70 : null,
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text("Profile updated successfully!")),
+                          );
+                        } catch (e) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text("Failed to update profile: $e")),
+                          );
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: isDarkMode
+                            ? Theme.of(context).colorScheme.secondary
+                            : Theme.of(context).colorScheme.onInverseSurface,
+                      ),
+                      child: Text(
+                        "Update Profile",
+                        style: TextStyle(
+                          color: isDarkMode ? Colors.white70 : null,
+                        ),
                       ),
                     ),
                   ),
-                  ElevatedButton(
-                    onPressed: () async {
-                      final healthInfo = await HealthInfoAccessor.getHealthInfo();
-                      final heightController = TextEditingController(text: healthInfo.heightInches.toString());
-                      final weightController = TextEditingController(text: healthInfo.weightPounds.toString());
-                      final ageController = TextEditingController(text: healthInfo.ageYears.toString());
+                  Showcase(
+                    key: _healthInfoKey,
+                    title: 'Update Health Info',
+                    description: 'Health info will always be private and is used to estimate calories burned.',
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        final healthInfo = await HealthInfoAccessor.getHealthInfo();
+                        final heightController = TextEditingController(text: healthInfo.heightInches.toString());
+                        final weightController = TextEditingController(text: healthInfo.weightPounds.toString());
+                        final ageController = TextEditingController(text: healthInfo.ageYears.toString());
 
-                      showDialog(
-                        context: context,
-                        builder: (BuildContext context) {
-                          return AlertDialog(
-                            backgroundColor: isDarkMode ? Colors.grey[900] : Colors.white,
-                             title: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  "Set Health Information",
-                                  style: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
-                                ),
-                                SizedBox(height: 8),
-                                Text(
-                                  "Health information is kept private and will be used to estimate how many calories are burned on a ride.",
-                                  style: TextStyle(
-                                    color: isDarkMode ? Colors.white70 : Colors.black87,
-                                    fontSize: 13,
+                        showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return AlertDialog(
+                              backgroundColor: isDarkMode ? Colors.grey[900] : Colors.white,
+                              title: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    "Set Health Information",
+                                    style: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
                                   ),
+                                  SizedBox(height: 8),
+                                  Text(
+                                    "Health information is kept private and will be used to estimate how many calories are burned on a ride.",
+                                    style: TextStyle(
+                                      color: isDarkMode ? Colors.white70 : Colors.black87,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              content: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  TextField(
+                                    controller: heightController,
+                                    keyboardType: TextInputType.number,
+                                    style: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
+                                    decoration: InputDecoration(
+                                      labelText: "Height (inches)",
+                                      labelStyle: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black),
+                                    ),
+                                  ),
+                                  TextField(
+                                    controller: weightController,
+                                    keyboardType: TextInputType.number,
+                                    style: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
+                                    decoration: InputDecoration(
+                                      labelText: "Weight (pounds)",
+                                      labelStyle: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black),
+                                    ),
+                                  ),
+                                  TextField(
+                                    controller: ageController,
+                                    keyboardType: TextInputType.number,
+                                    style: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
+                                    decoration: InputDecoration(
+                                      labelText: "Age (years)",
+                                      labelStyle: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context),
+                                  child: Text("Cancel", style: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black)),
+                                ),
+                                TextButton(
+                                  onPressed: () async {
+                                    try {
+                                      await HealthInfoAccessor.setHealthInfoInts(
+                                        int.parse(heightController.text.trim()),
+                                        int.parse(weightController.text.trim()),
+                                        int.parse(ageController.text.trim()),
+                                      );
+
+                                      Navigator.pop(context);
+
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(content: Text('Health info updated successfully!')),
+                                      );
+                                    } catch (e) {
+                                      Navigator.pop(context);
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(content: Text('Failed to update health info: $e')),
+                                      );
+                                    }
+                                  },
+                                  child: Text("Submit", style: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black)),
                                 ),
                               ],
-                            ),
-                            content: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                TextField(
-                                  controller: heightController,
-                                  keyboardType: TextInputType.number,
-                                  style: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
-                                  decoration: InputDecoration(
-                                    labelText: "Height (inches)",
-                                    labelStyle: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black),
-                                  ),
-                                ),
-                                TextField(
-                                  controller: weightController,
-                                  keyboardType: TextInputType.number,
-                                  style: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
-                                  decoration: InputDecoration(
-                                    labelText: "Weight (pounds)",
-                                    labelStyle: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black),
-                                  ),
-                                ),
-                                TextField(
-                                  controller: ageController,
-                                  keyboardType: TextInputType.number,
-                                  style: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
-                                  decoration: InputDecoration(
-                                    labelText: "Age (years)",
-                                    labelStyle: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.pop(context),
-                                child: Text("Cancel", style: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black)),
-                              ),
-                              TextButton(
-                                onPressed: () async {
-                                  try {
-                                    await HealthInfoAccessor.setHealthInfoInts(
-                                      int.parse(heightController.text.trim()),
-                                      int.parse(weightController.text.trim()),
-                                      int.parse(ageController.text.trim()),
-                                    );
-
-                                    Navigator.pop(context);
-
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(content: Text('Health info updated successfully!')),
-                                    );
-                                  } catch (e) {
-                                    Navigator.pop(context);
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(content: Text('Failed to update health info: $e')),
-                                    );
-                                  }
-                                },
-                                child: Text("Submit", style: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black)),
-                              ),
-                            ],
-                          );
-                        },
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: isDarkMode
-                          ? Theme.of(context).colorScheme.secondary
-                          : Theme.of(context).colorScheme.onInverseSurface,
-                    ),
-                    child: Text(
-                      "Set Health Information",
-                      style: TextStyle(
-                        color: isDarkMode ? Colors.white70 : null,
+                            );
+                          },
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: isDarkMode
+                            ? Theme.of(context).colorScheme.secondary
+                            : Theme.of(context).colorScheme.onInverseSurface,
+                      ),
+                      child: Text(
+                        "Set Health Information",
+                        style: TextStyle(
+                          color: isDarkMode ? Colors.white70 : null,
+                        ),
                       ),
                     ),
                   ),
@@ -559,9 +648,30 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
               SizedBox(height: 40),
               Column(
                 children: [
-                  UserDailyGoalsSection(),
+                  Showcase(
+                    key: _dailyGoalsKey,
+                    title: 'Daily Goals',
+                    description: 'Set daily goals can be seen on the home page.',
+                    child: UserDailyGoalsSection(),
+                  ),
                   Divider(),
-                  NotificationScheduler(),
+                  Showcase(
+                    key: _notificationsKey ,
+                    title: 'Notification Manager',
+                    description: 'Manage daily reminders here. Add notifications with a title, body, and time. Existing reminders will be shown here.',
+                    child: NotificationScheduler(),
+                  ),
+                  Positioned(
+                    bottom: 0,
+                    left: 0,
+                    child: Showcase(
+                      key: _finalMessageKey,
+                      title: 'Great job!',
+                      description:
+                          'You can restart the tutorial in settings, enjoy CycleGuard!',
+                      child: SizedBox(width: 1, height: 1),
+                    ),
+                  ),
                 ],
               ),
             ],
@@ -770,126 +880,6 @@ class UserDailyGoalsSection extends StatelessWidget {
     );
   }
 }
-
-/*class NotificationScheduler extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final notificationService = LocalNotificationService();
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Divider(height: 40),
-        Text(
-          "Daily Reminder",
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
-          ),
-        ),
-        SizedBox(height: 8),
-        OutlinedButton(
-          onPressed: () => _showScheduleNotificationDialog(context, notificationService),
-          child: Text("Schedule"),
-        ),
-        SizedBox(height: 20),
-      ],
-    );
-  }
-
-  void _showScheduleNotificationDialog(BuildContext context, LocalNotificationService notificationService) {
-    bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    final titleController = TextEditingController();
-    final bodyController = TextEditingController();
-    TimeOfDay? selectedTime;
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          backgroundColor: isDarkMode ? Colors.grey[900] : Colors.white,
-          title: Text(
-            "Schedule Daily Reminder",
-            style: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: titleController,
-                decoration: InputDecoration(
-                  labelText: "Notification Title",
-                  labelStyle: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black),
-                ),
-              ),
-              TextField(
-                controller: bodyController,
-                decoration: InputDecoration(
-                  labelText: "Notification Body",
-                  labelStyle: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black),
-                ),
-              ),
-              SizedBox(height: 10),
-              ElevatedButton(
-                onPressed: () async {
-                  final TimeOfDay? picked = await showTimePicker(
-                    context: context,
-                    initialTime: TimeOfDay.now(),
-                  );
-                  if (picked != null) {
-                    selectedTime = picked;
-                  }
-                },
-                child: Text("Pick Time"),
-              ),
-              if (selectedTime != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 8.0),
-                  child: Text(
-                    "Selected time: ${selectedTime!.format(context)}",
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text("Cancel", style: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black)),
-            ),
-            TextButton(
-              onPressed: () async {
-                final title = titleController.text;
-                final body = bodyController.text;
-
-                if (selectedTime == null) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Please pick a time')),
-                  );
-                  return;
-                }
-
-                // Schedule the notification
-                await notificationService.scheduleNotification(
-                  title: title,
-                  body: body,
-                  hour: selectedTime!.hour,
-                  minute: selectedTime!.minute,
-                );
-
-                Navigator.pop(context);
-
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Notification Scheduled')),
-                );
-              },
-              child: Text("Submit", style: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black)),
-            ),
-          ],
-        );
-      },
-    );
-  }
-}*/
 
 class RequestsTab extends StatefulWidget {
   @override

@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:provider/provider.dart';
 import '../main.dart'; // Import MyAppState\
 
 import 'package:google_fonts/google_fonts.dart';
@@ -188,6 +189,8 @@ class LoginFormState extends State<CreateAccountPage> {
     print(createSuccess ? "Create account success!" : "Create account failed!");
 
     if (createSuccess) {
+      final appState = Provider.of<MyAppState>(context, listen: false);
+      await appState.loadUserProfile();
       setState(() {
         Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => MyHomePage()));
       });
@@ -221,12 +224,13 @@ class LoginFormState extends State<CreateAccountPage> {
                 onPressed: _tryCreateAccount,
                 child: Text("Create account"),
               ),
+              const SizedBox(height: 12),
               InkWell(
                 onTap: _login,
                 child: const Text(
                   'Already have an account? Login',
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: 20,
                     color: Color(0xFF555555),
                     decoration: TextDecoration.underline,
                   ),

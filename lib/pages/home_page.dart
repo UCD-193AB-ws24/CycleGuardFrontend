@@ -26,6 +26,7 @@ class _HomePageState extends State<HomePage> {
   ScrollController _controller = ScrollController();
 
   // tutorial keys
+  final GlobalKey _welcomeMessageKey = GlobalKey();
   final GlobalKey _pastWeekKey = GlobalKey();
   final GlobalKey _todayGoalKey = GlobalKey();
   final GlobalKey _avgRideKey = GlobalKey();
@@ -64,6 +65,7 @@ class _HomePageState extends State<HomePage> {
       if (appState.isHomeTutorialActive) {
         // Start the tutorial
         ShowCaseWidget.of(context).startShowCase([
+          _welcomeMessageKey,
           _pastWeekKey,
           _todayGoalKey,
           _avgRideKey,
@@ -186,6 +188,17 @@ class _HomePageState extends State<HomePage> {
             controller: _controller,
             padding: const EdgeInsets.all(8.0),
             children: [
+              Positioned(
+                bottom: 0,
+                left: 0,
+                child: Showcase(
+                  key: _welcomeMessageKey,
+                  title: 'Welcome to CycleGuard!',
+                  description:
+                      "We've prepared a brief guide around the app for you! Tap on the screen when you are ready to be shown the home page!",
+                  child: SizedBox(width: 1, height: 1),
+                ),
+              ),
               Showcase(
                 key: _pastWeekKey,
                 title: 'Past Week of Biking',

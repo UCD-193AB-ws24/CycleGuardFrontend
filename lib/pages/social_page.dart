@@ -1,27 +1,21 @@
-import 'package:cycle_guard_app/data/packs_accessor.dart';
-import 'package:cycle_guard_app/data/user_stats_accessor.dart';
-import 'package:flutter/material.dart';
-import 'dart:convert';
-import 'package:cycle_guard_app/pages/leader.dart'; // Import Leader model
-import 'package:http/http.dart' as http;
-import 'package:cycle_guard_app/data/user_profile_accessor.dart';
-import 'package:cycle_guard_app/data/user_daily_goal_provider.dart';
-import 'package:cycle_guard_app/data/user_daily_goal_accessor.dart';
-import 'package:cycle_guard_app/data/friends_list_accessor.dart';
+import 'package:cycle_guard_app/auth/auth_util.dart';
 import 'package:cycle_guard_app/data/friend_requests_accessor.dart';
+import 'package:cycle_guard_app/data/friends_list_accessor.dart';
 import 'package:cycle_guard_app/data/health_info_accessor.dart';
+import 'package:cycle_guard_app/data/packs_accessor.dart';
+import 'package:cycle_guard_app/data/user_daily_goal_provider.dart';
+import 'package:cycle_guard_app/data/user_profile_accessor.dart';
 import 'package:cycle_guard_app/pages/settings_page.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-import 'package:provider/provider.dart';
-import '../main.dart';
-import 'package:showcaseview/showcaseview.dart';
-
-// for local notifications
-import 'dart:developer';
 /*import 'package:cycle_guard_app/pages/local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cycle_guard_app/data/notifications_accessor.dart';*/
 import 'package:cycle_guard_app/widgets/notification_scheduler.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:provider/provider.dart';
+import 'package:showcaseview/showcaseview.dart';
+
+import '../main.dart';
 
 class SocialPage extends StatefulWidget {
   @override
@@ -824,9 +818,35 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
                   ]
                 );
               } else {
+                final packData = snapshot.data!;
+                bool isOwner = packData.owner == AuthUtil.username;
+
+
 
                 return Column(children: [
-                  Text("${snapshot.data!}"),
+                  Text(packData.name,
+                      style: TextStyle(fontSize: 20, height: 3, fontWeight: FontWeight.bold)),
+
+
+                  // Divider(height: 30),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text("${packData.memberCount} members - "),
+                      OutlinedButton(
+                        onPressed: () => _showMemberList(context, packData),
+                        child: Text("View member list"),
+                      ),
+                    ],
+                  ),
+
+                  Divider(height: 30),
+                  OutlinedButton(
+                    onPressed: () => _showLeavePackDialog(context, packData, isOwner),
+                    child: Text("Leave pack"),
+                  ),
+                  SizedBox(height: 20),
+
                 ]);
 
                 // final List<String> users = snapshot.data!['users'];
@@ -980,6 +1000,188 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
                 }
               },
               child: Text(isCreateNewPack?"Create":"Join", style: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // ListView getUserList(PackData packData, bool showContribution, bool ignoreSelf, Function()? onTap) {
+  //   final memberList = packData.memberList;
+  //   if (ignoreSelf) memberList.remove(AuthUtil.username);
+  //
+  //   Map<String, double> contributionMap = packData.packGoal.active?packData.packGoal.contributionMap:{};
+  //   final goalUnit = packData.packGoal.goalField==PacksAccessor.GOAL_DISTANCE?"mile":"minute";
+  //   final pluralUnit = "${goalUnit}s";
+  //
+  //   return ListView.builder(
+  //     shrinkWrap: true,
+  //     itemCount: memberList.length,
+  //     itemBuilder: (context, index) {
+  //       final username = memberList[index];
+  //
+  //       RadioListTile tile;
+  //
+  //       if (showContribution) {
+  //         final contribution = contributionMap.containsKey(username)?contributionMap[username]:0;
+  //         tile = RadioListTile(
+  //           title: Text(username),
+  //           subtitle: Text("$contribution ${contribution==1?goalUnit:pluralUnit}"),
+  //           value: username, groupValue: null, onChanged: (var value) {  },
+  //         );
+  //       } else {
+  //         tile = ListTile(
+  //           title: Text(username),
+  //           onTap: onTap,
+  //         );
+  //       }
+  //
+  //       return Card(
+  //         elevation: 2,
+  //         child: tile,
+  //       );
+  //     }
+  //   );
+  // }
+
+  void _showMemberList(BuildContext context, PackData packData) {
+    bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
+    final memberList = packData.memberList;
+
+    Map<String, double> contributionMap = packData.packGoal.active?packData.packGoal.contributionMap:{};
+    final goalUnit = packData.packGoal.goalField==PacksAccessor.GOAL_DISTANCE?"mile":"minute";
+    final pluralUnit = "${goalUnit}s";
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: isDarkMode ? Colors.grey[900] : Colors.white,
+          title: Text(
+            "${packData.memberCount} members",
+            style: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
+          ),
+          content: Container(
+            height: 1000,
+            width: 1000,
+            child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: memberList.length,
+                itemBuilder: (context, index) {
+                  final username = memberList[index];
+                  final contribution = contributionMap.containsKey(username)?contributionMap[username]:0;
+
+                  return Card(
+                    elevation: 2,
+                    child: ListTile(
+                      title: Text(username),
+                      subtitle: Text("$contribution ${contribution==1?goalUnit:pluralUnit}"),
+                    ),
+                  );
+                }
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text("Close", style: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black)),
+            )
+          ],
+        );
+      },
+    );
+  }
+
+  String leavePackNewOwner="";
+
+  void _showLeavePackDialog(BuildContext context, PackData packData, bool isOwner) {
+    bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
+    // ListView listView = getUserList(packData, false, true, () {});
+
+    final memberList = packData.memberList;
+    memberList.remove(AuthUtil.username);
+
+    Map<String, double> contributionMap = packData.packGoal.active?packData.packGoal.contributionMap:{};
+    final goalUnit = packData.packGoal.goalField==PacksAccessor.GOAL_DISTANCE?"mile":"minute";
+    final pluralUnit = "${goalUnit}s";
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: isDarkMode ? Colors.grey[900] : Colors.white,
+          title: Text(
+            "Are you sure you want to leave this pack?",
+            style: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
+          ),
+          content: Container(
+            height: 1000,
+            width: 1000,
+            child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: memberList.length,
+            itemBuilder: (context, index) {
+              final username = memberList[index];
+
+              RadioListTile tile;
+              final contribution = contributionMap.containsKey(username)?contributionMap[username]:0;
+              tile = RadioListTile(
+                title: Text(username),
+                subtitle: Text("$contribution ${contribution==1?goalUnit:pluralUnit}"),
+                value: username,
+                groupValue: leavePackNewOwner,
+                onChanged: (var value) {
+                  print("Clicked username $username");
+                  setState(() {
+                    leavePackNewOwner = username;
+                  });
+                },
+              );
+
+              return Card(
+                elevation: 2,
+                child: tile,
+              );
+            }
+        ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text("Cancel", style: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black)),
+            ),
+            TextButton(
+              onPressed: () async {
+                try {
+                  bool success;
+
+                  print("Leaving pack, setting new owner to $leavePackNewOwner");
+                  if (isOwner) {
+                    success = await PacksAccessor.leavePackAsOwner(leavePackNewOwner);
+                  } else {
+                    success = await PacksAccessor.leavePack();
+                  }
+
+                  print("Success? $success");
+
+                  Navigator.pop(context);
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text("Left pack ${packData.name}")),
+                  );
+
+                  setState(() {});
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                        content: Text("An error occurred: $e")),
+                  );
+                }
+              },
+              child: Text("Leave", style: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black)),
             ),
           ],
         );

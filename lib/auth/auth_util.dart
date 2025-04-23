@@ -20,6 +20,7 @@ class AuthUtil {
 
     if (prefs.containsKey('authToken')) {
       _token = prefs.getString('authToken')!;
+      _username = prefs.getString('username')!;
       return true;
     }
     return false;
@@ -28,6 +29,7 @@ class AuthUtil {
   static Future<void> _setToken() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('authToken', _token);
+    await prefs.setString('username', _username);
   }
 
   static String _token = "";
@@ -42,7 +44,7 @@ class AuthUtil {
   }
 
   static bool isLoggedIn() {
-    return _token.isNotEmpty;
+    return _token.isNotEmpty && _username.isNotEmpty;
   }
 
   static Future<CreateAccountStatus> login(String username, String password) async {
@@ -109,5 +111,6 @@ class AuthUtil {
   static Future<void> clearPersistentToken() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('authToken');
+    await prefs.remove('username');
   }
 }

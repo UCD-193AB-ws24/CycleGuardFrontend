@@ -21,7 +21,7 @@
     
 
     <application
-        android:label="cycle_guard_app"
+        android:label="CylcGuard"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

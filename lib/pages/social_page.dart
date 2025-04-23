@@ -809,7 +809,20 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Text("You are not in a pack!"),
-                    Text("Join pack..."),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        OutlinedButton(
+                          onPressed: () => _showJoinPackDialog(context, false),
+                          child: Text("Join Pack"),
+                        ),
+                        OutlinedButton(
+                          onPressed: () => _showJoinPackDialog(context, true),
+                          child: Text("Create Pack"),
+                        ),
+                      ],
+                    )
+
                   ]
                 );
               } else {
@@ -868,6 +881,85 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
           ),
         ),
       ],
+    );
+  }
+
+
+  // True: create pack
+  // False: join pack
+  void _showJoinPackDialog(BuildContext context, bool isCreateNewPack) {
+    bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
+    final packNameController = TextEditingController();
+    final packPasswordController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: isDarkMode ? Colors.grey[900] : Colors.white,
+          title: Text(
+            isCreateNewPack?"Create New Pack":"Join Pack",
+            style: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: packNameController,
+                keyboardType: TextInputType.name,
+                style: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
+                decoration: InputDecoration(
+                  labelText: "Pack Name",
+                  labelStyle: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black),
+                ),
+              ),
+              TextField(
+                controller: packPasswordController,
+                keyboardType: TextInputType.name,
+                style: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
+                decoration: InputDecoration(
+                  labelText: "Pack Password",
+                  labelStyle: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text("Cancel", style: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black)),
+            ),
+            TextButton(
+              onPressed: () async {
+                try {
+                  final packName = packNameController.text.trim();
+                  final packPassword = packPasswordController.text.trim();
+
+                  bool success = false;
+                  if (isCreateNewPack) {
+                    success = await PacksAccessor.createPack(packName, packPassword);
+                  } else {
+                    success = await PacksAccessor.joinPack(packName, packPassword);
+                  }
+
+                  print("Success? $success");
+
+                  Navigator.pop(context);
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(isCreateNewPack?"Created pack $packName!":"Joined pack $packName!")),
+                  );
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text("Failed to update goals: $e")),
+                  );
+                }
+              },
+              child: Text(isCreateNewPack?"Create":"Join", style: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black)),
+            ),
+          ],
+        );
+      },
     );
   }
 }

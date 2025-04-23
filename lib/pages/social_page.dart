@@ -339,7 +339,7 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
                         padding: EdgeInsets.all(15),
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: Theme.of(context).colorScheme.primaryContainer,
+                          color: isDarkMode ? Theme.of(context).colorScheme.secondary : Theme.of(context).colorScheme.primaryContainer,
                         ),
                         child: SvgPicture.asset(
                           'assets/$displayIcon.svg',

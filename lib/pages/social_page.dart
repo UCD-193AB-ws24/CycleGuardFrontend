@@ -1,3 +1,4 @@
+import 'package:cycle_guard_app/data/packs_accessor.dart';
 import 'package:cycle_guard_app/data/user_stats_accessor.dart';
 import 'package:flutter/material.dart';
 import 'dart:convert';
@@ -29,7 +30,7 @@ class SocialPage extends StatefulWidget {
 
 class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  int numOfTabs = 3;
+  int numOfTabs = 4;
   bool isPublic = true; // Move isPublic to the state class
   bool _hasFetchedIcons = false;
   late TextEditingController nameController;
@@ -268,6 +269,7 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
                   Tab(icon: Icon(Icons.person), text: "Profile"),
                   Tab(icon: Icon(Icons.search), text: "Bikers"),
                   Tab(icon: Icon(Icons.people), text: "Requests"),
+                  Tab(icon: Icon(Icons.bike_scooter_rounded), text: "Packs"),
                 ],
               ),
             ),
@@ -295,6 +297,7 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
           ),
           _buildSearchTab(),
           RequestsTab(),
+          _buildPacksTab(),
         ],
       ),
     );
@@ -760,6 +763,106 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
                     );
                   },
                 );
+              }
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+
+  /// **4️⃣ Packs Tab - Join, leave, and manage a pack
+  Widget _buildPacksTab() {
+    TextEditingController searchController = TextEditingController();
+    List<String> _friends = []; // Stores the user's friends
+    bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
+    return Column(
+      children: [
+        // Padding(
+        //   padding: const EdgeInsets.all(16.0),
+        //   child: TextField(
+        //     controller: searchController,
+        //     decoration: InputDecoration(
+        //       labelText: "Search bikers...",
+        //       suffixIcon: IconButton(
+        //         icon: Icon(Icons.search),
+        //         onPressed: () {
+        //           setState(() {}); // Trigger UI update for search filtering
+        //         },
+        //       ),
+        //     ),
+        //   ),
+        // ),
+        Expanded(
+          child: FutureBuilder<PackData?>(
+            future: PacksAccessor.getPackData(), // Fetch users & friend list
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return Center(child: CircularProgressIndicator()); // Show loading indicator
+              } else if (snapshot.hasError) {
+                return Center(child: Text("Error loading pack data"));
+              } else if (!snapshot.hasData) {
+                return Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Text("You are not in a pack!"),
+                    Text("Join pack..."),
+                  ]
+                );
+              } else {
+
+                return Column(children: [
+                  Text("${snapshot.data!}"),
+                ]);
+
+                // final List<String> users = snapshot.data!['users'];
+                // _friends = snapshot.data!['friends']; // Update friend list
+                //
+                // return ListView.builder(
+                //   itemCount: users.length,
+                //   itemBuilder: (context, index) {
+                //     String user = users[index];
+                //     bool isFriend = _friends.contains(user); // Check if user is a friend
+                //
+                //     // Search filtering logic
+                //     if (searchController.text.isNotEmpty &&
+                //         !user.toLowerCase().contains(searchController.text.toLowerCase())) {
+                //       return SizedBox.shrink(); // Hide users who don't match the search query
+                //     }
+                //
+                //     return Card(
+                //       margin: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                //       color: isDarkMode ? Theme.of(context).colorScheme.onSecondaryFixedVariant : Colors.white,
+                //       child: ListTile(
+                //         leading: CircleAvatar(child: Text(user[0].toUpperCase())),
+                //         title: Text(
+                //           user,
+                //           style: TextStyle(
+                //             color: isDarkMode ? Colors.white70 : null,
+                //           ),
+                //         ),
+                //         subtitle: isFriend ? Text("Friend", style: TextStyle(color: Colors.green)) : null,
+                //         trailing: isFriend
+                //             ? null // Don't show add friend button for existing friends
+                //             : ElevatedButton(
+                //           style: ElevatedButton.styleFrom(
+                //             backgroundColor: isDarkMode
+                //                 ? Theme.of(context).colorScheme.secondary
+                //                 : Theme.of(context).colorScheme.onInverseSurface,
+                //             foregroundColor: isDarkMode
+                //                 ? Colors.white70
+                //                 : Theme.of(context).colorScheme.primary,
+                //           ),
+                //           onPressed: () => _sendFriendRequest(user),
+                //           child: Text("Add Friend"),
+                //         ),
+                //       ),
+                //     );
+                //   },
+                // );
               }
             },
           ),

@@ -30,7 +30,7 @@ class PacksAccessor {
 
     final response = await RequestsUtil.postWithToken("/packs/createPack", body);
     if (response.statusCode != 200) {
-      throw "Error in createPack: response code ${response.statusCode}";
+      throw response.statusCode;
     }
     return response.statusCode==200;
   }
@@ -43,7 +43,7 @@ class PacksAccessor {
 
     final response = await RequestsUtil.postWithToken("/packs/joinPack", body);
     if (response.statusCode != 200) {
-      throw "Error in joinPack: response code ${response.statusCode}";
+      throw response.statusCode;
     }
     return response.statusCode==200;
   }
@@ -51,7 +51,7 @@ class PacksAccessor {
   static Future<bool> leavePack() async {
     final response = await RequestsUtil.postWithToken("/packs/leavePack", RequestsUtil.noParams);
     if (response.statusCode != 200) {
-      throw "Error in leavePack: response code ${response.statusCode}";
+      throw response.statusCode;
     }
     return response.statusCode==200;
   }
@@ -62,7 +62,7 @@ class PacksAccessor {
     };
     final response = await RequestsUtil.postWithToken("/packs/leavePackAsOwner", body);
     if (response.statusCode != 200) {
-      throw "Error in leavePackAsOwner: response code ${response.statusCode}";
+      throw response.statusCode;
     }
     return response.statusCode==200;
   }
@@ -75,7 +75,7 @@ class PacksAccessor {
     };
     final response = await RequestsUtil.postWithToken("/packs/setPackGoal", body);
     if (response.statusCode != 200) {
-      throw "Error in setPackGoal: response code ${response.statusCode}";
+      throw response.statusCode;
     }
     return response.statusCode==200;
   }
@@ -83,7 +83,7 @@ class PacksAccessor {
   static Future<bool> cancelPackGoal() async {
     final response = await RequestsUtil.postWithToken("/packs/cancelGoal", RequestsUtil.noParams);
     if (response.statusCode != 200) {
-      throw "Error in cancelPackGoal: response code ${response.statusCode}";
+      throw response.statusCode;
     }
     return response.statusCode==200;
   }

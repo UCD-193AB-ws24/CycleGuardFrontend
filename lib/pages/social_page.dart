@@ -774,8 +774,6 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
 
   /// **4️⃣ Packs Tab - Join, leave, and manage a pack
   Widget _buildPacksTab() {
-    TextEditingController searchController = TextEditingController();
-    List<String> _friends = []; // Stores the user's friends
     bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return Column(
@@ -949,10 +947,36 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text(isCreateNewPack?"Created pack $packName!":"Joined pack $packName!")),
                   );
+
+                  setState(() {});
                 } catch (e) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text("Failed to update goals: $e")),
-                  );
+                  if (isCreateNewPack) {
+                    String message;
+                    if (e.toString() == "409") {
+                      message = "Pack name already exists";
+                    } else {
+                      message = "An error occurred: $e";
+                    }
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(message)),
+                    );
+                  } else {
+                    String message;
+                    if (e.toString() == "404") {
+                      message = "Pack not found";
+                    } else if (e.toString() == "401") {
+                      message = "Incorrect pack password";
+                    } else {
+                      message = "An error occurred: $e";
+                    }
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(message)),
+                    );
+                  }
                 }
               },
               child: Text(isCreateNewPack?"Create":"Join", style: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black)),

@@ -32,18 +32,45 @@ class _NotificationScheduler extends State<NotificationScheduler> {
     super.dispose();
   }
 
-  Future<void> _selectTime(BuildContext context) async {
-    final TimeOfDay? picked = await showTimePicker(
-      context: context,
-      initialTime: _selectedTime,
-    );
-    if (picked != null && picked != _selectedTime) {
-      setState(() {
-        _selectedTime = picked;
-      });
-    }
-  }
+Future<void> _selectTime(BuildContext context) async {
+  final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+  final colorScheme = Theme.of(context).colorScheme;
 
+  final TimeOfDay? picked = await showTimePicker(
+    context: context,
+    initialTime: _selectedTime,
+    builder: (BuildContext context, Widget? child) {
+      return Theme(
+        data: Theme.of(context).copyWith(
+          timePickerTheme: TimePickerThemeData(
+            backgroundColor: isDarkMode ? colorScheme.onPrimaryFixed : colorScheme.surfaceContainerLow,
+            dialBackgroundColor: isDarkMode ? colorScheme.onPrimaryFixedVariant : colorScheme.primaryContainer,
+            hourMinuteColor: isDarkMode ? colorScheme.onPrimaryFixedVariant : colorScheme.primaryContainer,
+            dayPeriodColor: isDarkMode ? colorScheme.onPrimaryFixedVariant : colorScheme.primaryContainer,
+            dialHandColor: colorScheme.primary,
+            dialTextColor: isDarkMode ? Colors.white70 : Colors.black,
+            hourMinuteTextColor: isDarkMode ? Colors.white70 : Colors.black,
+            dayPeriodTextColor: isDarkMode ? Colors.white70 : Colors.black,
+            entryModeIconColor: isDarkMode ? Colors.white70 : Colors.black,
+
+          ),
+          textButtonTheme: TextButtonThemeData(
+            style: TextButton.styleFrom(
+              foregroundColor: isDarkMode ? Colors.white70 : Colors.black,
+            ),
+          ),
+        ),
+        child: child!,
+      );
+    },
+  );
+
+  if (picked != null && picked != _selectedTime) {
+    setState(() {
+      _selectedTime = picked;
+    });
+  }
+}
 
   /*
     To use getNotifications uncomment the button in build and the line in init

@@ -55,7 +55,7 @@ class LoginFormState extends State<LoginPage> {
       final appState = Provider.of<MyAppState>(context, listen: false);
       await appState.loadUserSettings();
       await appState.fetchOwnedThemes();
-
+      await appState.loadUserProfile();
 
       try {
         final notificationList = await app_notifications.NotificationsAccessor.getNotifications();
@@ -173,12 +173,13 @@ class LoginFormState extends State<LoginPage> {
                 onPressed: _tryLogin,
                 child: Text("Log in"),
               ),
+              const SizedBox(height:12),
               InkWell(
                 onTap: _createAccount,
                 child: const Text(
                   'Create account',
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: 20,
                     color: Color(0xFF555555), 
                     decoration: TextDecoration.underline,
                   ),

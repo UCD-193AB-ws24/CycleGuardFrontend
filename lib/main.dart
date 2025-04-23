@@ -13,6 +13,7 @@ import 'package:cycle_guard_app/data/achievements_progress_provider.dart';
 import 'package:cycle_guard_app/data/week_history_provider.dart';
 import 'package:cycle_guard_app/data/trip_history_provider.dart';
 import 'package:cycle_guard_app/data/user_settings_accessor.dart';
+import 'package:cycle_guard_app/data/user_profile_accessor.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'constants.dart';
@@ -35,6 +36,9 @@ import 'pages/local_notifications.dart';
 import 'package:android_intent_plus/android_intent.dart';
 //import 'package:android_intent_plus/intent.dart';
 import 'package:permission_handler/permission_handler.dart';
+
+// tutorial
+import 'package:showcaseview/showcaseview.dart';
 
 //const MethodChannel platform = MethodChannel('com.cycleguard.channel'); // Must match iOS
 
@@ -120,19 +124,22 @@ class MyApp extends StatelessWidget {
       create: (context) => MyAppState(),
       child: Consumer6<MyAppState, UserStatsProvider, AchievementsProgressProvider, WeekHistoryProvider, TripHistoryProvider, UserDailyGoalProvider>(
         builder: (context, appState, userStats, achievementsProgress, weekHistory, tripHistory, userDailyGoal, child) {
-          return MaterialApp(
-            title: 'Cycle Guard App',
-            debugShowCheckedModeBanner: false,
-            themeMode: appState.isDarkMode ? ThemeMode.dark : ThemeMode.light,
-            theme: ThemeData(
-              useMaterial3: true,
-              colorScheme: ColorScheme.fromSeed(seedColor: appState.selectedColor),
+          return ShowCaseWidget(
+            enableAutoScroll: true,
+            builder: (context) => MaterialApp(
+              title: 'Cycle Guard App',
+              debugShowCheckedModeBanner: false,
+              themeMode: appState.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+              theme: ThemeData(
+                useMaterial3: true,
+                colorScheme: ColorScheme.fromSeed(seedColor: appState.selectedColor),
+              ),
+              darkTheme: ThemeData.dark().copyWith(
+                brightness: Brightness.dark,
+                colorScheme: ColorScheme.fromSeed(seedColor: appState.selectedColor),
+              ),
+              home: OnBoardStart(),
             ),
-            darkTheme: ThemeData.dark().copyWith(
-              brightness: Brightness.dark,
-              colorScheme: ColorScheme.fromSeed(seedColor: appState.selectedColor),
-            ),
-            home: OnBoardStart(),
           );
         },
       ),
@@ -144,6 +151,8 @@ class MyAppState extends ChangeNotifier {
   Color selectedColor = Colors.orange;
   String selectedIcon = "icon_default";
   bool isDarkMode = false;
+  bool isHomeTutorialActive = false;
+  bool isSocialTutorialActive = false;
 
   final Map<String, Color> availableThemes = {
     'Yellow': Colors.yellow,
@@ -180,7 +189,18 @@ class MyAppState extends ChangeNotifier {
 
     notifyListeners(); 
   }
-  
+
+  Future<void> loadUserProfile() async {
+    final profile = await UserProfileAccessor.getOwnProfile();
+    isHomeTutorialActive = profile.isNewAccount;
+    notifyListeners();
+  }
+
+  void enableTutorial() {
+    isHomeTutorialActive = true;
+    notifyListeners();
+  }
+
   Future<void> fetchOwnedIcons() async {
     final ownedIconNames = (await PurchaseInfoAccessor.getPurchaseInfo()).iconsOwned;
 

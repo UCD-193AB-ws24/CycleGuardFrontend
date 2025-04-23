@@ -84,21 +84,24 @@ class mapState extends State<RoutesPage> {
       showStartButton = true;
       showStopButton = false;
       recordingDistance = false;
+      centerCamera(center!);
     });
+    totalDist = 0;
   }
 
   void calcDist() {
+    double dist = Geolocator.distanceBetween(
+      prevLoc!.latitude,
+      prevLoc!.longitude,
+      center!.latitude,
+      center!.longitude,
+    );
     if (prevLoc != center) {
-      totalDist += Geolocator.distanceBetween(
-        prevLoc!.latitude,
-        prevLoc!.longitude,
-        center!.latitude,
-        center!.longitude,
-      );
+      totalDist += dist;
       offCenter = true;
     }
 
-    if (center == dest) {
+    if (dist<=50) {
       stopDistanceRecord();
     }
 
@@ -110,6 +113,7 @@ class mapState extends State<RoutesPage> {
     onCameraMoveStarted: () {
       setState(() {
         offCenter = false;
+
       });
     },
     mapType: currentMapType,
@@ -259,7 +263,6 @@ class mapState extends State<RoutesPage> {
   Future<void> fetchLocationUpdates() async {
     bool serviceEnabled;
     PermissionStatus permissionGranted;
-
     serviceEnabled = await locationController.serviceEnabled();
     if (!serviceEnabled) {
       serviceEnabled = await locationController.requestService();
@@ -282,7 +285,7 @@ class mapState extends State<RoutesPage> {
             calcDist();
             if(offCenter)animateCameraWithHeading(center!, heading ?? 0);
           } else {
-            centerCamera(center!);
+            if(offCenter) centerCamera(center!);
           }
 
           getPolylinePoints().then((coordinates) {

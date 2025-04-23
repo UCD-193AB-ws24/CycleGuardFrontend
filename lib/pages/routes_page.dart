@@ -32,6 +32,8 @@ class mapState extends State<RoutesPage> {
   bool showStartButton = false;
   bool showStopButton = false;
   bool recordingDistance = false;
+  final stopwatch = Stopwatch();
+  int rideDuration = 0;
 
   final locationController = Location();
   final TextEditingController textController = TextEditingController();
@@ -77,6 +79,7 @@ class mapState extends State<RoutesPage> {
       recordingDistance = true;
       offCenter = true;
     });
+    stopwatch.start();
   }
 
   void stopDistanceRecord() {
@@ -84,26 +87,45 @@ class mapState extends State<RoutesPage> {
       showStartButton = true;
       showStopButton = false;
       recordingDistance = false;
-      centerCamera(center!);
+
     });
+    centerCamera(center!);
     totalDist = 0;
+    rideDuration = 0;
   }
 
   void calcDist() {
-    double dist = Geolocator.distanceBetween(
-      prevLoc!.latitude,
-      prevLoc!.longitude,
-      center!.latitude,
-      center!.longitude,
-    );
+    Duration time = stopwatch.elapsed;
+    stopwatch.stop();
+
+
     if (prevLoc != center) {
-      totalDist += dist;
+      rideDuration += stopwatch.elapsedMilliseconds;
+      totalDist += Geolocator.distanceBetween(
+        prevLoc!.latitude,
+        prevLoc!.longitude,
+        center!.latitude,
+        center!.longitude,
+      );
       offCenter = true;
     }
 
-    if (dist<=50) {
+    double distBetweenDest = Geolocator.distanceBetween(
+      center!.latitude,
+      center!.longitude,
+      dest!.latitude,
+      dest!.longitude
+    );
+
+    if (distBetweenDest<=50) {
+      rideDuration += stopwatch.elapsedMilliseconds;
+      stopwatch.reset();
       stopDistanceRecord();
+    }else{
+      stopwatch.reset();
+      stopwatch.start();
     }
+
 
     print(totalDist);
   }

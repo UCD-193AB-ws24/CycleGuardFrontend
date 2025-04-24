@@ -827,8 +827,7 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
                   Text(packData.name,
                       style: TextStyle(fontSize: 20, height: 3, fontWeight: FontWeight.bold)),
 
-
-                  // Divider(height: 30),
+                  // Show members list button
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -841,10 +840,28 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
                   ),
 
                   Divider(height: 30),
-                  OutlinedButton(
-                    onPressed: () => _showLeavePackDialog(context, packData, isOwner),
-                    child: Text("Leave pack"),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text("Current pack goal data..."),
+                    ]
                   ),
+                  OutlinedButton(
+                    onPressed: () => _showSetGoalDialog(context, packData),
+                    child: Text("Set goal"),
+                  ),
+
+                  Divider(height: 30),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      OutlinedButton(
+                        onPressed: () => _showLeavePackDialog(context, packData, isOwner),
+                        child: Text("Leave pack"),
+                      ),
+                    ]
+                  ),
+
                   SizedBox(height: 20),
 
                 ]);
@@ -1007,44 +1024,6 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
     );
   }
 
-  // ListView getUserList(PackData packData, bool showContribution, bool ignoreSelf, Function()? onTap) {
-  //   final memberList = packData.memberList;
-  //   if (ignoreSelf) memberList.remove(AuthUtil.username);
-  //
-  //   Map<String, double> contributionMap = packData.packGoal.active?packData.packGoal.contributionMap:{};
-  //   final goalUnit = packData.packGoal.goalField==PacksAccessor.GOAL_DISTANCE?"mile":"minute";
-  //   final pluralUnit = "${goalUnit}s";
-  //
-  //   return ListView.builder(
-  //     shrinkWrap: true,
-  //     itemCount: memberList.length,
-  //     itemBuilder: (context, index) {
-  //       final username = memberList[index];
-  //
-  //       RadioListTile tile;
-  //
-  //       if (showContribution) {
-  //         final contribution = contributionMap.containsKey(username)?contributionMap[username]:0;
-  //         tile = RadioListTile(
-  //           title: Text(username),
-  //           subtitle: Text("$contribution ${contribution==1?goalUnit:pluralUnit}"),
-  //           value: username, groupValue: null, onChanged: (var value) {  },
-  //         );
-  //       } else {
-  //         tile = ListTile(
-  //           title: Text(username),
-  //           onTap: onTap,
-  //         );
-  //       }
-  //
-  //       return Card(
-  //         elevation: 2,
-  //         child: tile,
-  //       );
-  //     }
-  //   );
-  // }
-
   void _showMemberList(BuildContext context, PackData packData) {
     bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
@@ -1182,6 +1161,97 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
                 }
               },
               child: Text("Leave", style: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showSetGoalDialog(BuildContext context, PackData packData) {
+    bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
+    final valueController = TextEditingController();
+    final timeController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: isDarkMode ? Colors.grey[900] : Colors.white,
+          title: Text(
+            "Set Pack Goals",
+            style: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
+          ),
+          content: SizedBox(
+            width: 1000,
+            height: 1000,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    TextField(
+                      controller: valueController,
+                      keyboardType: TextInputType.number,
+                      style: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
+                      decoration: InputDecoration(
+                        labelText: "Value",
+                        labelStyle: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black),
+                      ),
+                    ),
+                  ],
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    TextField(
+                      controller: timeController,
+                      keyboardType: TextInputType.number,
+                      style: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
+                      decoration: InputDecoration(
+                        labelText: "Duration",
+                        labelStyle: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black),
+                      ),
+                    ),
+                    Text("days"),
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text("Cancel", style: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black)),
+            ),
+            TextButton(
+              onPressed: () async {
+                try {
+                  final value = int.parse(valueController.text.trim());
+                  final durationDays = int.parse(timeController.text.trim());
+
+                  bool success = await PacksAccessor.setPackGoal(durationDays*86400, "distance", value);
+
+                  print("Success? $success");
+
+                  Navigator.pop(context);
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text("Set new pack goal!")),
+                  );
+
+                  setState(() {});
+                } catch (e) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                          content: Text("Error: $e")),
+                    );
+                  }
+              },
+              child: Text("Add", style: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black)),
             ),
           ],
         );

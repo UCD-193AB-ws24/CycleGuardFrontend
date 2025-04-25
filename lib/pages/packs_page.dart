@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:cycle_guard_app/data/user_stats_provider.dart';
 import 'package:cycle_guard_app/data/packs_accessor.dart';
 
 class PacksPage extends StatefulWidget {
@@ -35,8 +37,13 @@ class _PacksPageState extends State<PacksPage> {
   }
 
   Future<void> _leavePack() async {
-    //await PacksAccessor.leavePack(); // Assuming this method exists
-    await PacksAccessor.leavePackAsOwner(PacksAccessor.NO_NEW_OWNER);
+    final userStats = Provider.of<UserStatsProvider>(context, listen: false);
+    if (userStats.username == _myPack?.owner) {
+      await PacksAccessor.leavePackAsOwner(PacksAccessor.NO_NEW_OWNER);
+    } else {
+      await PacksAccessor.leavePack();
+    }
+    
     await _loadPack();
   }
 

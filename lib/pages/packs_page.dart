@@ -125,9 +125,16 @@ class _PacksPageState extends State<PacksPage> {
             onPressed: () async {
               final name = nameController.text.trim();
               final pass = passController.text;
-              await PacksAccessor.joinPack(name, pass);
-              Navigator.of(context).pop();
-              _loadPack();
+              try {
+                await PacksAccessor.joinPack(name, pass);
+                Navigator.of(context).pop();
+                _loadPack();
+              } catch (e) {
+                // Show an error message to the user
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Pack does not exist')),
+                );
+              }
             },
             child: const Text('Join'),
           ),

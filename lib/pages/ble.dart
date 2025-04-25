@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../auth/dim_util.dart';
+import 'dart:typed_data';
 
 import 'dart:io' show Platform;
 
@@ -67,16 +68,30 @@ class BluetoothController extends GetxController {
 Future<void> _connectAndRead(BluetoothDevice device) async {
 
   if(!device.isConnected) await device.connect();
+
+  print("Connected to ${device.advName}: $device");
   List<BluetoothService> services = await device.discoverServices();
 
   // theres only one table inside the ble lol
   BluetoothCharacteristic? targetCharacteristic;
   for (BluetoothService service in services) {
       for (BluetoothCharacteristic characteristic in service.characteristics) {
+          // print(characteristic);
+          var cur = await characteristic.read();
+          print(cur);
+          int bitData = convertTo32Bit(cur);
+
+
+          var byteData = ByteData(4);
+          byteData.setInt32(0, bitData);
+          print(byteData.getFloat32(0));
+
           targetCharacteristic = characteristic;
 
       }
   }
+
+  // longitude, latitude, speed, uv
 
 
   if (targetCharacteristic != null) {
@@ -152,6 +167,18 @@ void showCustomDialog(BuildContext context) async {
   );
 }
 
+int convertTo32Bit(List<int> list) {
+  int res = 0;
+  for (int i=0; i<list.length; i++) {
+    int cur = list[i];
+    // res |= cur<<(8*(list.length-1 - i));
+    res |= cur<<(8*i);
+  }
+
+  print(res.toRadixString(2).padLeft(32, '0'));
+  return res;
+}
+
 
 Future<void> requestBluetoothPermissions() async {
   PermissionStatus bluetoothPermissionStatus = await Permission.bluetooth.request();
@@ -174,3 +201,21 @@ Future<void> requestBluetoothPermissions() async {
     // openAppSettings();
   }
 }
+
+// class BluetoothData {
+//   // longitude, latitude, speed, uv
+//   double longitude, latitude, speed;
+//   int uv;
+//   BluetoothData(List<BluetoothService> services) {
+//     for (BluetoothService service in services) {
+//       for (BluetoothCharacteristic characteristic in service.characteristics) {
+//           print(characteristic);
+//           var cur = await characteristic.read();
+//           print(cur);
+//           print(convertTo32Bit(cur));
+//           targetCharacteristic = characteristic;
+
+//       }
+//     }
+//   }
+// }

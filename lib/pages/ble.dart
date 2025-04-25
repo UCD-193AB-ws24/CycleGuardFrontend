@@ -5,13 +5,15 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../auth/dim_util.dart';
 import 'dart:typed_data';
-
+import 'dart:async';
 import 'dart:io' show Platform;
 
 
 class BluetoothController extends GetxController {
   static BluetoothController get to => Get.find();
   Stream<List<ScanResult>> get scanResults => FlutterBluePlus.scanResults;
+
+
 
   Future<void> scanDevices() async {
     await requestBluetoothPermissions();
@@ -64,43 +66,18 @@ class BluetoothController extends GetxController {
   //   }
   }
 }
+ Timer? timer;
 
 Future<void> _connectAndRead(BluetoothDevice device) async {
-
   if(!device.isConnected) await device.connect();
 
   print("Connected to ${device.advName}: $device");
-  List<BluetoothService> services = await device.discoverServices();
-
-  // theres only one table inside the ble lol
-  BluetoothCharacteristic? targetCharacteristic;
-  for (BluetoothService service in services) {
-      for (BluetoothCharacteristic characteristic in service.characteristics) {
-          // print(characteristic);
-          var cur = await characteristic.read();
-          print(cur);
-          int bitData = convertTo32Bit(cur);
-
-
-          var byteData = ByteData(4);
-          byteData.setInt32(0, bitData);
-          print(byteData.getFloat32(0));
-
-          targetCharacteristic = characteristic;
-
-      }
-  }
-
-  // longitude, latitude, speed, uv
-
-
-  if (targetCharacteristic != null) {
-    // Read the value from the known characteristic
-    var value = await targetCharacteristic.read();
-    print('Read value from characteristic: $value');
-  } else {
-    print('Characteristic not found');
-  }
+  if (timer != null) timer!.cancel();
+  timer = Timer.periodic(Duration(seconds: 1), (Timer timer) async {
+      BluetoothData data = await BluetoothData.fromBluetooth(device);
+      print(data);
+    }
+  );
 
 }
 
@@ -175,7 +152,7 @@ int convertTo32Bit(List<int> list) {
     res |= cur<<(8*i);
   }
 
-  print(res.toRadixString(2).padLeft(32, '0'));
+  // print(res.toRadixString(2).padLeft(32, '0'));
   return res;
 }
 
@@ -202,20 +179,40 @@ Future<void> requestBluetoothPermissions() async {
   }
 }
 
-// class BluetoothData {
-//   // longitude, latitude, speed, uv
-//   double longitude, latitude, speed;
-//   int uv;
-//   BluetoothData(List<BluetoothService> services) {
-//     for (BluetoothService service in services) {
-//       for (BluetoothCharacteristic characteristic in service.characteristics) {
-//           print(characteristic);
-//           var cur = await characteristic.read();
-//           print(cur);
-//           print(convertTo32Bit(cur));
-//           targetCharacteristic = characteristic;
 
-//       }
-//     }
-//   }
-// }
+class BluetoothData {
+  // longitude, latitude, speed, uv
+  final double longitude, latitude, speed, uv;
+
+  BluetoothData(this.longitude, this.latitude, this.speed, this.uv);
+  static Future<BluetoothData> fromBluetooth(BluetoothDevice device) async {
+    List<BluetoothService> services = await device.discoverServices();
+    List<double> resData = [0, 0, 0, 0];
+
+    for (BluetoothService service in services) {
+      var characteristics = service.characteristics;
+      for (int i=0; i<characteristics.length; i++) {
+        var characteristic = characteristics[i];
+        var cur = await characteristic.read();
+        
+        int bitData = convertTo32Bit(cur);
+        var byteData = ByteData(4);
+        byteData.setInt32(0, bitData);
+        resData[i] = byteData.getFloat32(0);
+      }
+    }
+
+    // double longitude, latitude, speed, uv;
+    double longitude = resData[0];
+    double latitude = resData[1];
+    double speed = resData[2];
+    double uv = resData[3];
+
+    return BluetoothData(longitude, latitude, speed, uv);
+  }
+
+  @override
+  String toString() {
+    return 'BluetoothData{longitude: $longitude, latitude: $latitude, speed: $speed, uv: $uv}';
+  }
+}

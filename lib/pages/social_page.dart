@@ -17,6 +17,8 @@ import 'package:provider/provider.dart';
 import '../main.dart';
 import 'package:showcaseview/showcaseview.dart';
 
+import 'package:cycle_guard_app/pages/packs_page.dart';
+
 // for local notifications
 import 'dart:developer';
 /*import 'package:cycle_guard_app/pages/local_notifications.dart';
@@ -32,7 +34,7 @@ class SocialPage extends StatefulWidget {
 class _SocialPageState extends State<SocialPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  int numOfTabs = 4;
+  int numOfTabs = 5;
   bool isPublic = true; // Move isPublic to the state class
   bool _hasFetchedIcons = false;
   late TextEditingController nameController;
@@ -241,56 +243,57 @@ class _SocialPageState extends State<SocialPage>
   }
 
   /// Fetches and displays a friend’s position on the distance leaderboard.
-Future<void> _showFriendRanking(BuildContext context, String username) async {
-  // 1. Show a loading spinner
-  showDialog(
-    context: context,
-    barrierDismissible: false,
-    builder: (_) => Center(child: CircularProgressIndicator()),
-  );
-
-  try {
-    // 2. Fetch the distance leaderboard
-    final leaderboards = await GlobalLeaderboardsAccessor.getDistanceLeaderboards();
-
-    // 3. Find this friend’s entry
-    final entry = leaderboards.entries.firstWhere(
-      (e) => e.username == username,
-      orElse: () => throw Exception('No ranking found for $username'),
-    );
-
-    // 4. Dismiss the loading dialog
-    Navigator.pop(context);
-
-    // 5. Show the results in an AlertDialog
+  Future<void> _showFriendRanking(BuildContext context, String username) async {
+    // 1. Show a loading spinner
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text('$username’s Ranking'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text('🏅 Rank: ${leaderboards.entries.indexOf(entry) + 1}'),
-            SizedBox(height: 8),
-            Text('🚴 Total Distance: ${entry.value.toStringAsFixed(2)} km'),
+      barrierDismissible: false,
+      builder: (_) => Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      // 2. Fetch the distance leaderboard
+      final leaderboards =
+          await GlobalLeaderboardsAccessor.getDistanceLeaderboards();
+
+      // 3. Find this friend’s entry
+      final entry = leaderboards.entries.firstWhere(
+        (e) => e.username == username,
+        orElse: () => throw Exception('No ranking found for $username'),
+      );
+
+      // 4. Dismiss the loading dialog
+      Navigator.pop(context);
+
+      // 5. Show the results in an AlertDialog
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('$username’s Ranking'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('🏅 Rank: ${leaderboards.entries.indexOf(entry) + 1}'),
+              SizedBox(height: 8),
+              Text('🚴 Total Distance: ${entry.value.toStringAsFixed(2)} km'),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('Close'),
+            ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Close'),
-          ),
-        ],
-      ),
-    );
-  } catch (e) {
-    // Ensure we dismiss the loading spinner
-    Navigator.pop(context);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Error fetching ranking: $e')),
-    );
+      );
+    } catch (e) {
+      // Ensure we dismiss the loading spinner
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error fetching ranking: $e')),
+      );
+    }
   }
-}
 
   @override
   Widget build(BuildContext context) {
@@ -327,6 +330,7 @@ Future<void> _showFriendRanking(BuildContext context, String username) async {
                 Tab(icon: Icon(Icons.groups_3), text: "Friends"),
                 Tab(icon: Icon(Icons.search), text: "Bikers"),
                 Tab(icon: Icon(Icons.handshake_outlined), text: "Requests"),
+                Tab(icon: Icon(Icons.bike_scooter_rounded), text: "Packs"),
               ],
             ),
           ),
@@ -355,6 +359,7 @@ Future<void> _showFriendRanking(BuildContext context, String username) async {
           _buildFriendsTab(),
           _buildSearchTab(),
           RequestsTab(),
+          PacksPage()
         ],
       ),
     );

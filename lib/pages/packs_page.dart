@@ -153,6 +153,9 @@ class _PacksPageState extends State<PacksPage> {
 
     if (_myPack == null) return const SizedBox();
 
+    final userStats = Provider.of<UserStatsProvider>(context, listen: false);
+    final isOwner = userStats.username == _myPack?.owner;
+
     final goal = _myPack!.packGoal;
     final members = _myPack!.memberList;
     final double progress = (goal.goalAmount > 0)
@@ -173,7 +176,9 @@ class _PacksPageState extends State<PacksPage> {
             LinearProgressIndicator(value: progress, minHeight: 10),
             const SizedBox(height: 8),
             Text(
-              'Goal: ${goal.goalAmount} mi — Total: ${goal.totalContribution.toStringAsFixed(1)} mi',
+              goal.goalAmount == 0
+                  ? 'No goal set, the pack owner can set a new goal!'
+                  : 'Goal: ${goal.goalAmount} mi — Total: ${goal.totalContribution.toStringAsFixed(1)} mi',
             ),
             const Divider(height: 20),
             const Text('Members:', style: TextStyle(fontWeight: FontWeight.bold)),
@@ -182,6 +187,56 @@ class _PacksPageState extends State<PacksPage> {
               return Text('$member — ${contribution.toStringAsFixed(1)} mi');
             }),
             const SizedBox(height: 12),
+
+            if (isOwner) ...[
+              if (goal.goalAmount > 0)
+                ElevatedButton(
+                  onPressed: () async {
+                    try {
+                      final success = await PacksAccessor.cancelPackGoal();
+                      if (success) {
+                        await _loadPack(); 
+                      }
+                    } catch (e) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Failed to cancel goal: $e')),
+                      );
+                    }
+                  },
+                  child: const Text('Cancel Goal'),
+                )
+              else
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Set a new goal:'),
+                    Wrap(
+                      spacing: 8,
+                      children: [100, 250, 500].map((amount) {
+                        return ElevatedButton(
+                          onPressed: () async {
+                            try {
+                              await PacksAccessor.setPackGoal(
+                                60 * 60 * 24 * 7, 
+                                PacksAccessor.GOAL_DISTANCE,
+                                amount,
+                              );
+                              await _loadPack(); 
+                            } catch (e) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('Failed to set goal: $e')),
+                              );
+                            }
+                          },
+                          child: Text('$amount mi'),
+                        );
+                      }).toList(),
+                    ),
+                  ],
+                ),
+              const SizedBox(height: 12),
+            ],
+
             ElevatedButton(
               onPressed: _leavePack,
               style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
@@ -225,32 +280,35 @@ class _PacksPageState extends State<PacksPage> {
 
   @override
   Widget build(BuildContext context) {
+    if (_loading) {
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
+    }
+
     final bool isInPack = _myPack != null;
+
+    if (isInPack) {
+      return _buildMyPackSection();
+    }
 
     return ListView(
       children: [
-        _buildMyPackSection(),
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-          child: Divider(),
-        ),
+        const SizedBox(height: 12),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           child: ElevatedButton(
-            onPressed: isInPack
-                ? () => _showMessage('You can only be in one pack at a time.')
-                : _showJoinPackDialog,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: isInPack ? Colors.grey : null,
-            ),
+            onPressed: _showJoinPackDialog,
             child: const Text('Join Pack'),
           ),
         ),
         const Padding(
           padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           child: Center(
-            child: Text('Available Challenges',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+            child: Text(
+              'Available Challenges',
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
           ),
         ),
         ..._challengeDistances.map(_buildChallengeCard).toList(),

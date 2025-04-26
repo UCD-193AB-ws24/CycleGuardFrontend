@@ -343,12 +343,12 @@ class _HomePageState extends State<HomePage> {
                         ),
                       ),
                     ),
-                    SizedBox(height: DimUtil.safeWidth(context) * 1 / 40),
+                    SizedBox(height: DimUtil.safeHeight(context) * 1 / 40),
                     buildStreakDisplay(context, userStats.rideStreak),
                   ],
                 ),
               ),
-              SizedBox(height: DimUtil.safeWidth(context) * 1 / 20),
+              SizedBox(height: DimUtil.safeHeight(context) * 1 / 20),
               Showcase(
                 key: _todayGoalKey,
                 title: 'Daily Goals',
@@ -480,7 +480,7 @@ class _HomePageState extends State<HomePage> {
                         ),
                       ],
                     ),
-                    SizedBox(height: DimUtil.safeWidth(context) * 1 / 40),
+                    SizedBox(height: DimUtil.safeHeight(context) * 1 / 40),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
@@ -519,7 +519,7 @@ class _HomePageState extends State<HomePage> {
                   ],
                 ),
               ),
-              SizedBox(height: DimUtil.safeWidth(context) * 1 / 20),
+              SizedBox(height: DimUtil.safeHeight(context) * 1 / 20),
               Showcase(
                 key: _avgRideKey,
                 title: 'Average Daily Ride',
@@ -534,7 +534,7 @@ class _HomePageState extends State<HomePage> {
                             fontSize: 18, fontWeight: FontWeight.bold),
                       ),
                     ),
-                    SizedBox(height: DimUtil.safeWidth(context) * 1 / 40),
+                    SizedBox(height: DimUtil.safeHeight(context) * 1 / 40),
                     Row(
                       children: [
                         Flexible(
@@ -565,7 +565,7 @@ class _HomePageState extends State<HomePage> {
                   ],
                 ),
               ),
-              SizedBox(height: DimUtil.safeWidth(context) * 1 / 20),
+              SizedBox(height: DimUtil.safeHeight(context) * 1 / 20),
               Showcase(
                 key: _dailyChallengeKey,
                 title: 'Daily Challenge',
@@ -573,7 +573,7 @@ class _HomePageState extends State<HomePage> {
                     'Ride five miles a day to receive 5 CycleCoins for purchasing items in the store!',
                 child: _buildDailyChallenge(context, isDailyChallengeComplete),
               ),
-              SizedBox(height: DimUtil.safeWidth(context) * 1 / 20),
+              SizedBox(height: DimUtil.safeHeight(context) * 1 / 20),
               Align(
                 alignment: Alignment.bottomCenter,
                 child: Padding(
@@ -609,7 +609,7 @@ class _HomePageState extends State<HomePage> {
                           children: [
                             Text('Your Ride History'),
                             SizedBox(
-                                width: DimUtil.safeWidth(context) * 1 / 40),
+                                width: DimUtil.safeWidth(context) * 1 / 20),
                             Icon(Icons.calendar_month_outlined,
                                 color: isDarkMode
                                     ? Colors.white
@@ -621,7 +621,7 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ),
               ),
-              SizedBox(height: DimUtil.safeWidth(context) * 1 / 20),
+              SizedBox(height: DimUtil.safeHeight(context) * 1 / 20),
               Showcase(
                 key: _achievementProgressKey,
                 title: 'Achievement Progress',
@@ -645,12 +645,12 @@ class _HomePageState extends State<HomePage> {
                         ],
                       ),
                     ),
-                    SizedBox(height: DimUtil.safeWidth(context) * 1 / 80),
+                    SizedBox(height: DimUtil.safeHeight(context) * 1 / 40),
                     _buildAchievementProgress(context, isDarkMode),
                   ],
                 ),
               ),
-              SizedBox(height: DimUtil.safeWidth(context) * 1 / 80),
+              SizedBox(height: DimUtil.safeHeight(context) * 1 / 40),
               Align(
                 alignment: Alignment.bottomCenter,
                 child: Padding(
@@ -876,7 +876,7 @@ class _HomePageState extends State<HomePage> {
                       fontWeight: FontWeight.bold,
                       color: Colors.white),
                 ),
-                SizedBox(height: DimUtil.safeWidth(context) * 1 / 80),
+                SizedBox(height: DimUtil.safeHeight(context) * 1 / 80),
                 Text(
                   'Reward: 5 CycleCoins',
                   style: TextStyle(fontSize: 16, color: Colors.white),
@@ -924,7 +924,7 @@ class _HomePageState extends State<HomePage> {
             context,
             isDarkMode,
           ),
-          SizedBox(height: DimUtil.safeWidth(context) * 1 / 40),
+          SizedBox(height: DimUtil.safeHeight(context) * 1 / 40),
           _buildAchievement(
             selectedAchievements[1]['title'],
             selectedAchievements[1]['progress'].toInt(),
@@ -960,7 +960,7 @@ class _HomePageState extends State<HomePage> {
                     fontWeight: FontWeight.bold,
                     color: isDarkMode ? Colors.white : selectedColor),
               ),
-              SizedBox(height: DimUtil.safeWidth(context) * 1 / 80),
+              SizedBox(height: DimUtil.safeHeight(context) * 1 / 80),
               LinearProgressIndicator(
                 value: progressPercentage,
                 color: isDarkMode

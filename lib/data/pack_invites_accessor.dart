@@ -4,6 +4,8 @@ import 'package:cycle_guard_app/auth/requests_util.dart';
 class PackInvitesAccessor {
   PackInvitesAccessor._();
 
+  // Returns a PackInvites object, which contains a list of packs you've been invited to
+  // The list contains the names of the packs you've been invited to
   static Future<PackInvites> getInvites() async {
     final response = await RequestsUtil.getWithToken("/packs/getInvites");
 
@@ -14,6 +16,8 @@ class PackInvitesAccessor {
     }
   }
 
+  // Send an invite to join your current pack to another user
+  // If the other user doesn't exist or you're not in a pack, it errors
   static Future<bool> sendInvite(String userToInvite) async {
     final body = {
       "username":userToInvite
@@ -26,6 +30,9 @@ class PackInvitesAccessor {
     return response.statusCode==200;
   }
 
+  // Cancels a previously-sent invite to that user to join your current pack
+  // Once this is sent, that user no longer is invited to join the pack
+  // That user is still able to join normally if they know the password
   static Future<bool> cancelInvite(String userToCancel) async {
     final body = {
       "username":userToCancel
@@ -38,6 +45,9 @@ class PackInvitesAccessor {
     return response.statusCode==200;
   }
 
+  // Accept an invite to join a pack
+  // packToJoin must be present within the user's PackInvites.invites list
+  // Errors if user is already in a pack
   static Future<bool> acceptInvite(String packToJoin) async {
     final body = {
       "packName":packToJoin
@@ -50,6 +60,8 @@ class PackInvitesAccessor {
     return response.statusCode==200;
   }
 
+  // Decline an invite to join a pack
+  // packToDecline must be present within the user's PackInvites.invites list
   static Future<bool> declineInvite(String packToDecline) async {
     final body = {
       "packName":packToDecline

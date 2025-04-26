@@ -89,6 +89,8 @@ class PacksAccessor {
   }
 }
 
+// PackData now has invites field, which is a list of usernames invited to the pack
+// A user on the invites list is able to join the pack without entering the password
 class PackData {
   final String name, owner;
   final List<String> memberList, invites;

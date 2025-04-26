@@ -224,7 +224,12 @@ class TestingPage extends StatelessWidget {
   }
 
   Future<void> _testPackInvites() async {
-    print("Current invites: ${await PackInvitesAccessor.getInvites()}");
+    print("User is invited to the following packs: ${await PackInvitesAccessor.getInvites()}");
+    // Invite user "e" to join the pack
+    // Username: e
+    // Password: e
+    await PackInvitesAccessor.sendInvite("e");
+    // await PackInvitesAccessor.cancelInvite("e");
   }
 
   Future<void> _testNotifications() async {

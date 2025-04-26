@@ -15,7 +15,7 @@ class _PacksPageState extends State<PacksPage> {
   PackData? _myPack;
   bool _loading = true;
 
-  final List<int> _challengeDistances = [100, 250, 500];
+  final List<int> _challengeDistances = [50, 100, 250, 500];
 
   @override
   void initState() {
@@ -49,31 +49,70 @@ class _PacksPageState extends State<PacksPage> {
   }
 
   void _showCreatePackDialog(int goalAmount) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final nameController = TextEditingController();
     final passController = TextEditingController();
 
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Create Pack'),
+        backgroundColor:
+            isDarkMode ? Theme.of(context).colorScheme.onPrimaryFixed : null,
+        title: Text(
+          'Create Pack',
+          style: TextStyle(color: isDarkMode ? Colors.white : null),
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
               controller: nameController,
-              decoration: const InputDecoration(labelText: 'Pack Name'),
+              decoration: InputDecoration(
+                labelText: 'Pack Name',
+                labelStyle:
+                    TextStyle(color: isDarkMode ? Colors.white70 : null),
+                enabledBorder: isDarkMode
+                    ? const UnderlineInputBorder(
+                        borderSide: BorderSide(color: Colors.white24),
+                      )
+                    : null,
+                focusedBorder: isDarkMode
+                    ? const UnderlineInputBorder(
+                        borderSide: BorderSide(color: Colors.white),
+                      )
+                    : null,
+              ),
+              style: TextStyle(color: isDarkMode ? Colors.white : null),
             ),
             TextField(
               controller: passController,
-              decoration: const InputDecoration(labelText: 'Password'),
               obscureText: true,
+              decoration: InputDecoration(
+                labelText: 'Password',
+                labelStyle:
+                    TextStyle(color: isDarkMode ? Colors.white70 : null),
+                enabledBorder: isDarkMode
+                    ? const UnderlineInputBorder(
+                        borderSide: BorderSide(color: Colors.white24),
+                      )
+                    : null,
+                focusedBorder: isDarkMode
+                    ? const UnderlineInputBorder(
+                        borderSide: BorderSide(color: Colors.white),
+                      )
+                    : null,
+              ),
+              style: TextStyle(color: isDarkMode ? Colors.white : null),
             ),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
+            child: Text(
+              'Cancel',
+              style: TextStyle(color: isDarkMode ? Colors.white : null),
+            ),
           ),
           TextButton(
             onPressed: () async {
@@ -88,7 +127,10 @@ class _PacksPageState extends State<PacksPage> {
               Navigator.of(context).pop();
               _loadPack();
             },
-            child: const Text('Create'),
+            child: Text(
+              'Create',
+              style: TextStyle(color: isDarkMode ? Colors.white : null),
+            ),
           ),
         ],
       ),
@@ -96,31 +138,70 @@ class _PacksPageState extends State<PacksPage> {
   }
 
   void _showJoinPackDialog() {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final nameController = TextEditingController();
     final passController = TextEditingController();
 
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Join Pack'),
+        backgroundColor:
+            isDarkMode ? Theme.of(context).colorScheme.onPrimaryFixed : null,
+        title: Text(
+          'Join Pack',
+          style: TextStyle(color: isDarkMode ? Colors.white : null),
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
               controller: nameController,
-              decoration: const InputDecoration(labelText: 'Pack Name'),
+              decoration: InputDecoration(
+                labelText: 'Pack Name',
+                labelStyle:
+                    TextStyle(color: isDarkMode ? Colors.white70 : null),
+                enabledBorder: isDarkMode
+                    ? const UnderlineInputBorder(
+                        borderSide: BorderSide(color: Colors.white24),
+                      )
+                    : null,
+                focusedBorder: isDarkMode
+                    ? const UnderlineInputBorder(
+                        borderSide: BorderSide(color: Colors.white),
+                      )
+                    : null,
+              ),
+              style: TextStyle(color: isDarkMode ? Colors.white : null),
             ),
             TextField(
               controller: passController,
-              decoration: const InputDecoration(labelText: 'Password'),
               obscureText: true,
+              decoration: InputDecoration(
+                labelText: 'Password',
+                labelStyle:
+                    TextStyle(color: isDarkMode ? Colors.white70 : null),
+                enabledBorder: isDarkMode
+                    ? const UnderlineInputBorder(
+                        borderSide: BorderSide(color: Colors.white24),
+                      )
+                    : null,
+                focusedBorder: isDarkMode
+                    ? const UnderlineInputBorder(
+                        borderSide: BorderSide(color: Colors.white),
+                      )
+                    : null,
+              ),
+              style: TextStyle(color: isDarkMode ? Colors.white : null),
             ),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
+            child: Text(
+              'Cancel',
+              style: TextStyle(color: isDarkMode ? Colors.white : null),
+            ),
           ),
           TextButton(
             onPressed: () async {
@@ -131,31 +212,29 @@ class _PacksPageState extends State<PacksPage> {
                 Navigator.of(context).pop();
                 _loadPack();
               } catch (e) {
-                // Show an error message to the user
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Pack does not exist')),
                 );
               }
             },
-            child: const Text('Join'),
+            child: Text(
+              'Join',
+              style: TextStyle(color: isDarkMode ? Colors.white : null),
+            ),
           ),
         ],
       ),
     );
   }
 
-  Map<String, Color> _buildMemberColors(Map<String, double> contributions) {
+  Map<String, Color> _buildMemberColors(Map<String, double> contributions, BuildContext context) {
     final colors = [
-      Colors.blue,
-      Colors.green,
-      Colors.orange,
-      Colors.purple,
-      Colors.pink,
-      Colors.teal,
-      Colors.brown,
-      Colors.indigo,
-      Colors.cyan,
-      Colors.red
+      Theme.of(context).colorScheme.primary,
+      Theme.of(context).colorScheme.secondary,
+      Theme.of(context).colorScheme.tertiary,
+      Theme.of(context).colorScheme.onPrimaryFixedVariant,
+      Theme.of(context).colorScheme.onSecondaryFixedVariant,
+      Theme.of(context).colorScheme.onTertiaryFixedVariant,
     ];
 
     final map = <String, Color>{};
@@ -181,7 +260,6 @@ class _PacksPageState extends State<PacksPage> {
 
     goal.contributionMap.forEach((member, value) {
       if (value <= 0.0) return;
-      final percentage = value / total * 100;
       sections.add(PieChartSectionData(
         color: colorMap[member],
         value: value,
@@ -202,6 +280,7 @@ class _PacksPageState extends State<PacksPage> {
   }
 
   Widget _buildMyPackSection() {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     if (_loading) {
       return const Padding(
         padding: EdgeInsets.all(16),
@@ -220,11 +299,12 @@ class _PacksPageState extends State<PacksPage> {
         ? (goal.totalContribution / goal.goalAmount).clamp(0.0, 1.0)
         : 0.0;
 
-    final memberColors = _buildMemberColors(goal.contributionMap);
+    final memberColors = _buildMemberColors(goal.contributionMap, context);
 
     return Card(
       elevation: 3,
       margin: const EdgeInsets.all(12),
+      color: isDarkMode ? Theme.of(context).colorScheme.onPrimaryFixed : null,
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: SingleChildScrollView(
@@ -233,12 +313,25 @@ class _PacksPageState extends State<PacksPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Center(
-                child: Text(_myPack!.name,
-                    style: const TextStyle(
-                        fontSize: 18, fontWeight: FontWeight.bold)),
+                child: Text(
+                  _myPack!.name,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: isDarkMode ? Colors.white : null,
+                  ),
+                ),
               ),
               const SizedBox(height: 8),
-              LinearProgressIndicator(value: progress, minHeight: 10),
+              LinearProgressIndicator(
+                value: progress,
+                minHeight: 10,
+                color:
+                    isDarkMode ? Theme.of(context).colorScheme.primary : null,
+                backgroundColor: isDarkMode
+                    ? Theme.of(context).colorScheme.primaryContainer
+                    : null,
+              ),
               const SizedBox(height: 8),
               Text.rich(
                 TextSpan(
@@ -247,24 +340,38 @@ class _PacksPageState extends State<PacksPage> {
                       text: goal.goalAmount == 0
                           ? 'No goal set, the pack owner can set a new goal!'
                           : 'Goal: ${goal.goalAmount} mi\n',
-                      style: const TextStyle(fontSize: 16),
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: isDarkMode ? Colors.white : null,
+                      ),
                     ),
                     TextSpan(
                       text:
                           'Total: ${goal.totalContribution.toStringAsFixed(1)} mi\n',
-                      style: const TextStyle(fontSize: 16),
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: isDarkMode ? Colors.white : null,
+                      ),
                     ),
                     TextSpan(
                       text:
                           'Remaining: ${(goal.goalAmount - goal.totalContribution).clamp(0.0, goal.goalAmount).toStringAsFixed(1)} mi',
-                      style: const TextStyle(fontSize: 16),
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: isDarkMode ? Colors.white : null,
+                      ),
                     ),
                   ],
                 ),
               ),
               const Divider(height: 20),
-              const Text('Pack Members:',
-                  style: TextStyle(fontWeight: FontWeight.bold)),
+              Text(
+                'Pack Members:',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: isDarkMode ? Colors.white : null,
+                ),
+              ),
               ...(() {
                 final memberEntries = members.map((member) {
                   final value = goal.contributionMap[member] ?? 0.0;
@@ -293,8 +400,20 @@ class _PacksPageState extends State<PacksPage> {
                             shape: BoxShape.rectangle,
                           ),
                         ),
-                        Expanded(child: Text(member)),
-                        Text('${value.toStringAsFixed(1)} mi : $percent%'),
+                        Expanded(
+                          child: Text(
+                            member,
+                            style: TextStyle(
+                              color: isDarkMode ? Colors.white : null,
+                            ),
+                          ),
+                        ),
+                        Text(
+                          '${value.toStringAsFixed(1)} mi : $percent%',
+                          style: TextStyle(
+                            color: isDarkMode ? Colors.white : null,
+                          ),
+                        ),
                       ],
                     ),
                   );
@@ -304,8 +423,13 @@ class _PacksPageState extends State<PacksPage> {
               if (goal.goalAmount > 0) ...[
                 const SizedBox(height: 16),
                 Center(
-                  child: const Text('Contribution Breakdown',
-                      style: TextStyle(fontWeight: FontWeight.bold)),
+                  child: Text(
+                    'Contribution Breakdown',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: isDarkMode ? Colors.white : null,
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 16),
                 SizedBox(
@@ -319,20 +443,65 @@ class _PacksPageState extends State<PacksPage> {
                     ),
                   ),
                 ),
+                const SizedBox(height: 24),
               ],
               if (isOwner) ...[
                 if (goal.goalAmount > 0)
                   ElevatedButton(
                     onPressed: () async {
-                      try {
-                        final success = await PacksAccessor.cancelPackGoal();
-                        if (success) {
-                          await _loadPack();
+                      final shouldCancel = await showDialog<bool>(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          backgroundColor: isDarkMode
+                              ? Theme.of(context).colorScheme.onPrimaryFixed
+                              : null,
+                          title: Text(
+                            'Are you sure?',
+                            style: TextStyle(
+                              color: isDarkMode ? Colors.white : null,
+                            ),
+                          ),
+                          content: Text(
+                            "Canceling a goal will lose all goal progress forever.",
+                            style: TextStyle(
+                              color: isDarkMode ? Colors.white : null,
+                            ),
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.of(context).pop(false),
+                              child: Text(
+                                'No',
+                                style: TextStyle(
+                                  color: isDarkMode ? Colors.white70 : null,
+                                ),
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.of(context).pop(true),
+                              child: Text(
+                                'Yes',
+                                style: TextStyle(
+                                  color: isDarkMode ? Colors.red[300] : null,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+
+                      if (shouldCancel == true) {
+                        try {
+                          final success = await PacksAccessor.cancelPackGoal();
+                          if (success) {
+                            await _loadPack();
+                          }
+                        } catch (e) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                                content: Text('Failed to cancel goal: $e')),
+                          );
                         }
-                      } catch (e) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Failed to cancel goal: $e')),
-                        );
                       }
                     },
                     child: const Text('Cancel Goal'),
@@ -341,7 +510,12 @@ class _PacksPageState extends State<PacksPage> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Set a new goal:'),
+                      Text(
+                        'Set a new goal:',
+                        style: TextStyle(
+                          color: isDarkMode ? Colors.white : null,
+                        ),
+                      ),
                       Wrap(
                         spacing: 8,
                         children: [100, 250, 500].map((amount) {
@@ -368,23 +542,45 @@ class _PacksPageState extends State<PacksPage> {
                     ],
                   ),
               ],
-              const SizedBox(height: 24),
+              const SizedBox(height: 8),
               ElevatedButton(
                 onPressed: () async {
                   final shouldLeave = await showDialog<bool>(
                     context: context,
                     builder: (context) => AlertDialog(
-                      title: const Text('Are you sure?'),
-                      content: const Text(
-                          "If you leave a pack your progress towards its contribution will be lost forever."),
+                      backgroundColor: isDarkMode
+                          ? Theme.of(context).colorScheme.onPrimaryFixed
+                          : null,
+                      title: Text(
+                        'Are you sure?',
+                        style: TextStyle(
+                          color: isDarkMode ? Colors.white : null,
+                        ),
+                      ),
+                      content: Text(
+                        "If you leave a pack your progress towards its contribution will be lost forever.",
+                        style: TextStyle(
+                          color: isDarkMode ? Colors.white : null,
+                        ),
+                      ),
                       actions: [
                         TextButton(
                           onPressed: () => Navigator.of(context).pop(false),
-                          child: const Text('No'),
+                          child: Text(
+                            'No',
+                            style: TextStyle(
+                              color: isDarkMode ? Colors.white70 : null,
+                            ),
+                          ),
                         ),
                         TextButton(
                           onPressed: () => Navigator.of(context).pop(true),
-                          child: const Text('Yes'),
+                          child: Text(
+                            'Yes',
+                            style: TextStyle(
+                              color: isDarkMode ? Colors.red[300] : null,
+                            ),
+                          ),
                         ),
                       ],
                     ),
@@ -394,9 +590,14 @@ class _PacksPageState extends State<PacksPage> {
                     _leavePack();
                   }
                 },
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                child: const Text('Leave Pack'),
-              )
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                ),
+                child: const Text(
+                  'Leave Pack',
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
             ],
           ),
         ),
@@ -406,17 +607,23 @@ class _PacksPageState extends State<PacksPage> {
 
   Widget _buildChallengeCard(int distance) {
     final bool disabled = _myPack != null;
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       elevation: 2,
+      color: isDarkMode ? Theme.of(context).colorScheme.onPrimaryFixed : null,
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
             Text(
               '$distance Mile Challenge',
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: isDarkMode ? Colors.white : null,
+              ),
             ),
             ElevatedButton(
               onPressed: disabled
@@ -424,7 +631,12 @@ class _PacksPageState extends State<PacksPage> {
                   : () => _showCreatePackDialog(distance),
               style: ElevatedButton.styleFrom(
                 elevation: 4,
-                backgroundColor: disabled ? Colors.grey : null,
+                backgroundColor: disabled
+                    ? Colors.grey
+                    : isDarkMode
+                        ? Theme.of(context).colorScheme.secondary
+                        : null,
+                foregroundColor: isDarkMode ? Colors.white70 : null,
               ),
               child: const Text('Accept Challenge'),
             ),
@@ -436,6 +648,7 @@ class _PacksPageState extends State<PacksPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     if (_loading) {
       return const Center(
         child: CircularProgressIndicator(),
@@ -455,6 +668,12 @@ class _PacksPageState extends State<PacksPage> {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           child: ElevatedButton(
             onPressed: _showJoinPackDialog,
+            style: ElevatedButton.styleFrom(
+              backgroundColor:
+                  isDarkMode ? Theme.of(context).colorScheme.secondary : null,
+              foregroundColor: isDarkMode ? Colors.white : null,
+              elevation: 4,
+            ),
             child: const Text('Join Pack'),
           ),
         ),

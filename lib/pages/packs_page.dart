@@ -364,12 +364,14 @@ class _PacksPageState extends State<PacksPage> {
                   ],
                 ),
               ),
-              const Divider(height: 20),
-              Text(
-                'Pack Members:',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: isDarkMode ? Colors.white : null,
+              const Divider(height: 28),
+              Center(
+                child: Text(
+                  'Pack Member Contribution:',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: isDarkMode ? Colors.white : null,
+                  ),
                 ),
               ),
               ...(() {
@@ -419,19 +421,8 @@ class _PacksPageState extends State<PacksPage> {
                   );
                 });
               })(),
-              const SizedBox(height: 12),
+              const SizedBox(height: 20),
               if (goal.goalAmount > 0) ...[
-                const SizedBox(height: 16),
-                Center(
-                  child: Text(
-                    'Contribution Breakdown',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: isDarkMode ? Colors.white : null,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
                 SizedBox(
                   height: 200,
                   child: PieChart(

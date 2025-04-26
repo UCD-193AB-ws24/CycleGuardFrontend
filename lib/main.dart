@@ -455,15 +455,20 @@ AppBar createAppBar(BuildContext context, String titleText) {
     actions: [
       Padding(
         padding: const EdgeInsets.only(right: 32.0),
-        child: SvgPicture.asset(
-          'assets/cg_logomark.svg',
-          height: 30,
-          width: 30,
-          colorFilter: ColorFilter.mode( 
-            Theme.of(context).brightness == Brightness.dark 
-              ? Colors.white70
-              : Colors.black,
-            BlendMode.srcIn,
+        child: GestureDetector(
+          onTap: () {
+             Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => MyHomePage()));
+          },
+          child: SvgPicture.asset(
+            'assets/cg_logomark.svg',
+            height: 30,
+            width: 30,
+            colorFilter: ColorFilter.mode( 
+              Theme.of(context).brightness == Brightness.dark 
+                ? Colors.white70
+                : Colors.black,
+              BlendMode.srcIn,
+            ),
           ),
         ),
       )

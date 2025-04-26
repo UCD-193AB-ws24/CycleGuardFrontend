@@ -6,6 +6,7 @@ import 'package:cycle_guard_app/data/friends_list_accessor.dart';
 import 'package:cycle_guard_app/data/global_leaderboards_accessor.dart';
 import 'package:cycle_guard_app/data/health_info_accessor.dart';
 import 'package:cycle_guard_app/data/notifications_accessor.dart' as notif_accessor;
+import 'package:cycle_guard_app/data/pack_invites_accessor.dart';
 import 'package:cycle_guard_app/data/packs_accessor.dart';
 import 'package:cycle_guard_app/data/single_trip_history.dart';
 import 'package:cycle_guard_app/data/submit_ride_service.dart';
@@ -220,6 +221,10 @@ class TestingPage extends StatelessWidget {
   Future<void> _clearPersistentToken(BuildContext context) async {
     await AuthUtil.clearPersistentToken();
     // Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => StartPage()));
+  }
+
+  Future<void> _testPackInvites() async {
+    print("Current invites: ${await PackInvitesAccessor.getInvites()}");
   }
 
   Future<void> _testNotifications() async {
@@ -459,6 +464,14 @@ class TestingPage extends StatelessWidget {
                     padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
                   ),
                   child: Text("Clear token from persistent storage"),
+                ),
+                ElevatedButton(
+                  onPressed: () => _testPackInvites(),
+                  style: ElevatedButton.styleFrom(
+                    elevation: 5,
+                    padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
+                  ),
+                  child: Text("Pack invites"),
                 ),
               ],
             ),

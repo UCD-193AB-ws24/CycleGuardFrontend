@@ -198,56 +198,63 @@ Future<void> _selectTime(BuildContext context) async {
           ),
           const SizedBox(height: 10),
 
-          const Text(
-            'Existing Notifications:',
-            style: TextStyle(fontSize: 16),
-            textAlign: TextAlign.center,
-          ),
-          SizedBox(
-            child: Column(
-              children: _notifications.map((notification) {
-                final isSelected = _selectedNotification == notification;
+          Column(
+          children: [
+            if (_notifications.isEmpty)
+              const Text(
+                'No Existing Notifications',
+                style: TextStyle(fontSize: 16),
+                textAlign: TextAlign.center,
+              ),
+            //const SizedBox(height: 10),
+            if (_notifications.isNotEmpty)
+              SizedBox(
+                child: Column(
+                  children: _notifications.map((notification) {
+                    final isSelected = _selectedNotification == notification;
 
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 8.0),
-                  child: Material(
-                    elevation: 4,
-                    color: isSelected
-                        ? Theme.of(context).colorScheme.primary
-                        : isDarkMode
-                            ? Theme.of(context).colorScheme.secondary
-                            : Theme.of(context).colorScheme.onInverseSurface,
-                    borderRadius: BorderRadius.circular(12.0),
-                    child: ListTile(
-                      title: Text(
-                        notification.title,
-                        style: TextStyle(
-                          color: isDarkMode ? Colors.white70 : Colors.black,
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 8.0),
+                      child: Material(
+                        elevation: 4,
+                        color: isSelected
+                            ? Theme.of(context).colorScheme.primary
+                            : isDarkMode
+                                ? Theme.of(context).colorScheme.secondary
+                                : Theme.of(context).colorScheme.onInverseSurface,
+                        borderRadius: BorderRadius.circular(12.0),
+                        child: ListTile(
+                          title: Text(
+                            notification.title,
+                            style: TextStyle(
+                              color: isDarkMode ? Colors.white70 : Colors.black,
+                            ),
+                          ),
+                          subtitle: Text(
+                            notification.body,
+                            style: TextStyle(
+                              color: isDarkMode ? Colors.white70 : Colors.black,
+                            ),
+                          ),
+                          trailing: Text(
+                            '${notification.hour}:${notification.minute.toString().padLeft(2, '0')}',
+                            style: TextStyle(
+                              color: isDarkMode ? Colors.white70 : Colors.black,
+                            ),
+                          ),
+                          onTap: () {
+                            setState(() {
+                              _selectedNotification = notification;
+                            });
+                          },
                         ),
                       ),
-                      subtitle: Text(
-                        notification.body,
-                        style: TextStyle(
-                          color: isDarkMode ? Colors.white70 : Colors.black,
-                        ),
-                      ),
-                      trailing: Text(
-                        '${notification.hour}:${notification.minute.toString().padLeft(2, '0')}',
-                        style: TextStyle(
-                          color: isDarkMode ? Colors.white70 : Colors.black,
-                        ),
-                      ),
-                      onTap: () {
-                        setState(() {
-                          _selectedNotification = notification;
-                        });
-                      },
-                    ),
-                  ),
-                );
-              }).toList(),
-            ),
-          ),
+                    );
+                  }).toList(),
+                ),
+              ),
+          ],
+        ),
           const SizedBox(height: 20),
           Text(
             _isAddingNotification ? 'Create Notificaiton' : 'Add or Delete Notifications:',

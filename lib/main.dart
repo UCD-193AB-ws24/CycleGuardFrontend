@@ -381,9 +381,10 @@ class _MyHomePageState extends State<MyHomePage> {
   var selectedIndex = 1;
 
   Color getNavBarColor(BuildContext context) {
+    Color selectedColor = Provider.of<MyAppState>(context).selectedColor;
     return Theme.of(context).brightness == Brightness.dark
         ? Theme.of(context).colorScheme.onSecondaryFixedVariant
-        : Theme.of(context).colorScheme.primary; 
+        : selectedColor; 
   }
 
   Color getNavBarBackgroundColor(BuildContext context) {

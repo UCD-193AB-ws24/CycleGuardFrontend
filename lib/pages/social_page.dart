@@ -298,6 +298,7 @@ class _SocialPageState extends State<SocialPage>
   @override
   Widget build(BuildContext context) {
     bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    Color selectedColor = Provider.of<MyAppState>(context).selectedColor;
 
     if (_isLoading) {
       return Center(child: CircularProgressIndicator());
@@ -325,6 +326,8 @@ class _SocialPageState extends State<SocialPage>
             child: TabBar(
               controller: _tabController,
               unselectedLabelColor: isDarkMode ? Colors.white70 : null,
+              labelColor: isDarkMode ? null : selectedColor,
+              indicatorColor: isDarkMode ? null : selectedColor,
               tabs: const [
                 Tab(icon: Icon(Icons.person), text: "Profile"),
                 Tab(icon: Icon(Icons.groups_3), text: "Friends"),
@@ -596,9 +599,6 @@ class _SocialPageState extends State<SocialPage>
                             isNewAccount: false,
                             profileIcon: appState.selectedIcon,
                           );
-
-                          print("---------");
-                          print(updatedProfile);
 
                           await UserProfileAccessor.updateOwnProfile(
                               updatedProfile);

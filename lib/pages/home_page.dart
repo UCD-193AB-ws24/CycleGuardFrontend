@@ -88,6 +88,7 @@ class _HomePageState extends State<HomePage> {
     final userStats = Provider.of<UserStatsProvider>(context);
     final weekHistory = Provider.of<WeekHistoryProvider>(context);
     final userGoals = Provider.of<UserDailyGoalProvider>(context);
+    Color selectedColor = Provider.of<MyAppState>(context).selectedColor;
     final colorScheme = Theme.of(context).colorScheme;
 
     final todayUtcTimestamp = DateTime.utc(
@@ -127,7 +128,7 @@ class _HomePageState extends State<HomePage> {
     bool isDailyChallengeComplete = rotatedDistances[6] >= 5;
 
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    final selectedColor = colorScheme.primary;
+    //final selectedColor = colorScheme.primary;
     return Scaffold(
       appBar: AppBar(
         title: Column(
@@ -941,11 +942,12 @@ class _HomePageState extends State<HomePage> {
       IconData icon, BuildContext context, bool isDarkMode) {
     double progressPercentage = (currentValue / goalValue).clamp(0.0, 1.0);
     final colorScheme = Theme.of(context).colorScheme;
+    Color selectedColor = Provider.of<MyAppState>(context).selectedColor;
 
     return Row(
       children: [
         Icon(icon,
-            color: isDarkMode ? Colors.white : colorScheme.primary, size: 40),
+            color: isDarkMode ? Colors.white : selectedColor, size: 40),
         SizedBox(width: DimUtil.safeWidth(context) * 1 / 40),
         Expanded(
           child: Column(
@@ -956,14 +958,14 @@ class _HomePageState extends State<HomePage> {
                 style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: isDarkMode ? Colors.white : colorScheme.primary),
+                    color: isDarkMode ? Colors.white : selectedColor),
               ),
               SizedBox(height: DimUtil.safeWidth(context) * 1 / 80),
               LinearProgressIndicator(
                 value: progressPercentage,
                 color: isDarkMode
                     ? colorScheme.onSecondaryFixedVariant
-                    : colorScheme.primary,
+                    : selectedColor,
                 minHeight: 8,
                 borderRadius: BorderRadius.circular(8),
               ),

@@ -89,9 +89,11 @@ class PacksAccessor {
   }
 }
 
+// PackData now has invites field, which is a list of usernames invited to the pack
+// A user on the invites list is able to join the pack without entering the password
 class PackData {
   final String name, owner;
-  final List<String> memberList;
+  final List<String> memberList, invites;
   final int memberCount;
   final PackGoal packGoal;
 
@@ -100,7 +102,8 @@ class PackData {
     required this.owner,
     required this.memberList,
     required this.memberCount,
-    required this.packGoal
+    required this.packGoal,
+    required this.invites,
   });
 
   static List<String> _parseMemberList(List<dynamic> list) {
@@ -113,12 +116,14 @@ class PackData {
       "name": String name,
       "owner": String owner,
       "memberList": List<dynamic> memberList,
+      "invites": List<dynamic> invites,
       "packGoal": Map<String, dynamic> packGoal,
       "memberCount": int memberCount
       } => PackData(
         name: name,
         owner: owner,
         memberList: _parseMemberList(memberList),
+        invites: _parseMemberList(invites),
         packGoal: PackGoal.fromJson(packGoal),
         memberCount: memberCount
       ),
@@ -128,7 +133,8 @@ class PackData {
 
   @override
   String toString() {
-    return 'PackData{name: $name, owner: $owner, memberList: $memberList, memberCount: $memberCount, packGoal: $packGoal}';
+    return 'PackData{name: $name, owner: $owner, memberList: $memberList, invites: $invites, '
+        'memberCount: $memberCount, packGoal: $packGoal}';
   }
 }
 
@@ -183,6 +189,7 @@ class PackGoal {
 
   @override
   String toString() {
-    return 'PackGoal{contributionMap: $contributionMap, active: $active, goalField: $goalField, startTime: $startTime, endTime: $endTime, goalAmount: $goalAmount, totalContribution: $totalContribution}';
+    return 'PackGoal{contributionMap: $contributionMap, active: $active, goalField: $goalField, '
+        'startTime: $startTime, endTime: $endTime, goalAmount: $goalAmount, totalContribution: $totalContribution}';
   }
 }

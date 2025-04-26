@@ -128,9 +128,9 @@ class _HomePageState extends State<HomePage> {
     bool isDailyChallengeComplete = rotatedDistances[6] >= 5;
 
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    //final selectedColor = colorScheme.primary;
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

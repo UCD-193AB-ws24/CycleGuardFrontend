@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:fl_chart/fl_chart.dart';
 import 'package:cycle_guard_app/data/user_stats_provider.dart';
 import 'package:cycle_guard_app/data/packs_accessor.dart';
 
@@ -43,7 +44,7 @@ class _PacksPageState extends State<PacksPage> {
     } else {
       await PacksAccessor.leavePack();
     }
-    
+
     await _loadPack();
   }
 
@@ -143,6 +144,63 @@ class _PacksPageState extends State<PacksPage> {
     );
   }
 
+  Map<String, Color> _buildMemberColors(Map<String, double> contributions) {
+    final colors = [
+      Colors.blue,
+      Colors.green,
+      Colors.orange,
+      Colors.purple,
+      Colors.pink,
+      Colors.teal,
+      Colors.brown,
+      Colors.indigo,
+      Colors.cyan,
+      Colors.red
+    ];
+
+    final map = <String, Color>{};
+    int index = 0;
+
+    // Ensure each member gets a color (including non-contributors)
+    for (final member in contributions.keys) {
+      map[member] = colors[index];
+      index++;
+      if (index >= colors.length) {
+        index = 0;
+      }
+    }
+
+    return map;
+  }
+
+  List<PieChartSectionData> _buildContributionChartSections(
+      PackGoal goal, Map<String, Color> colorMap) {
+    final List<PieChartSectionData> sections = [];
+    final total = goal.goalAmount.toDouble();
+    final remainder = (total - goal.totalContribution).clamp(0.0, total);
+
+    goal.contributionMap.forEach((member, value) {
+      if (value <= 0.0) return;
+      final percentage = value / total * 100;
+      sections.add(PieChartSectionData(
+        color: colorMap[member],
+        value: value,
+        title: '',
+        radius: 60,
+      ));
+    });
+
+    // Add "Remaining" slice
+    sections.add(PieChartSectionData(
+      color: Colors.grey.shade400,
+      value: remainder == 0.0 ? total : remainder,
+      title: '',
+      radius: 60,
+    ));
+
+    return sections;
+  }
+
   Widget _buildMyPackSection() {
     if (_loading) {
       return const Padding(
@@ -162,87 +220,185 @@ class _PacksPageState extends State<PacksPage> {
         ? (goal.totalContribution / goal.goalAmount).clamp(0.0, 1.0)
         : 0.0;
 
+    final memberColors = _buildMemberColors(goal.contributionMap);
+
     return Card(
       elevation: 3,
       margin: const EdgeInsets.all(12),
       child: Padding(
         padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('My Pack: ${_myPack!.name}',
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            LinearProgressIndicator(value: progress, minHeight: 10),
-            const SizedBox(height: 8),
-            Text(
-              goal.goalAmount == 0
-                  ? 'No goal set, the pack owner can set a new goal!'
-                  : 'Goal: ${goal.goalAmount} mi — Total: ${goal.totalContribution.toStringAsFixed(1)} mi',
-            ),
-            const Divider(height: 20),
-            const Text('Members:', style: TextStyle(fontWeight: FontWeight.bold)),
-            ...members.map((member) {
-              final contribution = goal.contributionMap[member] ?? 0.0;
-              return Text('$member — ${contribution.toStringAsFixed(1)} mi');
-            }),
-            const SizedBox(height: 12),
-
-            if (isOwner) ...[
-              if (goal.goalAmount > 0)
-                ElevatedButton(
-                  onPressed: () async {
-                    try {
-                      final success = await PacksAccessor.cancelPackGoal();
-                      if (success) {
-                        await _loadPack(); 
-                      }
-                    } catch (e) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Failed to cancel goal: $e')),
-                      );
-                    }
-                  },
-                  child: const Text('Cancel Goal'),
-                )
-              else
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Text(_myPack!.name,
+                    style: const TextStyle(
+                        fontSize: 18, fontWeight: FontWeight.bold)),
+              ),
+              const SizedBox(height: 8),
+              LinearProgressIndicator(value: progress, minHeight: 10),
+              const SizedBox(height: 8),
+              Text.rich(
+                TextSpan(
                   children: [
-                    const Text('Set a new goal:'),
-                    Wrap(
-                      spacing: 8,
-                      children: [100, 250, 500].map((amount) {
-                        return ElevatedButton(
-                          onPressed: () async {
-                            try {
-                              await PacksAccessor.setPackGoal(
-                                60 * 60 * 24 * 7, 
-                                PacksAccessor.GOAL_DISTANCE,
-                                amount,
-                              );
-                              await _loadPack(); 
-                            } catch (e) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('Failed to set goal: $e')),
-                              );
-                            }
-                          },
-                          child: Text('$amount mi'),
-                        );
-                      }).toList(),
+                    TextSpan(
+                      text: goal.goalAmount == 0
+                          ? 'No goal set, the pack owner can set a new goal!'
+                          : 'Goal: ${goal.goalAmount} mi\n',
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                    TextSpan(
+                      text:
+                          'Total: ${goal.totalContribution.toStringAsFixed(1)} mi\n',
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                    TextSpan(
+                      text:
+                          'Remaining: ${(goal.goalAmount - goal.totalContribution).clamp(0.0, goal.goalAmount).toStringAsFixed(1)} mi',
+                      style: const TextStyle(fontSize: 16),
                     ),
                   ],
                 ),
-              const SizedBox(height: 12),
-            ],
+              ),
+              const Divider(height: 20),
+              const Text('Pack Members:',
+                  style: TextStyle(fontWeight: FontWeight.bold)),
+              ...(() {
+                final memberEntries = members.map((member) {
+                  final value = goal.contributionMap[member] ?? 0.0;
+                  return MapEntry(member, value);
+                }).toList()
+                  ..sort((a, b) => b.value.compareTo(a.value));
 
-            ElevatedButton(
-              onPressed: _leavePack,
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-              child: const Text('Leave Pack'),
-            ),
-          ],
+                return List.generate(memberEntries.length, (index) {
+                  final entry = memberEntries[index];
+                  final member = entry.key;
+                  final value = entry.value;
+                  final color = memberColors[member];
+                  final percent =
+                      (value / goal.goalAmount * 100).toStringAsFixed(1);
+
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 2),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 12,
+                          height: 12,
+                          margin: const EdgeInsets.only(right: 8),
+                          decoration: BoxDecoration(
+                            color: color,
+                            shape: BoxShape.rectangle,
+                          ),
+                        ),
+                        Expanded(child: Text(member)),
+                        Text('${value.toStringAsFixed(1)} mi : $percent%'),
+                      ],
+                    ),
+                  );
+                });
+              })(),
+              const SizedBox(height: 12),
+              if (goal.goalAmount > 0) ...[
+                const SizedBox(height: 16),
+                Center(
+                  child: const Text('Contribution Breakdown',
+                      style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  height: 200,
+                  child: PieChart(
+                    PieChartData(
+                      sectionsSpace: 2,
+                      centerSpaceRadius: 40,
+                      sections:
+                          _buildContributionChartSections(goal, memberColors),
+                    ),
+                  ),
+                ),
+              ],
+              if (isOwner) ...[
+                if (goal.goalAmount > 0)
+                  ElevatedButton(
+                    onPressed: () async {
+                      try {
+                        final success = await PacksAccessor.cancelPackGoal();
+                        if (success) {
+                          await _loadPack();
+                        }
+                      } catch (e) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Failed to cancel goal: $e')),
+                        );
+                      }
+                    },
+                    child: const Text('Cancel Goal'),
+                  )
+                else
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Set a new goal:'),
+                      Wrap(
+                        spacing: 8,
+                        children: [100, 250, 500].map((amount) {
+                          return ElevatedButton(
+                            onPressed: () async {
+                              try {
+                                await PacksAccessor.setPackGoal(
+                                  60 * 60 * 24 * 7,
+                                  PacksAccessor.GOAL_DISTANCE,
+                                  amount,
+                                );
+                                await _loadPack();
+                              } catch (e) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                      content: Text('Failed to set goal: $e')),
+                                );
+                              }
+                            },
+                            child: Text('$amount mi'),
+                          );
+                        }).toList(),
+                      ),
+                    ],
+                  ),
+              ],
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: () async {
+                  final shouldLeave = await showDialog<bool>(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: const Text('Are you sure?'),
+                      content: const Text(
+                          "If you leave a pack your progress towards its contribution will be lost forever."),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(false),
+                          child: const Text('No'),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(true),
+                          child: const Text('Yes'),
+                        ),
+                      ],
+                    ),
+                  );
+
+                  if (shouldLeave == true) {
+                    _leavePack();
+                  }
+                },
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                child: const Text('Leave Pack'),
+              )
+            ],
+          ),
         ),
       ),
     );

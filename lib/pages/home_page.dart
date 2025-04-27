@@ -16,13 +16,15 @@ import 'package:draggable_scrollbar/draggable_scrollbar.dart';
 import 'package:cycle_guard_app/main.dart';
 import 'package:cycle_guard_app/data/user_profile_accessor.dart';
 import 'package:showcaseview/showcaseview.dart';
+import 'package:flutter/animation.dart';
 
 class HomePage extends StatefulWidget {
   @override
   _HomePageState createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin{
+class _HomePageState extends State<HomePage>
+    with SingleTickerProviderStateMixin {
   ScrollController _controller = ScrollController();
   late AnimationController _controllerAnimation;
   late Animation<double> _animation;
@@ -235,135 +237,144 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                     SizedBox(
                       height: DimUtil.safeHeight(context) * 1 / 4,
                       child: AnimatedBuilder(
-                        animation: _animation,
-                        builder: (context, child) {
-                          return BarChart(
-                            BarChartData(
-                              alignment: BarChartAlignment.spaceAround,
-                              maxY: 1 *
-                                  rotatedDistances.reduce((a, b) => a > b
-                                      ? a
-                                      : b), // 1.2 * the max value in rotatedDistances
-                              barGroups: [
-                                BarChartGroupData(x: 0, barRods: [
-                                  BarChartRodData(
-                                      fromY: 0,
-                                      toY: rotatedDistances[0] * _animation.value,
-                                      color: selectedColor,
-                                      width: 30.0)
-                                ]),
-                                BarChartGroupData(x: 1, barRods: [
-                                  BarChartRodData(
-                                      fromY: 0,
-                                      toY: rotatedDistances[1] * _animation.value,
-                                      color: selectedColor,
-                                      width: 30.0)
-                                ]),
-                                BarChartGroupData(x: 2, barRods: [
-                                  BarChartRodData(
-                                      fromY: 0,
-                                      toY: rotatedDistances[2] * _animation.value,
-                                      color: selectedColor,
-                                      width: 30.0)
-                                ]),
-                                BarChartGroupData(x: 3, barRods: [
-                                  BarChartRodData(
-                                      fromY: 0,
-                                      toY: rotatedDistances[3] * _animation.value,
-                                      color: selectedColor,
-                                      width: 30.0)
-                                ]),
-                                BarChartGroupData(x: 4, barRods: [
-                                  BarChartRodData(
-                                      fromY: 0,
-                                      toY: rotatedDistances[4] * _animation.value,
-                                      color: selectedColor,
-                                      width: 30.0)
-                                ]),
-                                BarChartGroupData(x: 5, barRods: [
-                                  BarChartRodData(
-                                      fromY: 0,
-                                      toY: rotatedDistances[5] * _animation.value,
-                                      color: selectedColor,
-                                      width: 30.0)
-                                ]),
-                                BarChartGroupData(x: 6, barRods: [
-                                  BarChartRodData(
-                                      fromY: 0,
-                                      toY: rotatedDistances[6] * _animation.value,
-                                      color: selectedColor,
-                                      width: 30.0)
-                                ]),
-                              ],
-                              titlesData: FlTitlesData(
-                                leftTitles: AxisTitles(
-                                  axisNameWidget: Text('Miles',
-                                      style: TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.bold)),
-                                  sideTitles: SideTitles(
-                                    showTitles: true,
-                                    reservedSize: 20,
-                                    getTitlesWidget:
-                                        (double value, TitleMeta meta) {
-                                      return Text(value.toInt().toString(),
-                                          style: TextStyle(fontSize: 12));
+                          animation: _animation,
+                          builder: (context, child) {
+                            return BarChart(
+                              BarChartData(
+                                alignment: BarChartAlignment.spaceAround,
+                                maxY: 1 *
+                                    rotatedDistances.reduce((a, b) => a > b
+                                        ? a
+                                        : b), // 1.2 * the max value in rotatedDistances
+                                barGroups: [
+                                  BarChartGroupData(x: 0, barRods: [
+                                    BarChartRodData(
+                                        fromY: 0,
+                                        toY: rotatedDistances[0] *
+                                            _animation.value,
+                                        color: selectedColor,
+                                        width: 30.0)
+                                  ]),
+                                  BarChartGroupData(x: 1, barRods: [
+                                    BarChartRodData(
+                                        fromY: 0,
+                                        toY: rotatedDistances[1] *
+                                            _animation.value,
+                                        color: selectedColor,
+                                        width: 30.0)
+                                  ]),
+                                  BarChartGroupData(x: 2, barRods: [
+                                    BarChartRodData(
+                                        fromY: 0,
+                                        toY: rotatedDistances[2] *
+                                            _animation.value,
+                                        color: selectedColor,
+                                        width: 30.0)
+                                  ]),
+                                  BarChartGroupData(x: 3, barRods: [
+                                    BarChartRodData(
+                                        fromY: 0,
+                                        toY: rotatedDistances[3] *
+                                            _animation.value,
+                                        color: selectedColor,
+                                        width: 30.0)
+                                  ]),
+                                  BarChartGroupData(x: 4, barRods: [
+                                    BarChartRodData(
+                                        fromY: 0,
+                                        toY: rotatedDistances[4] *
+                                            _animation.value,
+                                        color: selectedColor,
+                                        width: 30.0)
+                                  ]),
+                                  BarChartGroupData(x: 5, barRods: [
+                                    BarChartRodData(
+                                        fromY: 0,
+                                        toY: rotatedDistances[5] *
+                                            _animation.value,
+                                        color: selectedColor,
+                                        width: 30.0)
+                                  ]),
+                                  BarChartGroupData(x: 6, barRods: [
+                                    BarChartRodData(
+                                        fromY: 0,
+                                        toY: rotatedDistances[6] *
+                                            _animation.value,
+                                        color: selectedColor,
+                                        width: 30.0)
+                                  ]),
+                                ],
+                                titlesData: FlTitlesData(
+                                  leftTitles: AxisTitles(
+                                    axisNameWidget: Text('Miles',
+                                        style: TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.bold)),
+                                    sideTitles: SideTitles(
+                                      showTitles: true,
+                                      reservedSize: 20,
+                                      getTitlesWidget:
+                                          (double value, TitleMeta meta) {
+                                        return Text(value.toInt().toString(),
+                                            style: TextStyle(fontSize: 12));
+                                      },
+                                    ),
+                                  ),
+                                  bottomTitles: AxisTitles(
+                                    sideTitles: SideTitles(
+                                      showTitles: true,
+                                      getTitlesWidget:
+                                          (double value, TitleMeta meta) {
+                                        const days = [
+                                          'M',
+                                          'T',
+                                          'W',
+                                          'R',
+                                          'F',
+                                          'Sa',
+                                          'Su'
+                                        ];
+                                        List<String> rotatedDays =
+                                            getRotatedArray(
+                                                days, DateTime.now().weekday);
+                                        return Text(rotatedDays[value.toInt()],
+                                            style: TextStyle(fontSize: 12));
+                                      },
+                                    ),
+                                  ),
+                                  rightTitles: AxisTitles(
+                                      sideTitles:
+                                          SideTitles(showTitles: false)),
+                                  topTitles: AxisTitles(
+                                      sideTitles:
+                                          SideTitles(showTitles: false)),
+                                ),
+                                gridData: FlGridData(
+                                  drawHorizontalLine: false,
+                                  drawVerticalLine: false,
+                                ),
+                                barTouchData: BarTouchData(
+                                  touchTooltipData: BarTouchTooltipData(
+                                    getTooltipColor: (group) => isDarkMode
+                                        ? colorScheme.secondary
+                                        : colorScheme.secondaryFixed,
+                                    getTooltipItem:
+                                        (group, groupIndex, rod, rodIndex) {
+                                      return BarTooltipItem(
+                                        '${rod.toY.toStringAsFixed(1)}',
+                                        TextStyle(
+                                          color: isDarkMode
+                                              ? Colors.white
+                                              : selectedColor,
+                                        ),
+                                      );
                                     },
                                   ),
                                 ),
-                                bottomTitles: AxisTitles(
-                                  sideTitles: SideTitles(
-                                    showTitles: true,
-                                    getTitlesWidget:
-                                        (double value, TitleMeta meta) {
-                                      const days = [
-                                        'M',
-                                        'T',
-                                        'W',
-                                        'R',
-                                        'F',
-                                        'Sa',
-                                        'Su'
-                                      ];
-                                      List<String> rotatedDays = getRotatedArray(
-                                          days, DateTime.now().weekday);
-                                      return Text(rotatedDays[value.toInt()],
-                                          style: TextStyle(fontSize: 12));
-                                    },
-                                  ),
-                                ),
-                                rightTitles: AxisTitles(
-                                    sideTitles: SideTitles(showTitles: false)),
-                                topTitles: AxisTitles(
-                                    sideTitles: SideTitles(showTitles: false)),
+                                borderData: FlBorderData(show: false),
                               ),
-                              gridData: FlGridData(
-                                drawHorizontalLine: false,
-                                drawVerticalLine: false,
-                              ),
-                              barTouchData: BarTouchData(
-                                touchTooltipData: BarTouchTooltipData(
-                                  getTooltipColor: (group) => isDarkMode
-                                      ? colorScheme.secondary
-                                      : colorScheme.secondaryFixed,
-                                  getTooltipItem:
-                                      (group, groupIndex, rod, rodIndex) {
-                                    return BarTooltipItem(
-                                      '${rod.toY.toStringAsFixed(1)}',
-                                      TextStyle(
-                                        color: isDarkMode
-                                            ? Colors.white
-                                            : selectedColor,
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ),
-                              borderData: FlBorderData(show: false),
-                            ),
-                          );
-                        }
-                      ),
+                            );
+                          }),
                     ),
                     SizedBox(height: DimUtil.safeHeight(context) * 1 / 40),
                     buildStreakDisplay(context, userStats.rideStreak),
@@ -545,8 +556,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
               Showcase(
                 key: _avgRideKey,
                 title: 'Average Daily Ride',
-                description:
-                    'Your average ride statistics this week.',
+                description: 'Your average ride statistics this week.',
                 child: Column(
                   children: [
                     Center(
@@ -743,7 +753,24 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
           onPressed: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => StorePage()),
+              PageRouteBuilder(
+                pageBuilder: (context, animation, secondaryAnimation) => StorePage(),
+                transitionDuration: Duration(milliseconds: 300), 
+                transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                  var offsetAnimation = Tween<Offset>(
+                    begin: Offset(-1.0, 0.0),  
+                    end: Offset.zero,         
+                  ).animate(CurvedAnimation(
+                    parent: animation,
+                    curve: Curves.easeOut, 
+                  ));
+
+                  return SlideTransition(
+                    position: offsetAnimation,
+                    child: child,
+                  );
+                },
+              ),
             );
           },
           child: Column(
@@ -970,8 +997,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 
     return Row(
       children: [
-        Icon(icon,
-            color: isDarkMode ? Colors.white : selectedColor, size: 40),
+        Icon(icon, color: isDarkMode ? Colors.white : selectedColor, size: 40),
         SizedBox(width: DimUtil.safeWidth(context) * 1 / 40),
         Expanded(
           child: Column(

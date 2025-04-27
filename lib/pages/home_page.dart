@@ -240,7 +240,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                           return BarChart(
                             BarChartData(
                               alignment: BarChartAlignment.spaceAround,
-                              maxY: 1.2 *
+                              maxY: 1 *
                                   rotatedDistances.reduce((a, b) => a > b
                                       ? a
                                       : b), // 1.2 * the max value in rotatedDistances

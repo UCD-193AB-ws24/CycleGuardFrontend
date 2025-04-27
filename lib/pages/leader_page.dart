@@ -107,9 +107,29 @@ class _LeaderPageState extends State<LeaderPage> with SingleTickerProviderStateM
             Padding(
               padding: const EdgeInsets.only(right: 32.0),
               child: GestureDetector(
-              onTap: () {
-                Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => MyHomePage()));
-              },
+                onTap: () {
+                  Navigator.pushReplacement(
+                    context,
+                    PageRouteBuilder(
+                      pageBuilder: (context, animation, secondaryAnimation) => MyHomePage(),
+                      transitionDuration: Duration(milliseconds: 500),  
+                      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                        var offsetAnimation = Tween<Offset>(
+                          begin: Offset(0.0, -1.0),  
+                          end: Offset.zero,           
+                        ).animate(CurvedAnimation(
+                          parent: animation,
+                          curve: Curves.easeOut,    
+                        ));
+
+                        return SlideTransition(
+                          position: offsetAnimation,
+                          child: child,
+                        );
+                      },
+                    ),
+                  );
+                },
                 child: SvgPicture.asset(
                   'assets/cg_logomark.svg',
                   height: 30,

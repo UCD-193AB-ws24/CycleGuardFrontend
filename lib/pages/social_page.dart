@@ -343,7 +343,27 @@ class _SocialPageState extends State<SocialPage>
             padding: const EdgeInsets.only(right: 32.0),
             child: GestureDetector(
               onTap: () {
-                Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => MyHomePage()));
+                Navigator.pushReplacement(
+                  context,
+                  PageRouteBuilder(
+                    pageBuilder: (context, animation, secondaryAnimation) => MyHomePage(),
+                    transitionDuration: Duration(milliseconds: 500),  
+                    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                      var offsetAnimation = Tween<Offset>(
+                        begin: Offset(0.0, -1.0),  
+                        end: Offset.zero,           
+                      ).animate(CurvedAnimation(
+                        parent: animation,
+                        curve: Curves.easeOut,    
+                      ));
+
+                      return SlideTransition(
+                        position: offsetAnimation,
+                        child: child,
+                      );
+                    },
+                  ),
+                );
               },
               child: SvgPicture.asset(
                 'assets/cg_logomark.svg',
@@ -431,8 +451,24 @@ class _SocialPageState extends State<SocialPage>
                         onPressed: () {
                           Navigator.push(
                             context,
-                            MaterialPageRoute(
-                                builder: (context) => SettingsPage()),
+                            PageRouteBuilder(
+                              pageBuilder: (context, animation, secondaryAnimation) => SettingsPage(),
+                              transitionDuration: Duration(milliseconds: 300),  
+                              transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                                var offsetAnimation = Tween<Offset>(
+                                  begin: Offset(-1.0, 0.0),  
+                                  end: Offset.zero,          
+                                ).animate(CurvedAnimation(
+                                  parent: animation,
+                                  curve: Curves.easeOut, 
+                                ));
+
+                                return SlideTransition(
+                                  position: offsetAnimation,
+                                  child: child,
+                                );
+                              },
+                            ),
                           );
                         },
                         child: Column(

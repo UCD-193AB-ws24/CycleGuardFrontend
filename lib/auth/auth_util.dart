@@ -81,9 +81,9 @@ class AuthUtil {
     print("In AuthUtil.createAccount");
     print(username);
     print(password);
-    if (isLoggedIn()) {
-      throw "Already logged in!";
-    }
+    // if (isLoggedIn()) {
+    //   throw "Already logged in!";
+    // }
 
     final body = {
       "username": username,

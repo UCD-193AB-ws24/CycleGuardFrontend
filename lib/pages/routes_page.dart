@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:cycle_guard_app/data/user_profile_accessor.dart';
+import 'package:cycle_guard_app/pages/ble.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:geolocator/geolocator.dart';
@@ -11,6 +12,8 @@ import '../auth/key_util.dart';
 import '../auth/dim_util.dart';
 import '../data/submit_ride_service.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+
+import './ble.dart';
 
 ApiService apiService = ApiService();
 
@@ -297,7 +300,7 @@ class mapState extends State<RoutesPage> {
             bottom: DimUtil.safeHeight(context) * 1 / 8,
             right: DimUtil.safeWidth(context) * 1 / 20,
             child: FloatingActionButton(
-              onPressed: connectHelmet,
+              onPressed: () => connectHelmet(context),
               backgroundColor: helmetConnected?Colors.green:Colors.white,
               elevation: 4,
               child: SvgPicture.asset(
@@ -467,7 +470,8 @@ class mapState extends State<RoutesPage> {
     });
   }
 
-  void connectHelmet() {
+  void connectHelmet(BuildContext context) {
+    showCustomDialog(context);
     setState(() {
       helmetConnected = !helmetConnected;
     });

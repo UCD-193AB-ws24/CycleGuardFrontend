@@ -67,22 +67,25 @@ class BluetoothController extends GetxController {
   //   }
   }
 }
- Timer? timer;
+Timer? timer;
 
-Future<void> _connectAndRead(BluetoothDevice device) async {
+bool _isConnected = false;
+
+Future<void> _connectAndRead(BluetoothDevice device, Function(BluetoothData) callback) async {
+  _isConnected = false;
   if(!device.isConnected) await device.connect();
 
+  _isConnected = true;
   print("Connected to ${device.advName}: $device");
   if (timer != null) timer!.cancel();
   timer = Timer.periodic(Duration(seconds: 1), (Timer timer) async {
       BluetoothData data = await BluetoothData.fromBluetooth(device);
-      print(data);
+      callback(data);
     }
   );
-
 }
 
-void showCustomDialog(BuildContext context) async {
+Future<void> showCustomDialog(BuildContext context, Function(BluetoothData) callback) async {
   await requestBluetoothPermissions();
   showDialog(
     context: context,
@@ -123,6 +126,11 @@ void showCustomDialog(BuildContext context) async {
                             if (data.device.isConnected)
                               ElevatedButton(
                                 onPressed: () async {
+                                  if (timer != null) {
+                                    timer!.cancel();
+                                    timer = null;
+                                    _isConnected = false;
+                                  }
                                   await data.device.disconnect();
                                   print("Device disconnected: ${data.device.platformName}");
                                 },
@@ -130,7 +138,7 @@ void showCustomDialog(BuildContext context) async {
                               ),
                           ],
                         ),
-                        onTap: () => _connectAndRead(data.device),
+                        onTap: () => _connectAndRead(data.device, callback),
                       ),
                     );
                   },
@@ -152,7 +160,7 @@ void showCustomDialog(BuildContext context) async {
               child: Text(
                 "Scan",
                 style: GoogleFonts.poppins(
-                    fontSize: 18, fontWeight: FontWeight.bold),
+                  fontSize: 18, fontWeight: FontWeight.bold),
               ),
             ),
           ),

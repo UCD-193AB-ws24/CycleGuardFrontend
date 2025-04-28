@@ -470,8 +470,10 @@ class mapState extends State<RoutesPage> {
     });
   }
 
-  void connectHelmet(BuildContext context) {
-    showCustomDialog(context);
+  void connectHelmet(BuildContext context) async {
+    await showCustomDialog(context, (data) {
+      print("In callback function: $data");
+    });
     setState(() {
       helmetConnected = !helmetConnected;
     });

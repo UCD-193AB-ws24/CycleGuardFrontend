@@ -439,7 +439,7 @@ class TestingPage extends StatelessWidget {
                 //   child: Text("user/all"),
                 // ),
                 ElevatedButton(
-                  onPressed: () => showCustomDialog(context),
+                  onPressed: () => showCustomDialog(context, (data) => print(data)),
                   style: ElevatedButton.styleFrom(
                     elevation: 5,
                     padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),

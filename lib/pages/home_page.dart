@@ -538,9 +538,8 @@ class _HomePageState extends State<HomePage>
                       children: [
                         _buildCircularStat(
                           context,
-                          title: 'Time',
-                          value: '$todayTime min',
-                          goal: '${userGoals.dailyTimeGoal} min',
+                          title: '$todayTime min',
+                          icon: Icons.access_time,
                           percent: userGoals.dailyTimeGoal == 0
                               ? 0
                               : todayTime / userGoals.dailyTimeGoal,
@@ -548,9 +547,8 @@ class _HomePageState extends State<HomePage>
                         ),
                         _buildCircularStat(
                           context,
-                          title: 'Distance',
-                          value: '$todayDistance mi',
-                          goal: '${userGoals.dailyDistanceGoal} mi',
+                          title: '$todayDistance mi',
+                          icon: Icons.directions_bike,
                           percent: userGoals.dailyDistanceGoal == 0
                               ? 0
                               : todayDistance / userGoals.dailyDistanceGoal,
@@ -558,9 +556,8 @@ class _HomePageState extends State<HomePage>
                         ),
                         _buildCircularStat(
                           context,
-                          title: 'Calories',
-                          value: '$todayCalories cal',
-                          goal: '${userGoals.dailyCaloriesGoal} cal',
+                          title: '$todayCalories cal',
+                          icon: Icons.local_fire_department,
                           percent: userGoals.dailyCaloriesGoal == 0
                               ? 0
                               : todayCalories / userGoals.dailyCaloriesGoal,
@@ -876,12 +873,13 @@ class _HomePageState extends State<HomePage>
     );
   }
 
-  Widget _buildCircularStat(BuildContext context,
-      {required String title,
-      required String value,
-      required String goal,
-      required double percent,
-      required Color color}) {
+  Widget _buildCircularStat(
+    BuildContext context, {
+    required String title,
+    required IconData icon,
+    required double percent,
+    required Color color,
+  }) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -889,7 +887,11 @@ class _HomePageState extends State<HomePage>
           radius: 60.0,
           lineWidth: 8.0,
           percent: percent.clamp(0.0, 1.0),
-          center: Text(value, style: TextStyle(fontWeight: FontWeight.bold)),
+          center: Icon(
+            icon,
+            size: 64,
+            color: color,
+          ),
           progressColor: color,
           backgroundColor: Colors.grey.shade300,
           circularStrokeCap: CircularStrokeCap.round,
@@ -897,15 +899,9 @@ class _HomePageState extends State<HomePage>
           animationDuration: 500,
         ),
         const SizedBox(height: 8),
-        Text(title,
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
         Text(
-          '$goal',
-          style: TextStyle(
-              fontSize: 12,
-              color: Theme.of(context).brightness == Brightness.dark
-                  ? Colors.white70
-                  : Colors.black87),
+          title,
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
         ),
       ],
     );

@@ -73,7 +73,7 @@ class _SocialPageState extends State<SocialPage>
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final appState = Provider.of<MyAppState>(context, listen: false);
 
-      if (appState.isSocialTutorialActive) {
+      if (appState.isSocialTutorialActive && !appState.tutorialSkipped) {
         // Start the tutorial
         ShowCaseWidget.of(context).startShowCase([
           _tabsKey,
@@ -103,7 +103,26 @@ class _SocialPageState extends State<SocialPage>
 
         appState.isSocialTutorialActive = false;
       }
+
+      appState.addListener(_handleTutorialSkip);
     });
+  }
+
+  void _handleTutorialSkip() {
+    if (!mounted) return; // Check if widget is still mounted
+    
+    final appState = Provider.of<MyAppState>(context, listen: false);
+    if (appState.tutorialSkipped) {
+      // Stop any running showcase
+      try {
+        ShowCaseWidget.of(context).dismiss();
+      } catch (e) {
+        print('Error dismissing showcase: $e');
+      }
+      
+      // Remove the listener after handling the skip
+      appState.removeListener(_handleTutorialSkip);
+    }
   }
 
   Future<void> _loadProfile() async {

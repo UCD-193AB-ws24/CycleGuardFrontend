@@ -126,6 +126,18 @@ class MyApp extends StatelessWidget {
         builder: (context, appState, userStats, achievementsProgress, weekHistory, tripHistory, userDailyGoal, child) {
           return ShowCaseWidget(
             enableAutoScroll: true,
+            globalTooltipActions: [
+              TooltipActionButton(
+                backgroundColor: Colors.orange,
+                type: TooltipDefaultActionType.next,
+              ),
+              TooltipActionButton(
+                type: TooltipDefaultActionType.skip,
+                onTap: () {
+                  appState.skipTutorial();
+                },
+              ),
+            ],
             builder: (context) => MaterialApp(
               title: 'Cycle Guard App',
               debugShowCheckedModeBanner: false,
@@ -153,6 +165,9 @@ class MyAppState extends ChangeNotifier {
   bool isDarkMode = false;
   bool isHomeTutorialActive = false;
   bool isSocialTutorialActive = false;
+  bool _tutorialSkipped = false;
+
+  bool get tutorialSkipped => _tutorialSkipped;
 
   final Map<String, Color> availableThemes = {
     'Yellow': Colors.yellow,
@@ -190,6 +205,13 @@ class MyAppState extends ChangeNotifier {
     notifyListeners(); 
   }
 
+  void skipTutorial() {
+    isHomeTutorialActive = false;
+    isSocialTutorialActive = false;
+    _tutorialSkipped = true;
+    notifyListeners();
+  }
+
   Future<void> loadUserProfile() async {
     final profile = await UserProfileAccessor.getOwnProfile();
     isHomeTutorialActive = profile.isNewAccount;
@@ -198,6 +220,7 @@ class MyAppState extends ChangeNotifier {
 
   void enableTutorial() {
     isHomeTutorialActive = true;
+    _tutorialSkipped = false;
     notifyListeners();
   }
 

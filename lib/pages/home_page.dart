@@ -77,7 +77,7 @@ class _HomePageState extends State<HomePage>
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final appState = Provider.of<MyAppState>(context, listen: false);
 
-      if (appState.isHomeTutorialActive) {
+      if (appState.isHomeTutorialActive && !appState.tutorialSkipped) {
         // Start the tutorial
         ShowCaseWidget.of(context).startShowCase([
           _welcomeMessageKey,
@@ -95,11 +95,30 @@ class _HomePageState extends State<HomePage>
         appState.isHomeTutorialActive = false;
         appState.isSocialTutorialActive = true;
       }
+
+      appState.addListener(_handleTutorialSkip);
     });
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _controllerAnimation.forward();
     });
+  }
+
+  void _handleTutorialSkip() {
+    if (!mounted) return; // Check if widget is still mounted
+    
+    final appState = Provider.of<MyAppState>(context, listen: false);
+    if (appState.tutorialSkipped) {
+      // Stop any running showcase
+      try {
+        ShowCaseWidget.of(context).dismiss();
+      } catch (e) {
+        print('Error dismissing showcase: $e');
+      }
+      
+      // Remove the listener after handling the skip
+      appState.removeListener(_handleTutorialSkip);
+    }
   }
 
   @override
@@ -215,7 +234,7 @@ class _HomePageState extends State<HomePage>
                   key: _welcomeMessageKey,
                   title: 'Welcome to CycleGuard!',
                   description:
-                      "We've prepared a brief guide around the app for you! Tap on the screen when you are ready to be shown the home page!",
+                      "Tap on the screen or 'next' to continue or tap 'skip' to end the tutorial early.",
                   child: SizedBox(width: 1, height: 1),
                 ),
               ),

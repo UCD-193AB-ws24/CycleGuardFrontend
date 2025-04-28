@@ -113,7 +113,15 @@ class mapState extends State<RoutesPage> {
   }
 
   List<double> _toLats(List<LatLng> list) {
-    
+    return list.map((e) => e.latitude).toList(growable: false);
+  }
+
+  List<double> _toLngs(List<LatLng> list) {
+    return list.map((e) => e.longitude).toList(growable: false);
+  }
+
+  double _calculateCalories() {
+    return 0;
   }
 
   void stopDistanceRecord() {
@@ -129,10 +137,10 @@ class mapState extends State<RoutesPage> {
     // Time is in milliseconds
     final rideInfo = RideInfo(
         totalDist * 0.000621371,
-        100,
+        _calculateCalories(),
         rideDuration/60000,
-        [],
-        []
+        _toLats(recordedLocations),
+        _toLngs(recordedLocations)
     );
     print(rideInfo.toJson());
 

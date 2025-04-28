@@ -705,7 +705,7 @@ class _PacksPageState extends State<PacksPage> {
                       ),
                       Wrap(
                         spacing: 8,
-                        children: [100, 250, 500].map((amount) {
+                        children: [50, 100, 250, 500].map((amount) {
                           return ElevatedButton(
                             onPressed: () async {
                               try {

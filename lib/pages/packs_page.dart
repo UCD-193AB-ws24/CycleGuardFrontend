@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:cycle_guard_app/data/user_stats_provider.dart';
 import 'package:cycle_guard_app/data/packs_accessor.dart';
+import 'package:cycle_guard_app/data/pack_invites_accessor.dart';
 
 class PacksPage extends StatefulWidget {
   const PacksPage({super.key});
@@ -13,22 +14,38 @@ class PacksPage extends StatefulWidget {
 
 class _PacksPageState extends State<PacksPage> {
   PackData? _myPack;
+  PackInvites? _myInvites;
   bool _loading = true;
+  bool _sendingInvite = false;
 
   final List<int> _challengeDistances = [50, 100, 250, 500];
 
   @override
   void initState() {
     super.initState();
-    _loadPack();
+    _loadData();
   }
 
-  Future<void> _loadPack() async {
-    final pack = await PacksAccessor.getPackData();
+  Future<void> _loadData() async {
     setState(() {
-      _myPack = pack;
-      _loading = false;
+      _loading = true;
     });
+    
+    try {
+      final pack = await PacksAccessor.getPackData();
+      final invites = await PackInvitesAccessor.getInvites();
+      
+      setState(() {
+        _myPack = pack;
+        _myInvites = invites;
+        _loading = false;
+      });
+    } catch (e) {
+      _showMessage('Failed to load data: $e');
+      setState(() {
+        _loading = false;
+      });
+    }
   }
 
   void _showMessage(String message) {
@@ -45,7 +62,114 @@ class _PacksPageState extends State<PacksPage> {
       await PacksAccessor.leavePack();
     }
 
-    await _loadPack();
+    await _loadData();
+  }
+
+  void _showInviteMemberDialog() {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final usernameController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor:
+            isDarkMode ? Theme.of(context).colorScheme.onPrimaryFixed : null,
+        title: Text(
+          'Invite Member',
+          style: TextStyle(color: isDarkMode ? Colors.white : null),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: usernameController,
+              decoration: InputDecoration(
+                labelText: 'Username',
+                labelStyle:
+                    TextStyle(color: isDarkMode ? Colors.white70 : null),
+                enabledBorder: isDarkMode
+                    ? const UnderlineInputBorder(
+                        borderSide: BorderSide(color: Colors.white24),
+                      )
+                    : null,
+                focusedBorder: isDarkMode
+                    ? const UnderlineInputBorder(
+                        borderSide: BorderSide(color: Colors.white),
+                      )
+                    : null,
+              ),
+              style: TextStyle(color: isDarkMode ? Colors.white : null),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(
+              'Cancel',
+              style: TextStyle(color: isDarkMode ? Colors.white : null),
+            ),
+          ),
+          TextButton(
+            onPressed: () async {
+              final username = usernameController.text.trim();
+              if (username.isNotEmpty) {
+                Navigator.of(context).pop();
+                setState(() {
+                  _sendingInvite = true;
+                });
+                
+                try {
+                  await PackInvitesAccessor.sendInvite(username);
+                  _showMessage('Invite sent to $username');
+                  await _loadData();
+                } catch (e) {
+                  _showMessage('Failed to send invite: $e');
+                } finally {
+                  setState(() {
+                    _sendingInvite = false;
+                  });
+                }
+              }
+            },
+            child: Text(
+              'Send Invite',
+              style: TextStyle(color: isDarkMode ? Colors.white : null),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _cancelInvite(String username) async {
+    try {
+      await PackInvitesAccessor.cancelInvite(username);
+      _showMessage('Invite to $username canceled');
+      await _loadData();
+    } catch (e) {
+      _showMessage('Failed to cancel invite: $e');
+    }
+  }
+
+  Future<void> _acceptInvite(String packName) async {
+    try {
+      await PackInvitesAccessor.acceptInvite(packName);
+      _showMessage('Joined pack: $packName');
+      await _loadData();
+    } catch (e) {
+      _showMessage('Failed to accept invite: $e');
+    }
+  }
+
+  Future<void> _declineInvite(String packName) async {
+    try {
+      await PackInvitesAccessor.declineInvite(packName);
+      _showMessage('Declined invite from: $packName');
+      await _loadData();
+    } catch (e) {
+      _showMessage('Failed to decline invite: $e');
+    }
   }
 
   void _showCreatePackDialog(int goalAmount) {
@@ -125,7 +249,7 @@ class _PacksPageState extends State<PacksPage> {
                 goalAmount,
               );
               Navigator.of(context).pop();
-              _loadPack();
+              _loadData();
             },
             child: Text(
               'Create',
@@ -210,7 +334,7 @@ class _PacksPageState extends State<PacksPage> {
               try {
                 await PacksAccessor.joinPack(name, pass);
                 Navigator.of(context).pop();
-                _loadPack();
+                _loadData();
               } catch (e) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Pack does not exist')),
@@ -295,6 +419,7 @@ class _PacksPageState extends State<PacksPage> {
 
     final goal = _myPack!.packGoal;
     final members = _myPack!.memberList;
+    final invites = _myPack!.invites;
     final double progress = (goal.goalAmount > 0)
         ? (goal.totalContribution / goal.goalAmount).clamp(0.0, 1.0)
         : 0.0;
@@ -338,7 +463,7 @@ class _PacksPageState extends State<PacksPage> {
                   children: [
                     TextSpan(
                       text: goal.goalAmount == 0
-                          ? 'No goal set, the pack owner can set a new goal!'
+                          ? 'No goal set, the pack owner can set a new goal!\n'
                           : 'Goal: ${goal.goalAmount} mi\n',
                       style: TextStyle(
                         fontSize: 16,
@@ -411,7 +536,9 @@ class _PacksPageState extends State<PacksPage> {
                           ),
                         ),
                         Text(
-                          '${value.toStringAsFixed(1)} mi : $percent%',
+                          (goal.goalAmount == 0 || value == 0)
+                              ? '    ---    '
+                              : '${value.toStringAsFixed(1)} mi : ${((value / goal.goalAmount) * 100).toStringAsFixed(1)}%',
                           style: TextStyle(
                             color: isDarkMode ? Colors.white : null,
                           ),
@@ -436,6 +563,75 @@ class _PacksPageState extends State<PacksPage> {
                 ),
                 const SizedBox(height: 24),
               ],
+              
+              // Invites section (for pack owner)
+              if (isOwner) ...[
+                const Divider(height: 24),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Pending Invites:',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: isDarkMode ? Colors.white : null,
+                      ),
+                    ),
+                    ElevatedButton.icon(
+                      onPressed: _sendingInvite ? null : _showInviteMemberDialog,
+                      icon: _sendingInvite 
+                          ? SizedBox(
+                              width: 18, 
+                              height: 18, 
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: isDarkMode ? Colors.white54 : null,
+                              ),
+                            )
+                          : const Icon(Icons.person_add),
+                      label: const Text('Invite Member'),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                if (invites.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: Text(
+                      'No pending invites',
+                      style: TextStyle(
+                        fontStyle: FontStyle.italic,
+                        color: isDarkMode ? Colors.white70 : Colors.grey,
+                      ),
+                    ),
+                  )
+                else
+                  ...invites.map((username) => Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          username,
+                          style: TextStyle(
+                            color: isDarkMode ? Colors.white : null,
+                          ),
+                        ),
+                        TextButton.icon(
+                          onPressed: () => _cancelInvite(username),
+                          icon: const Icon(Icons.close),
+                          label: const Text('Cancel'),
+                          style: TextButton.styleFrom(
+                            foregroundColor: Colors.red,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )).toList(),
+                const Divider(height: 24),
+              ],
+              
               if (isOwner) ...[
                 if (goal.goalAmount > 0)
                   ElevatedButton(
@@ -485,7 +681,7 @@ class _PacksPageState extends State<PacksPage> {
                         try {
                           final success = await PacksAccessor.cancelPackGoal();
                           if (success) {
-                            await _loadPack();
+                            await _loadData();
                           }
                         } catch (e) {
                           ScaffoldMessenger.of(context).showSnackBar(
@@ -518,7 +714,7 @@ class _PacksPageState extends State<PacksPage> {
                                   PacksAccessor.GOAL_DISTANCE,
                                   amount,
                                 );
-                                await _loadPack();
+                                await _loadData();
                               } catch (e) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
@@ -596,6 +792,71 @@ class _PacksPageState extends State<PacksPage> {
     );
   }
 
+  Widget _buildInvitesSection() {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final invites = _myInvites?.invites ?? [];
+    
+    if (invites.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      elevation: 2,
+      color: isDarkMode ? Theme.of(context).colorScheme.onPrimaryFixed : null,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Pack Invites',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: isDarkMode ? Colors.white : null,
+              ),
+            ),
+            const SizedBox(height: 12),
+            ...invites.map((packName) => Padding(
+              padding: const EdgeInsets.only(bottom: 12.0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      packName,
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: isDarkMode ? Colors.white : null,
+                      ),
+                    ),
+                  ),
+                  TextButton.icon(
+                    onPressed: () => _acceptInvite(packName),
+                    icon: const Icon(Icons.check),
+                    label: const Text('Accept'),
+                    style: TextButton.styleFrom(
+                      foregroundColor: Colors.green,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  TextButton.icon(
+                    onPressed: () => _declineInvite(packName),
+                    icon: const Icon(Icons.close),
+                    label: const Text('Decline'),
+                    style: TextButton.styleFrom(
+                      foregroundColor: Colors.red,
+                    ),
+                  ),
+                ],
+              ),
+            )).toList(),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildChallengeCard(int distance) {
     final bool disabled = _myPack != null;
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
@@ -655,6 +916,11 @@ class _PacksPageState extends State<PacksPage> {
     return ListView(
       children: [
         const SizedBox(height: 12),
+        
+        // Show invites section if there are any
+        if (_myInvites != null && _myInvites!.invites.isNotEmpty)
+          _buildInvitesSection(),
+          
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           child: ElevatedButton(

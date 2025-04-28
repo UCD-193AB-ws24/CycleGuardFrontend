@@ -226,6 +226,8 @@ class mapState extends State<RoutesPage> {
             },
             itemClick: (prediction) {
               textController.text = prediction.description!;
+              recordedLocations.clear();
+              FocusScope.of(context).unfocus();
             },
           ),
         ],

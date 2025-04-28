@@ -38,6 +38,8 @@ class mapState extends State<RoutesPage> {
   final stopwatch = Stopwatch();
   int rideDuration = 0;
 
+  bool helmetConnected = false;
+
   BitmapDescriptor customIcon = BitmapDescriptor.defaultMarker;
 
   final locationController = Location();
@@ -293,6 +295,24 @@ class mapState extends State<RoutesPage> {
               : mainMap(),
           Positioned(
             bottom: DimUtil.safeHeight(context) * 1 / 8,
+            right: DimUtil.safeWidth(context) * 1 / 20,
+            child: FloatingActionButton(
+              onPressed: connectHelmet,
+              backgroundColor: helmetConnected?Colors.green:Colors.white,
+              elevation: 4,
+              child: SvgPicture.asset(
+                'assets/cg_logomark.svg',
+                height: 30,
+                width: 30,
+                colorFilter: ColorFilter.mode(
+                  helmetConnected?Colors.white:Colors.black,
+                  BlendMode.srcIn,
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: DimUtil.safeHeight(context) * 1 / 8,
             left: DimUtil.safeWidth(context) * 1 / 20,
             child: FloatingActionButton(
               onPressed: changeMapType,
@@ -444,6 +464,12 @@ class mapState extends State<RoutesPage> {
 
     setState(() {
       polylines[id] = polyline;
+    });
+  }
+
+  void connectHelmet() {
+    setState(() {
+      helmetConnected = !helmetConnected;
     });
   }
 }

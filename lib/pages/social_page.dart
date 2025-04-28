@@ -108,7 +108,7 @@ class _SocialPageState extends State<SocialPage>
     });
   }
 
-  void _handleTutorialSkip() {
+  void _handleTutorialSkip() async {
     if (!mounted) return; // Check if widget is still mounted
     
     final appState = Provider.of<MyAppState>(context, listen: false);
@@ -119,6 +119,22 @@ class _SocialPageState extends State<SocialPage>
       } catch (e) {
         print('Error dismissing showcase: $e');
       }
+
+      // Mark tutorial as completed (update profile and app state)
+      final profile = await UserProfileAccessor.getOwnProfile();
+
+      final updatedProfile = UserProfile(
+        username: profile.username,
+        displayName: profile.displayName,
+        bio: profile.bio,
+        profileIcon: profile.profileIcon,
+        isPublic: profile.isPublic,
+        isNewAccount: false,
+      );
+
+      await UserProfileAccessor.updateOwnProfile(updatedProfile);
+
+        appState.isSocialTutorialActive = false;
       
       // Remove the listener after handling the skip
       appState.removeListener(_handleTutorialSkip);

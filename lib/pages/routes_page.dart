@@ -112,6 +112,10 @@ class mapState extends State<RoutesPage> {
     }
   }
 
+  List<double> _toLats(List<LatLng> list) {
+    
+  }
+
   void stopDistanceRecord() {
     print(recordedLocations);
 
@@ -130,7 +134,7 @@ class mapState extends State<RoutesPage> {
         [],
         []
     );
-    print(rideInfo);
+    print(rideInfo.toJson());
 
     // For now, don't send anything to backend yet
     // SubmitRideService.addRide(rideInfo);

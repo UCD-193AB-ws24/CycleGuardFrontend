@@ -49,9 +49,9 @@ class AuthUtil {
     print("In AuthUtil.login");
     print(username);
     print(password);
-    if (isLoggedIn()) {
-      throw "Already logged in!";
-    }
+    // if (isLoggedIn()) {
+    //   throw "Already logged in!";
+    // }
     
     final body = {
       "username": username,

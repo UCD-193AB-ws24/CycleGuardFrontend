@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:math';
+import 'package:cycle_guard_app/data/user_profile_accessor.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:geolocator/geolocator.dart';
@@ -9,6 +10,7 @@ import 'package:google_places_flutter/google_places_flutter.dart';
 import '../auth/key_util.dart';
 import '../auth/dim_util.dart';
 import '../data/submit_ride_service.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 ApiService apiService = ApiService();
 
@@ -36,6 +38,8 @@ class mapState extends State<RoutesPage> {
   final stopwatch = Stopwatch();
   int rideDuration = 0;
 
+  BitmapDescriptor customIcon = BitmapDescriptor.defaultMarker;
+
   final locationController = Location();
   final TextEditingController textController = TextEditingController();
   LatLng? center;
@@ -45,10 +49,30 @@ class mapState extends State<RoutesPage> {
   List<LatLng> recordedLocations = [];
   double? heading;
 
+  Future<void> setCustomIcon() async {
+    try{
+      UserProfile userProfile = await UserProfileAccessor.getOwnProfile();
+      //print('${userProfile.profileIcon}.png aaaaaaaaaaaaaaaaaaaaAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
+      BitmapDescriptor.asset(
+        ImageConfiguration(size: Size(30, 30)),
+        'assets/${userProfile.profileIcon}.png',
+
+      ).then((icon){
+        setState(() {
+          customIcon = icon;
+        });
+      });
+    }catch(e){
+      print("Error loading custom icon: $e");
+    }
+
+  }
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
+      setCustomIcon();
       await fetchLocationUpdates();
       Geolocator.getPositionStream(
         locationSettings: LocationSettings(accuracy:LocationAccuracy.high),
@@ -170,7 +194,7 @@ class mapState extends State<RoutesPage> {
     markers: {
       Marker(
         markerId: MarkerId("centerMarker"),
-        icon: BitmapDescriptor.defaultMarker,
+        icon: customIcon,
         position: center!,
       ),
       if (dest != null)

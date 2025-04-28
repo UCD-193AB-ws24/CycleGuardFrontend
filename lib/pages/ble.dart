@@ -11,7 +11,8 @@ class BluetoothController extends GetxController {
 
   Future<void> scanDevices() async {
     await requestBluetoothPermissions();
-    PermissionStatus bluetoothScanStatus = await Permission.bluetoothScan.status;
+    PermissionStatus bluetoothScanStatus =
+        await Permission.bluetoothScan.status;
     if (bluetoothScanStatus.isGranted) {
       FlutterBluePlus.startScan(timeout: const Duration(seconds: 5));
 
@@ -29,19 +30,16 @@ class BluetoothController extends GetxController {
 }
 
 Future<void> _connectAndRead(BluetoothDevice device) async {
-
-  if(!device.isConnected) await device.connect();
+  if (!device.isConnected) await device.connect();
   List<BluetoothService> services = await device.discoverServices();
 
   // theres only one table inside the ble lol
   BluetoothCharacteristic? targetCharacteristic;
   for (BluetoothService service in services) {
-      for (BluetoothCharacteristic characteristic in service.characteristics) {
-          targetCharacteristic = characteristic;
-
-      }
+    for (BluetoothCharacteristic characteristic in service.characteristics) {
+      targetCharacteristic = characteristic;
+    }
   }
-
 
   if (targetCharacteristic != null) {
     // Read the value from the known characteristic
@@ -50,7 +48,6 @@ Future<void> _connectAndRead(BluetoothDevice device) async {
   } else {
     print('Characteristic not found');
   }
-
 }
 
 void showCustomDialog(BuildContext context) async {
@@ -61,7 +58,7 @@ void showCustomDialog(BuildContext context) async {
       return AlertDialog(
         title: Text('Select Your Helmet'),
         content: Container(
-          padding: EdgeInsets.symmetric(horizontal: 4,vertical: 5),
+          padding: EdgeInsets.symmetric(horizontal: 4, vertical: 5),
           child: StreamBuilder<List<ScanResult>>(
             stream: Get.put(BluetoothController()).scanResults,
             builder: (context, snapshot) {
@@ -75,15 +72,30 @@ void showCustomDialog(BuildContext context) async {
                   itemBuilder: (context, index) {
                     final data = snapshot.data![index];
                     return Card(
+
                       elevation: 2,
                       child: ListTile(
                         title: Text(data.device.platformName),
                         subtitle: Text(data.device.remoteId.str),
-                        trailing: Text(data.rssi.toString()),
+                        iconColor: data.device.isConnected ? Colors.white : Colors.grey,
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(data.rssi.toString()),
+                            const SizedBox(width: 8),
+                            if (data.device.isConnected)
+                              ElevatedButton(
+                                onPressed: () async {
+                                  await data.device.disconnect();
+                                  print("Device disconnected: ${data.device.platformName}");
+                                },
+                                child: Text("Disconnect"),
+                              ),
+                          ],
+                        ),
                         onTap: () => _connectAndRead(data.device),
                       ),
                     );
-
                   },
                 );
               } else {
@@ -112,12 +124,15 @@ void showCustomDialog(BuildContext context) async {
   );
 }
 
-
 Future<void> requestBluetoothPermissions() async {
-  PermissionStatus bluetoothPermissionStatus = await Permission.bluetooth.request();
-  PermissionStatus bluetoothConnectPermissionStatus = await Permission.bluetoothConnect.request();
-  PermissionStatus bluetoothScanPermissionStatus = await Permission.bluetoothScan.request();
-  PermissionStatus locationPermissionStatus = await Permission.locationWhenInUse.request();
+  PermissionStatus bluetoothPermissionStatus =
+      await Permission.bluetooth.request();
+  PermissionStatus bluetoothConnectPermissionStatus =
+      await Permission.bluetoothConnect.request();
+  PermissionStatus bluetoothScanPermissionStatus =
+      await Permission.bluetoothScan.request();
+  PermissionStatus locationPermissionStatus =
+      await Permission.locationWhenInUse.request();
 
   if (bluetoothPermissionStatus.isGranted &&
       bluetoothConnectPermissionStatus.isGranted &&

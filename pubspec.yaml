@@ -106,6 +106,11 @@ flutter:
     - assets/icon_1_F.svg
     - assets/icon_1_M.svg
     - assets/icon_2_F.svg
+    - assets/icon_1_M.png
+    - assets/icon_1_F.png
+    - assets/icon_2_F.png
+    - assets/icon_2_M.png
+    - assets/icon_default.png
     - assets/icon_2_M.svg
     - assets/cg_type_logo.svg
     - assets/cg_launcher_icon.png

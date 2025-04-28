@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:math';
+import 'package:cycle_guard_app/data/user_profile_accessor.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:geolocator/geolocator.dart';
@@ -9,6 +10,7 @@ import 'package:google_places_flutter/google_places_flutter.dart';
 import '../auth/key_util.dart';
 import '../auth/dim_util.dart';
 import '../data/submit_ride_service.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 ApiService apiService = ApiService();
 
@@ -30,24 +32,47 @@ class mapState extends State<RoutesPage> {
   bool dstFound = false;
   bool offCenter = true;
   bool mapType = true;
-  bool showStartButton = false;
+  bool showStartButton = true;
   bool showStopButton = false;
   bool recordingDistance = false;
   final stopwatch = Stopwatch();
   int rideDuration = 0;
 
+  BitmapDescriptor customIcon = BitmapDescriptor.defaultMarker;
+
   final locationController = Location();
   final TextEditingController textController = TextEditingController();
   LatLng? center;
-  LatLng? dest = LatLng(0.0, 0.0);
+  LatLng? dest;
   LatLng? prevLoc;
   double totalDist = 0;
+  List<LatLng> recordedLocations = [];
   double? heading;
+
+  Future<void> setCustomIcon() async {
+    try{
+      UserProfile userProfile = await UserProfileAccessor.getOwnProfile();
+      //print('${userProfile.profileIcon}.png aaaaaaaaaaaaaaaaaaaaAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
+      BitmapDescriptor.asset(
+        ImageConfiguration(size: Size(30, 30)),
+        'assets/${userProfile.profileIcon}.png',
+
+      ).then((icon){
+        setState(() {
+          customIcon = icon;
+        });
+      });
+    }catch(e){
+      print("Error loading custom icon: $e");
+    }
+
+  }
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
+      setCustomIcon();
       await fetchLocationUpdates();
       Geolocator.getPositionStream(
         locationSettings: LocationSettings(accuracy:LocationAccuracy.high),
@@ -81,9 +106,15 @@ class mapState extends State<RoutesPage> {
       offCenter = true;
     });
     stopwatch.start();
+    if (dest == null) {
+      recordedLocations.clear();
+      recordedLocations.add(center!);
+    }
   }
 
   void stopDistanceRecord() {
+    print(recordedLocations);
+
     setState(() {
       showStartButton = true;
       showStopButton = false;
@@ -107,6 +138,7 @@ class mapState extends State<RoutesPage> {
     centerCamera(center!);
     totalDist = 0;
     rideDuration = 0;
+
   }
 
   void calcDist() {
@@ -124,19 +156,20 @@ class mapState extends State<RoutesPage> {
       );
       offCenter = true;
     }
+    if(dest != null) {
+      double distBetweenDest = Geolocator.distanceBetween(
+          center!.latitude,
+          center!.longitude,
+          dest!.latitude,
+          dest!.longitude
+      );
+      if (distBetweenDest <= 50) {
+        stopwatch.reset();
+        stopDistanceRecord();
+        return;
+      }
 
-    double distBetweenDest = Geolocator.distanceBetween(
-      center!.latitude,
-      center!.longitude,
-      dest!.latitude,
-      dest!.longitude
-    );
-
-    if (distBetweenDest<=50) {
-      rideDuration += stopwatch.elapsedMilliseconds;
-      stopwatch.reset();
-      stopDistanceRecord();
-    }else{
+    } else {
       stopwatch.reset();
       stopwatch.start();
     }
@@ -161,15 +194,16 @@ class mapState extends State<RoutesPage> {
     markers: {
       Marker(
         markerId: MarkerId("centerMarker"),
-        icon: BitmapDescriptor.defaultMarker,
+        icon: customIcon,
         position: center!,
       ),
-      Marker(
-        markerId: MarkerId("destinationMarker"),
-        icon: BitmapDescriptor.defaultMarker,
-        position: dest!,
-        visible: dstFound,
-      ),
+      if (dest != null)
+        Marker(
+          markerId: MarkerId("destinationMarker"),
+          icon: BitmapDescriptor.defaultMarker,
+          position: dest!,
+          visible: dstFound,
+        ),
     },
     polylines: Set<Polyline>.of(polylines.values),
   );
@@ -216,6 +250,8 @@ class mapState extends State<RoutesPage> {
             },
             itemClick: (prediction) {
               textController.text = prediction.description!;
+              recordedLocations.clear();
+              FocusScope.of(context).unfocus();
             },
           ),
         ],
@@ -315,19 +351,23 @@ class mapState extends State<RoutesPage> {
     locationController.onLocationChanged.listen((currentLocation) {
       if (currentLocation.latitude != null &&
           currentLocation.longitude != null) {
+
         setState(() {
           if (recordingDistance) prevLoc = center;
           center = LatLng(currentLocation.latitude!, currentLocation.longitude!);
           if (recordingDistance) {
             calcDist();
+            if (dest == null || (dest?.latitude == 0.0 && dest?.longitude == 0.0)) {
+
+              recordedLocations.add(center!);
+              getPolylinePoints().then((coordinates) {
+                generatePolyLines(coordinates);
+              });
+            }
             if(offCenter)animateCameraWithHeading(center!, heading ?? 0);
           } else {
             if(offCenter) centerCamera(center!);
           }
-
-          getPolylinePoints().then((coordinates) {
-            generatePolyLines(coordinates);
-          });
         });
       }
     });
@@ -358,18 +398,23 @@ class mapState extends State<RoutesPage> {
   Future<List<LatLng>> getPolylinePoints() async {
     List<LatLng> polylineCoordinates = [];
     PolylinePoints polylinePoints = PolylinePoints();
-    PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
-      googleApiKey: apiService.getGoogleApiKey(),
-      request: PolylineRequest(
-        origin: PointLatLng(center!.latitude, center!.longitude),
-        destination: PointLatLng(dest!.latitude, dest!.longitude),
-        mode: TravelMode.bicycling,
-      ),
-    );
 
-    if (result.points.isNotEmpty) {
+    if(dest!=null) {
+      PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
+        googleApiKey: apiService.getGoogleApiKey(),
+        request: PolylineRequest(
+          origin: PointLatLng(center!.latitude, center!.longitude),
+          destination: PointLatLng(dest!.latitude, dest!.longitude),
+          mode: TravelMode.bicycling,
+        ),
+      );
       for (var point in result.points) {
         polylineCoordinates.add(LatLng(point.latitude, point.longitude));
+      }
+
+    } else if( dest == null && recordedLocations.isNotEmpty){
+      for (var point in recordedLocations) {
+        polylineCoordinates.add(point);
       }
     }
 

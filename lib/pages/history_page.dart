@@ -489,7 +489,7 @@ class _HistoryPageState extends State<HistoryPage> {
                                             crossAxisAlignment: CrossAxisAlignment.start,
                                             children: [
                                               _buildDetailRow(Icons.access_time, 'Time: $formattedTime', Colors.green),
-                                              _buildDetailRow(Icons.directions_bike, '${trip.distance} km', Colors.blueAccent),
+                                              _buildDetailRow(Icons.directions_bike, '${trip.distance} mi', Colors.blueAccent),
                                               _buildDetailRow(Icons.timer, '${trip.time} min', Colors.orange),
                                               _buildDetailRow(Icons.local_fire_department, '${trip.calories} cal', Colors.red),
                                             ],

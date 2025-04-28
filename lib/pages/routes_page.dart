@@ -8,6 +8,7 @@ import 'package:location/location.dart' hide LocationAccuracy;
 import 'package:google_places_flutter/google_places_flutter.dart';
 import '../auth/key_util.dart';
 import '../auth/dim_util.dart';
+import '../data/submit_ride_service.dart';
 
 ApiService apiService = ApiService();
 
@@ -94,8 +95,22 @@ class mapState extends State<RoutesPage> {
       showStartButton = true;
       showStopButton = false;
       recordingDistance = false;
-
     });
+
+    // Distance is in miles
+    // Time is in milliseconds
+    final rideInfo = RideInfo(
+        totalDist * 0.000621371,
+        100,
+        rideDuration/60000,
+        [],
+        []
+    );
+    print(rideInfo);
+
+    // For now, don't send anything to backend yet
+    // SubmitRideService.addRide(rideInfo);
+    
     centerCamera(center!);
     totalDist = 0;
     rideDuration = 0;

@@ -4,6 +4,7 @@ import 'package:cycle_guard_app/data/global_leaderboards_accessor.dart';
 import 'package:cycle_guard_app/pages/leader.dart'; // Import Leader model'
 import 'package:http/http.dart' as http;
 import 'package:flutter_svg/flutter_svg.dart';
+import '../main.dart';
 
 /// Function to get an appropriate user icon based on rank
 IconData getUserIcon(int rank) {
@@ -105,13 +106,38 @@ class _LeaderPageState extends State<LeaderPage> with SingleTickerProviderStateM
           actions: [
             Padding(
               padding: const EdgeInsets.only(right: 32.0),
-              child: SvgPicture.asset(
-                'assets/cg_logomark.svg',
-                height: 30,
-                width: 30,
-                colorFilter: ColorFilter.mode( 
-                  isDarkMode ? Colors.white70 : Colors.black,
-                  BlendMode.srcIn,
+              child: GestureDetector(
+                onTap: () {
+                  Navigator.pushReplacement(
+                    context,
+                    PageRouteBuilder(
+                      pageBuilder: (context, animation, secondaryAnimation) => MyHomePage(),
+                      transitionDuration: Duration(milliseconds: 500),  
+                      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                        var offsetAnimation = Tween<Offset>(
+                          begin: Offset(0.0, -1.0),  
+                          end: Offset.zero,           
+                        ).animate(CurvedAnimation(
+                          parent: animation,
+                          curve: Curves.easeOut,    
+                        ));
+
+                        return SlideTransition(
+                          position: offsetAnimation,
+                          child: child,
+                        );
+                      },
+                    ),
+                  );
+                },
+                child: SvgPicture.asset(
+                  'assets/cg_logomark.svg',
+                  height: 30,
+                  width: 30,
+                  colorFilter: ColorFilter.mode( 
+                    isDarkMode ? Colors.white70 : Colors.black,
+                    BlendMode.srcIn,
+                  ),
                 ),
               ),
             )

@@ -16,14 +16,18 @@ import 'package:draggable_scrollbar/draggable_scrollbar.dart';
 import 'package:cycle_guard_app/main.dart';
 import 'package:cycle_guard_app/data/user_profile_accessor.dart';
 import 'package:showcaseview/showcaseview.dart';
+import 'package:flutter/animation.dart';
 
 class HomePage extends StatefulWidget {
   @override
   _HomePageState createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends State<HomePage>
+    with SingleTickerProviderStateMixin {
   ScrollController _controller = ScrollController();
+  late AnimationController _controllerAnimation;
+  late Animation<double> _animation;
 
   // tutorial keys
   final GlobalKey _welcomeMessageKey = GlobalKey();
@@ -40,12 +44,23 @@ class _HomePageState extends State<HomePage> {
   @override
   void dispose() {
     _controller.dispose();
+    _controllerAnimation.dispose();
     super.dispose();
   }
 
   @override
   void initState() {
     super.initState();
+
+    _controllerAnimation = AnimationController(
+      vsync: this,
+      duration: Duration(milliseconds: 500),
+    );
+
+    _animation = Tween<double>(begin: 0, end: 1).animate(CurvedAnimation(
+      parent: _controllerAnimation,
+      curve: Curves.easeOut,
+    ));
 
     // Trigger async providers
     Future.microtask(() {
@@ -62,7 +77,7 @@ class _HomePageState extends State<HomePage> {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final appState = Provider.of<MyAppState>(context, listen: false);
 
-      if (appState.isHomeTutorialActive) {
+      if (appState.isHomeTutorialActive && !appState.tutorialSkipped) {
         // Start the tutorial
         ShowCaseWidget.of(context).startShowCase([
           _welcomeMessageKey,
@@ -80,7 +95,46 @@ class _HomePageState extends State<HomePage> {
         appState.isHomeTutorialActive = false;
         appState.isSocialTutorialActive = true;
       }
+
+      appState.addListener(_handleTutorialSkip);
     });
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _controllerAnimation.forward();
+    });
+  }
+
+  void _handleTutorialSkip() async {
+    if (!mounted) return; // Check if widget is still mounted
+    
+    final appState = Provider.of<MyAppState>(context, listen: false);
+    if (appState.tutorialSkipped) {
+      // Stop any running showcase
+      try {
+        ShowCaseWidget.of(context).dismiss();
+      } catch (e) {
+        print('Error dismissing showcase: $e');
+      }
+      
+      // Mark tutorial as completed (update profile and app state)
+      final profile = await UserProfileAccessor.getOwnProfile();
+
+      final updatedProfile = UserProfile(
+        username: profile.username,
+        displayName: profile.displayName,
+        bio: profile.bio,
+        profileIcon: profile.profileIcon,
+        isPublic: profile.isPublic,
+        isNewAccount: false,
+      );
+
+      await UserProfileAccessor.updateOwnProfile(updatedProfile);
+
+      appState.isSocialTutorialActive = false;
+
+      // Remove the listener after handling the skip
+      appState.removeListener(_handleTutorialSkip);
+    }
   }
 
   @override
@@ -88,6 +142,7 @@ class _HomePageState extends State<HomePage> {
     final userStats = Provider.of<UserStatsProvider>(context);
     final weekHistory = Provider.of<WeekHistoryProvider>(context);
     final userGoals = Provider.of<UserDailyGoalProvider>(context);
+    Color selectedColor = Provider.of<MyAppState>(context).selectedColor;
     final colorScheme = Theme.of(context).colorScheme;
 
     final todayUtcTimestamp = DateTime.utc(
@@ -127,9 +182,9 @@ class _HomePageState extends State<HomePage> {
     bool isDailyChallengeComplete = rotatedDistances[6] >= 5;
 
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    final selectedColor = colorScheme.primary;
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -195,7 +250,7 @@ class _HomePageState extends State<HomePage> {
                   key: _welcomeMessageKey,
                   title: 'Welcome to CycleGuard!',
                   description:
-                      "We've prepared a brief guide around the app for you! Tap on the screen when you are ready to be shown the home page!",
+                      "Tap on the screen or 'next' to continue or tap 'skip' to end the tutorial early.",
                   child: SizedBox(width: 1, height: 1),
                 ),
               ),
@@ -216,138 +271,152 @@ class _HomePageState extends State<HomePage> {
                     SizedBox(height: DimUtil.safeHeight(context) * 1 / 40),
                     SizedBox(
                       height: DimUtil.safeHeight(context) * 1 / 4,
-                      child: BarChart(
-                        BarChartData(
-                          alignment: BarChartAlignment.spaceAround,
-                          maxY: 1.2 *
-                              rotatedDistances.reduce((a, b) => a > b
-                                  ? a
-                                  : b), // 1.2 * the max value in rotatedDistances
-                          barGroups: [
-                            BarChartGroupData(x: 0, barRods: [
-                              BarChartRodData(
-                                  fromY: 0,
-                                  toY: rotatedDistances[0],
-                                  color: selectedColor,
-                                  width: 30.0)
-                            ]),
-                            BarChartGroupData(x: 1, barRods: [
-                              BarChartRodData(
-                                  fromY: 0,
-                                  toY: rotatedDistances[1],
-                                  color: selectedColor,
-                                  width: 30.0)
-                            ]),
-                            BarChartGroupData(x: 2, barRods: [
-                              BarChartRodData(
-                                  fromY: 0,
-                                  toY: rotatedDistances[2],
-                                  color: selectedColor,
-                                  width: 30.0)
-                            ]),
-                            BarChartGroupData(x: 3, barRods: [
-                              BarChartRodData(
-                                  fromY: 0,
-                                  toY: rotatedDistances[3],
-                                  color: selectedColor,
-                                  width: 30.0)
-                            ]),
-                            BarChartGroupData(x: 4, barRods: [
-                              BarChartRodData(
-                                  fromY: 0,
-                                  toY: rotatedDistances[4],
-                                  color: selectedColor,
-                                  width: 30.0)
-                            ]),
-                            BarChartGroupData(x: 5, barRods: [
-                              BarChartRodData(
-                                  fromY: 0,
-                                  toY: rotatedDistances[5],
-                                  color: selectedColor,
-                                  width: 30.0)
-                            ]),
-                            BarChartGroupData(x: 6, barRods: [
-                              BarChartRodData(
-                                  fromY: 0,
-                                  toY: rotatedDistances[6],
-                                  color: selectedColor,
-                                  width: 30.0)
-                            ]),
-                          ],
-                          titlesData: FlTitlesData(
-                            leftTitles: AxisTitles(
-                              axisNameWidget: Text('Miles',
-                                  style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.bold)),
-                              sideTitles: SideTitles(
-                                showTitles: true,
-                                reservedSize: 20,
-                                getTitlesWidget:
-                                    (double value, TitleMeta meta) {
-                                  return Text(value.toInt().toString(),
-                                      style: TextStyle(fontSize: 12));
-                                },
-                              ),
-                            ),
-                            bottomTitles: AxisTitles(
-                              sideTitles: SideTitles(
-                                showTitles: true,
-                                getTitlesWidget:
-                                    (double value, TitleMeta meta) {
-                                  const days = [
-                                    'M',
-                                    'T',
-                                    'W',
-                                    'R',
-                                    'F',
-                                    'Sa',
-                                    'Su'
-                                  ];
-                                  List<String> rotatedDays = getRotatedArray(
-                                      days, DateTime.now().weekday);
-                                  return Text(rotatedDays[value.toInt()],
-                                      style: TextStyle(fontSize: 12));
-                                },
-                              ),
-                            ),
-                            rightTitles: AxisTitles(
-                                sideTitles: SideTitles(showTitles: false)),
-                            topTitles: AxisTitles(
-                                sideTitles: SideTitles(showTitles: false)),
-                          ),
-                          gridData: FlGridData(
-                            drawHorizontalLine: false,
-                            drawVerticalLine: false,
-                          ),
-                          barTouchData: BarTouchData(
-                            touchTooltipData: BarTouchTooltipData(
-                              getTooltipColor: (group) => isDarkMode
-                                  ? colorScheme.secondary
-                                  : colorScheme.secondaryFixed,
-                              getTooltipItem:
-                                  (group, groupIndex, rod, rodIndex) {
-                                return BarTooltipItem(
-                                  '${rod.toY.toStringAsFixed(1)}',
-                                  TextStyle(
-                                    color: isDarkMode
-                                        ? Colors.white
-                                        : selectedColor,
+                      child: AnimatedBuilder(
+                          animation: _animation,
+                          builder: (context, child) {
+                            return BarChart(
+                              BarChartData(
+                                alignment: BarChartAlignment.spaceAround,
+                                maxY: 1 *
+                                    rotatedDistances.reduce((a, b) => a > b
+                                        ? a
+                                        : b), // 1.2 * the max value in rotatedDistances
+                                barGroups: [
+                                  BarChartGroupData(x: 0, barRods: [
+                                    BarChartRodData(
+                                        fromY: 0,
+                                        toY: rotatedDistances[0] *
+                                            _animation.value,
+                                        color: selectedColor,
+                                        width: 30.0)
+                                  ]),
+                                  BarChartGroupData(x: 1, barRods: [
+                                    BarChartRodData(
+                                        fromY: 0,
+                                        toY: rotatedDistances[1] *
+                                            _animation.value,
+                                        color: selectedColor,
+                                        width: 30.0)
+                                  ]),
+                                  BarChartGroupData(x: 2, barRods: [
+                                    BarChartRodData(
+                                        fromY: 0,
+                                        toY: rotatedDistances[2] *
+                                            _animation.value,
+                                        color: selectedColor,
+                                        width: 30.0)
+                                  ]),
+                                  BarChartGroupData(x: 3, barRods: [
+                                    BarChartRodData(
+                                        fromY: 0,
+                                        toY: rotatedDistances[3] *
+                                            _animation.value,
+                                        color: selectedColor,
+                                        width: 30.0)
+                                  ]),
+                                  BarChartGroupData(x: 4, barRods: [
+                                    BarChartRodData(
+                                        fromY: 0,
+                                        toY: rotatedDistances[4] *
+                                            _animation.value,
+                                        color: selectedColor,
+                                        width: 30.0)
+                                  ]),
+                                  BarChartGroupData(x: 5, barRods: [
+                                    BarChartRodData(
+                                        fromY: 0,
+                                        toY: rotatedDistances[5] *
+                                            _animation.value,
+                                        color: selectedColor,
+                                        width: 30.0)
+                                  ]),
+                                  BarChartGroupData(x: 6, barRods: [
+                                    BarChartRodData(
+                                        fromY: 0,
+                                        toY: rotatedDistances[6] *
+                                            _animation.value,
+                                        color: selectedColor,
+                                        width: 30.0)
+                                  ]),
+                                ],
+                                titlesData: FlTitlesData(
+                                  leftTitles: AxisTitles(
+                                    axisNameWidget: Text('Miles',
+                                        style: TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.bold)),
+                                    sideTitles: SideTitles(
+                                      showTitles: true,
+                                      reservedSize: 20,
+                                      getTitlesWidget:
+                                          (double value, TitleMeta meta) {
+                                        return Text(value.toInt().toString(),
+                                            style: TextStyle(fontSize: 12));
+                                      },
+                                    ),
                                   ),
-                                );
-                              },
-                            ),
-                          ),
-                          borderData: FlBorderData(show: false),
-                        ),
-                      ),
+                                  bottomTitles: AxisTitles(
+                                    sideTitles: SideTitles(
+                                      showTitles: true,
+                                      getTitlesWidget:
+                                          (double value, TitleMeta meta) {
+                                        const days = [
+                                          'M',
+                                          'T',
+                                          'W',
+                                          'R',
+                                          'F',
+                                          'Sa',
+                                          'Su'
+                                        ];
+                                        List<String> rotatedDays =
+                                            getRotatedArray(
+                                                days, DateTime.now().weekday);
+                                        return Text(rotatedDays[value.toInt()],
+                                            style: TextStyle(fontSize: 12));
+                                      },
+                                    ),
+                                  ),
+                                  rightTitles: AxisTitles(
+                                      sideTitles:
+                                          SideTitles(showTitles: false)),
+                                  topTitles: AxisTitles(
+                                      sideTitles:
+                                          SideTitles(showTitles: false)),
+                                ),
+                                gridData: FlGridData(
+                                  drawHorizontalLine: false,
+                                  drawVerticalLine: false,
+                                ),
+                                barTouchData: BarTouchData(
+                                  touchTooltipData: BarTouchTooltipData(
+                                    getTooltipColor: (group) => isDarkMode
+                                        ? colorScheme.secondary
+                                        : colorScheme.secondaryFixed,
+                                    getTooltipItem:
+                                        (group, groupIndex, rod, rodIndex) {
+                                      return BarTooltipItem(
+                                        '${rod.toY.toStringAsFixed(1)}',
+                                        TextStyle(
+                                          color: isDarkMode
+                                              ? Colors.white
+                                              : selectedColor,
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
+                                borderData: FlBorderData(show: false),
+                              ),
+                            );
+                          }),
                     ),
-                    SizedBox(height: DimUtil.safeWidth(context) * 1 / 40),
+                    SizedBox(height: DimUtil.safeHeight(context) * 1 / 40),
                     buildStreakDisplay(context, userStats.rideStreak),
                   ],
                 ),
               ),
-              SizedBox(height: DimUtil.safeWidth(context) * 1 / 20),
+              SizedBox(height: DimUtil.safeHeight(context) * 1 / 20),
               Showcase(
                 key: _todayGoalKey,
                 title: 'Daily Goals',
@@ -479,15 +548,14 @@ class _HomePageState extends State<HomePage> {
                         ),
                       ],
                     ),
-                    SizedBox(height: DimUtil.safeWidth(context) * 1 / 40),
+                    SizedBox(height: DimUtil.safeHeight(context) * 1 / 40),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
                         _buildCircularStat(
                           context,
-                          title: 'Time',
-                          value: '$todayTime min',
-                          goal: '${userGoals.dailyTimeGoal} min',
+                          title: '$todayTime min',
+                          icon: Icons.access_time,
                           percent: userGoals.dailyTimeGoal == 0
                               ? 0
                               : todayTime / userGoals.dailyTimeGoal,
@@ -495,9 +563,8 @@ class _HomePageState extends State<HomePage> {
                         ),
                         _buildCircularStat(
                           context,
-                          title: 'Distance',
-                          value: '$todayDistance mi',
-                          goal: '${userGoals.dailyDistanceGoal} mi',
+                          title: '$todayDistance mi',
+                          icon: Icons.directions_bike,
                           percent: userGoals.dailyDistanceGoal == 0
                               ? 0
                               : todayDistance / userGoals.dailyDistanceGoal,
@@ -505,9 +572,8 @@ class _HomePageState extends State<HomePage> {
                         ),
                         _buildCircularStat(
                           context,
-                          title: 'Calories',
-                          value: '$todayCalories cal',
-                          goal: '${userGoals.dailyCaloriesGoal} cal',
+                          title: '$todayCalories cal',
+                          icon: Icons.local_fire_department,
                           percent: userGoals.dailyCaloriesGoal == 0
                               ? 0
                               : todayCalories / userGoals.dailyCaloriesGoal,
@@ -518,12 +584,11 @@ class _HomePageState extends State<HomePage> {
                   ],
                 ),
               ),
-              SizedBox(height: DimUtil.safeWidth(context) * 1 / 20),
+              SizedBox(height: DimUtil.safeHeight(context) * 1 / 20),
               Showcase(
                 key: _avgRideKey,
                 title: 'Average Daily Ride',
-                description:
-                    'Your average ride statistics this week.',
+                description: 'Your average ride statistics this week.',
                 child: Column(
                   children: [
                     Center(
@@ -533,7 +598,7 @@ class _HomePageState extends State<HomePage> {
                             fontSize: 18, fontWeight: FontWeight.bold),
                       ),
                     ),
-                    SizedBox(height: DimUtil.safeWidth(context) * 1 / 40),
+                    SizedBox(height: DimUtil.safeHeight(context) * 1 / 40),
                     Row(
                       children: [
                         Flexible(
@@ -564,7 +629,7 @@ class _HomePageState extends State<HomePage> {
                   ],
                 ),
               ),
-              SizedBox(height: DimUtil.safeWidth(context) * 1 / 20),
+              SizedBox(height: DimUtil.safeHeight(context) * 1 / 20),
               Showcase(
                 key: _dailyChallengeKey,
                 title: 'Daily Challenge',
@@ -572,7 +637,7 @@ class _HomePageState extends State<HomePage> {
                     'Ride five miles a day to receive 5 CycleCoins for purchasing items in the store!',
                 child: _buildDailyChallenge(context, isDailyChallengeComplete),
               ),
-              SizedBox(height: DimUtil.safeWidth(context) * 1 / 20),
+              SizedBox(height: DimUtil.safeHeight(context) * 1 / 20),
               Align(
                 alignment: Alignment.bottomCenter,
                 child: Padding(
@@ -608,7 +673,7 @@ class _HomePageState extends State<HomePage> {
                           children: [
                             Text('Your Ride History'),
                             SizedBox(
-                                width: DimUtil.safeWidth(context) * 1 / 40),
+                                width: DimUtil.safeWidth(context) * 1 / 20),
                             Icon(Icons.calendar_month_outlined,
                                 color: isDarkMode
                                     ? Colors.white
@@ -620,7 +685,7 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ),
               ),
-              SizedBox(height: DimUtil.safeWidth(context) * 1 / 20),
+              SizedBox(height: DimUtil.safeHeight(context) * 1 / 20),
               Showcase(
                 key: _achievementProgressKey,
                 title: 'Achievement Progress',
@@ -644,12 +709,12 @@ class _HomePageState extends State<HomePage> {
                         ],
                       ),
                     ),
-                    SizedBox(height: DimUtil.safeWidth(context) * 1 / 80),
+                    SizedBox(height: DimUtil.safeHeight(context) * 1 / 40),
                     _buildAchievementProgress(context, isDarkMode),
                   ],
                 ),
               ),
-              SizedBox(height: DimUtil.safeWidth(context) * 1 / 80),
+              SizedBox(height: DimUtil.safeHeight(context) * 1 / 40),
               Align(
                 alignment: Alignment.bottomCenter,
                 child: Padding(
@@ -720,7 +785,24 @@ class _HomePageState extends State<HomePage> {
           onPressed: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => StorePage()),
+              PageRouteBuilder(
+                pageBuilder: (context, animation, secondaryAnimation) => StorePage(),
+                transitionDuration: Duration(milliseconds: 300), 
+                transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                  var offsetAnimation = Tween<Offset>(
+                    begin: Offset(-1.0, 0.0),  
+                    end: Offset.zero,         
+                  ).animate(CurvedAnimation(
+                    parent: animation,
+                    curve: Curves.easeOut, 
+                  ));
+
+                  return SlideTransition(
+                    position: offsetAnimation,
+                    child: child,
+                  );
+                },
+              ),
             );
           },
           child: Column(
@@ -807,12 +889,13 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildCircularStat(BuildContext context,
-      {required String title,
-      required String value,
-      required String goal,
-      required double percent,
-      required Color color}) {
+  Widget _buildCircularStat(
+    BuildContext context, {
+    required String title,
+    required IconData icon,
+    required double percent,
+    required Color color,
+  }) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -820,21 +903,21 @@ class _HomePageState extends State<HomePage> {
           radius: 60.0,
           lineWidth: 8.0,
           percent: percent.clamp(0.0, 1.0),
-          center: Text(value, style: TextStyle(fontWeight: FontWeight.bold)),
+          center: Icon(
+            icon,
+            size: 64,
+            color: color,
+          ),
           progressColor: color,
           backgroundColor: Colors.grey.shade300,
           circularStrokeCap: CircularStrokeCap.round,
+          animation: true,
+          animationDuration: 500,
         ),
         const SizedBox(height: 8),
-        Text(title,
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
         Text(
-          '$goal',
-          style: TextStyle(
-              fontSize: 12,
-              color: Theme.of(context).brightness == Brightness.dark
-                  ? Colors.white70
-                  : Colors.black87),
+          title,
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
         ),
       ],
     );
@@ -875,7 +958,7 @@ class _HomePageState extends State<HomePage> {
                       fontWeight: FontWeight.bold,
                       color: Colors.white),
                 ),
-                SizedBox(height: DimUtil.safeWidth(context) * 1 / 80),
+                SizedBox(height: DimUtil.safeHeight(context) * 1 / 80),
                 Text(
                   'Reward: 5 CycleCoins',
                   style: TextStyle(fontSize: 16, color: Colors.white),
@@ -923,7 +1006,7 @@ class _HomePageState extends State<HomePage> {
             context,
             isDarkMode,
           ),
-          SizedBox(height: DimUtil.safeWidth(context) * 1 / 40),
+          SizedBox(height: DimUtil.safeHeight(context) * 1 / 40),
           _buildAchievement(
             selectedAchievements[1]['title'],
             selectedAchievements[1]['progress'].toInt(),
@@ -941,11 +1024,11 @@ class _HomePageState extends State<HomePage> {
       IconData icon, BuildContext context, bool isDarkMode) {
     double progressPercentage = (currentValue / goalValue).clamp(0.0, 1.0);
     final colorScheme = Theme.of(context).colorScheme;
+    Color selectedColor = Provider.of<MyAppState>(context).selectedColor;
 
     return Row(
       children: [
-        Icon(icon,
-            color: isDarkMode ? Colors.white : colorScheme.primary, size: 40),
+        Icon(icon, color: isDarkMode ? Colors.white : selectedColor, size: 40),
         SizedBox(width: DimUtil.safeWidth(context) * 1 / 40),
         Expanded(
           child: Column(
@@ -956,14 +1039,14 @@ class _HomePageState extends State<HomePage> {
                 style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: isDarkMode ? Colors.white : colorScheme.primary),
+                    color: isDarkMode ? Colors.white : selectedColor),
               ),
-              SizedBox(height: DimUtil.safeWidth(context) * 1 / 80),
+              SizedBox(height: DimUtil.safeHeight(context) * 1 / 80),
               LinearProgressIndicator(
                 value: progressPercentage,
                 color: isDarkMode
                     ? colorScheme.onSecondaryFixedVariant
-                    : colorScheme.primary,
+                    : selectedColor,
                 minHeight: 8,
                 borderRadius: BorderRadius.circular(8),
               ),

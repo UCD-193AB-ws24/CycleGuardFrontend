@@ -109,14 +109,14 @@ class LoginFormState extends State<LoginPage> {
     super.dispose();
   }
 
-  Widget emailTextField() => TextField(
+  Widget usernameTextField() => TextField(
 
     decoration: InputDecoration(
       filled: true,
       fillColor: Colors.white,
-      hintText: 'username@example.com',
-      labelText: 'Email',
-      prefixIcon:  Icon(Icons.mail),
+      hintText: 'username',
+      labelText: 'username',
+      prefixIcon:  Icon(Icons.account_circle),
       border: OutlineInputBorder(),
     ),
     controller: usernameController,
@@ -160,7 +160,7 @@ class LoginFormState extends State<LoginPage> {
             padding: EdgeInsets.all(32),
 
             children: [
-              emailTextField(),
+              usernameTextField(),
               const SizedBox(height:24),
               passwordTextField(),
               const SizedBox(height:24),

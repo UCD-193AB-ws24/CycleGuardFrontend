@@ -73,7 +73,7 @@ class _SocialPageState extends State<SocialPage>
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final appState = Provider.of<MyAppState>(context, listen: false);
 
-      if (appState.isSocialTutorialActive) {
+      if (appState.isSocialTutorialActive && !appState.tutorialSkipped) {
         // Start the tutorial
         ShowCaseWidget.of(context).startShowCase([
           _tabsKey,
@@ -103,7 +103,42 @@ class _SocialPageState extends State<SocialPage>
 
         appState.isSocialTutorialActive = false;
       }
+
+      appState.addListener(_handleTutorialSkip);
     });
+  }
+
+  void _handleTutorialSkip() async {
+    if (!mounted) return; // Check if widget is still mounted
+    
+    final appState = Provider.of<MyAppState>(context, listen: false);
+    if (appState.tutorialSkipped) {
+      // Stop any running showcase
+      try {
+        ShowCaseWidget.of(context).dismiss();
+      } catch (e) {
+        print('Error dismissing showcase: $e');
+      }
+
+      // Mark tutorial as completed (update profile and app state)
+      final profile = await UserProfileAccessor.getOwnProfile();
+
+      final updatedProfile = UserProfile(
+        username: profile.username,
+        displayName: profile.displayName,
+        bio: profile.bio,
+        profileIcon: profile.profileIcon,
+        isPublic: profile.isPublic,
+        isNewAccount: false,
+      );
+
+      await UserProfileAccessor.updateOwnProfile(updatedProfile);
+
+        appState.isSocialTutorialActive = false;
+      
+      // Remove the listener after handling the skip
+      appState.removeListener(_handleTutorialSkip);
+    }
   }
 
   Future<void> _loadProfile() async {
@@ -298,6 +333,7 @@ class _SocialPageState extends State<SocialPage>
   @override
   Widget build(BuildContext context) {
     bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    Color selectedColor = Provider.of<MyAppState>(context).selectedColor;
 
     if (_isLoading) {
       return Center(child: CircularProgressIndicator());
@@ -325,6 +361,8 @@ class _SocialPageState extends State<SocialPage>
             child: TabBar(
               controller: _tabController,
               unselectedLabelColor: isDarkMode ? Colors.white70 : null,
+              labelColor: isDarkMode ? null : selectedColor,
+              indicatorColor: isDarkMode ? null : selectedColor,
               tabs: const [
                 Tab(icon: Icon(Icons.person), text: "Profile"),
                 Tab(icon: Icon(Icons.groups_3), text: "Friends"),
@@ -338,13 +376,38 @@ class _SocialPageState extends State<SocialPage>
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 32.0),
-            child: SvgPicture.asset(
-              'assets/cg_logomark.svg',
-              height: 30,
-              width: 30,
-              colorFilter: ColorFilter.mode(
-                isDarkMode ? Colors.white70 : Colors.black,
-                BlendMode.srcIn,
+            child: GestureDetector(
+              onTap: () {
+                Navigator.pushReplacement(
+                  context,
+                  PageRouteBuilder(
+                    pageBuilder: (context, animation, secondaryAnimation) => MyHomePage(),
+                    transitionDuration: Duration(milliseconds: 500),  
+                    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                      var offsetAnimation = Tween<Offset>(
+                        begin: Offset(0.0, -1.0),  
+                        end: Offset.zero,           
+                      ).animate(CurvedAnimation(
+                        parent: animation,
+                        curve: Curves.easeOut,    
+                      ));
+
+                      return SlideTransition(
+                        position: offsetAnimation,
+                        child: child,
+                      );
+                    },
+                  ),
+                );
+              },
+              child: SvgPicture.asset(
+                'assets/cg_logomark.svg',
+                height: 30,
+                width: 30,
+                colorFilter: ColorFilter.mode(
+                  isDarkMode ? Colors.white70 : Colors.black,
+                  BlendMode.srcIn,
+                ),
               ),
             ),
           )
@@ -423,8 +486,24 @@ class _SocialPageState extends State<SocialPage>
                         onPressed: () {
                           Navigator.push(
                             context,
-                            MaterialPageRoute(
-                                builder: (context) => SettingsPage()),
+                            PageRouteBuilder(
+                              pageBuilder: (context, animation, secondaryAnimation) => SettingsPage(),
+                              transitionDuration: Duration(milliseconds: 300),  
+                              transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                                var offsetAnimation = Tween<Offset>(
+                                  begin: Offset(-1.0, 0.0),  
+                                  end: Offset.zero,          
+                                ).animate(CurvedAnimation(
+                                  parent: animation,
+                                  curve: Curves.easeOut, 
+                                ));
+
+                                return SlideTransition(
+                                  position: offsetAnimation,
+                                  child: child,
+                                );
+                              },
+                            ),
                           );
                         },
                         child: Column(
@@ -591,9 +670,6 @@ class _SocialPageState extends State<SocialPage>
                             isNewAccount: false,
                             profileIcon: appState.selectedIcon,
                           );
-
-                          print("---------");
-                          print(updatedProfile);
 
                           await UserProfileAccessor.updateOwnProfile(
                               updatedProfile);

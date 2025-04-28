@@ -126,6 +126,18 @@ class MyApp extends StatelessWidget {
         builder: (context, appState, userStats, achievementsProgress, weekHistory, tripHistory, userDailyGoal, child) {
           return ShowCaseWidget(
             enableAutoScroll: true,
+            globalTooltipActions: [
+              TooltipActionButton(
+                backgroundColor: Colors.orange,
+                type: TooltipDefaultActionType.next,
+              ),
+              TooltipActionButton(
+                type: TooltipDefaultActionType.skip,
+                onTap: () {
+                  appState.skipTutorial();
+                },
+              ),
+            ],
             builder: (context) => MaterialApp(
               title: 'Cycle Guard App',
               debugShowCheckedModeBanner: false,
@@ -153,6 +165,9 @@ class MyAppState extends ChangeNotifier {
   bool isDarkMode = false;
   bool isHomeTutorialActive = false;
   bool isSocialTutorialActive = false;
+  bool _tutorialSkipped = false;
+
+  bool get tutorialSkipped => _tutorialSkipped;
 
   final Map<String, Color> availableThemes = {
     'Yellow': Colors.yellow,
@@ -190,6 +205,13 @@ class MyAppState extends ChangeNotifier {
     notifyListeners(); 
   }
 
+  void skipTutorial() {
+    isHomeTutorialActive = false;
+    isSocialTutorialActive = false;
+    _tutorialSkipped = true;
+    notifyListeners();
+  }
+
   Future<void> loadUserProfile() async {
     final profile = await UserProfileAccessor.getOwnProfile();
     isHomeTutorialActive = profile.isNewAccount;
@@ -198,6 +220,7 @@ class MyAppState extends ChangeNotifier {
 
   void enableTutorial() {
     isHomeTutorialActive = true;
+    _tutorialSkipped = false;
     notifyListeners();
   }
 
@@ -381,9 +404,10 @@ class _MyHomePageState extends State<MyHomePage> {
   var selectedIndex = 1;
 
   Color getNavBarColor(BuildContext context) {
+    Color selectedColor = Provider.of<MyAppState>(context).selectedColor;
     return Theme.of(context).brightness == Brightness.dark
         ? Theme.of(context).colorScheme.onSecondaryFixedVariant
-        : Theme.of(context).colorScheme.primary; 
+        : selectedColor; 
   }
 
   Color getNavBarBackgroundColor(BuildContext context) {
@@ -455,15 +479,40 @@ AppBar createAppBar(BuildContext context, String titleText) {
     actions: [
       Padding(
         padding: const EdgeInsets.only(right: 32.0),
-        child: SvgPicture.asset(
-          'assets/cg_logomark.svg',
-          height: 30,
-          width: 30,
-          colorFilter: ColorFilter.mode( 
-            Theme.of(context).brightness == Brightness.dark 
-              ? Colors.white70
-              : Colors.black,
-            BlendMode.srcIn,
+        child: GestureDetector(
+          onTap: () {
+            Navigator.pushReplacement(
+              context,
+              PageRouteBuilder(
+                pageBuilder: (context, animation, secondaryAnimation) => MyHomePage(),
+                transitionDuration: Duration(milliseconds: 500),  
+                transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                  var offsetAnimation = Tween<Offset>(
+                    begin: Offset(0.0, -1.0),  
+                    end: Offset.zero,           
+                  ).animate(CurvedAnimation(
+                    parent: animation,
+                    curve: Curves.easeOut,    
+                  ));
+
+                  return SlideTransition(
+                    position: offsetAnimation,
+                    child: child,
+                  );
+                },
+              ),
+            );
+          },
+          child: SvgPicture.asset(
+            'assets/cg_logomark.svg',
+            height: 30,
+            width: 30,
+            colorFilter: ColorFilter.mode( 
+              Theme.of(context).brightness == Brightness.dark 
+                ? Colors.white70
+                : Colors.black,
+              BlendMode.srcIn,
+            ),
           ),
         ),
       )

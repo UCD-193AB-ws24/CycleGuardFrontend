@@ -70,6 +70,7 @@ class BluetoothController extends GetxController {
 Timer? timer;
 
 bool _isConnected = false;
+bool isConnected() => _isConnected;
 
 Future<void> _connectAndRead(BluetoothDevice device, Function(BluetoothData) callback) async {
   _isConnected = false;
@@ -106,11 +107,13 @@ Future<void> showCustomDialog(BuildContext context, Function(BluetoothData) call
                 return const Center(child: CircularProgressIndicator());
               }
               if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+                final filteredScan = snapshot.data!.where((scanResult) => 
+                  scanResult.device.platformName.contains("CycleGuard")).toList(growable: false);
                 return ListView.builder(
                   shrinkWrap: true,
-                  itemCount: snapshot.data!.length,
+                  itemCount: filteredScan.length,
                   itemBuilder: (context, index) {
-                    final data = snapshot.data![index];
+                    final data = filteredScan[index];
                     return Card(
 
                       elevation: 2,

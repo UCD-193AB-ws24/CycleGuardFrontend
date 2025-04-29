@@ -15,6 +15,8 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 import './ble.dart';
 
+bool _useHelmet = false;
+
 ApiService apiService = ApiService();
 
 class RoutesPage extends StatefulWidget {
@@ -41,7 +43,7 @@ class mapState extends State<RoutesPage> {
   final stopwatch = Stopwatch();
   int rideDuration = 0;
 
-  bool helmetConnected = false;
+  bool _helmetConnected = false;
 
   BitmapDescriptor customIcon = BitmapDescriptor.defaultMarker;
 
@@ -109,11 +111,14 @@ class mapState extends State<RoutesPage> {
       showStopButton = true;
       recordingDistance = true;
       offCenter = true;
+    _helmetConnected = isConnected();
     });
     stopwatch.start();
     if (dest == null) {
       recordedLocations.clear();
-      recordedLocations.add(center!);
+      if (!_helmetConnected) {
+        recordedLocations.add(center!);
+      }
     }
   }
 
@@ -301,14 +306,14 @@ class mapState extends State<RoutesPage> {
             right: DimUtil.safeWidth(context) * 1 / 20,
             child: FloatingActionButton(
               onPressed: () => connectHelmet(context),
-              backgroundColor: helmetConnected?Colors.green:Colors.white,
+              backgroundColor: _helmetConnected?Colors.green:Colors.white,
               elevation: 4,
               child: SvgPicture.asset(
                 'assets/cg_logomark.svg',
                 height: 30,
                 width: 30,
                 colorFilter: ColorFilter.mode(
-                  helmetConnected?Colors.white:Colors.black,
+                  _helmetConnected?Colors.white:Colors.black,
                   BlendMode.srcIn,
                 ),
               ),
@@ -388,20 +393,22 @@ class mapState extends State<RoutesPage> {
           currentLocation.longitude != null) {
 
         setState(() {
-          if (recordingDistance) prevLoc = center;
-          center = LatLng(currentLocation.latitude!, currentLocation.longitude!);
-          if (recordingDistance) {
-            calcDist();
-            if (dest == null || (dest?.latitude == 0.0 && dest?.longitude == 0.0)) {
+          if (!_helmetConnected) {
+            if (recordingDistance) prevLoc = center;
+            center = LatLng(currentLocation.latitude!, currentLocation.longitude!);
+            if (recordingDistance) {
+              calcDist();
+              if (dest == null || (dest?.latitude == 0.0 && dest?.longitude == 0.0)) {
 
-              recordedLocations.add(center!);
-              getPolylinePoints().then((coordinates) {
-                generatePolyLines(coordinates);
-              });
+                recordedLocations.add(center!);
+                getPolylinePoints().then((coordinates) {
+                  generatePolyLines(coordinates);
+                });
+              }
+              if (offCenter) animateCameraWithHeading(center!, heading ?? 0);
+            } else {
+              if (offCenter) centerCamera(center!);
             }
-            if(offCenter)animateCameraWithHeading(center!, heading ?? 0);
-          } else {
-            if(offCenter) centerCamera(center!);
           }
         });
       }
@@ -473,9 +480,24 @@ class mapState extends State<RoutesPage> {
   void connectHelmet(BuildContext context) async {
     await showCustomDialog(context, (data) {
       print("In callback function: $data");
+      if (recordingDistance) prevLoc = center;
+        center = LatLng(data.latitude, data.longitude);
+        if (recordingDistance) {
+          calcDist();
+          if (dest == null || (dest?.latitude == 0.0 && dest?.longitude == 0.0)) {
+
+            recordedLocations.add(center!);
+            getPolylinePoints().then((coordinates) {
+              generatePolyLines(coordinates);
+            });
+          }
+          if (offCenter) animateCameraWithHeading(center!, heading ?? 0);
+        } else {
+          if (offCenter) centerCamera(center!);
+        }
     });
     setState(() {
-      helmetConnected = !helmetConnected;
+      _helmetConnected = isConnected();
     });
   }
 }

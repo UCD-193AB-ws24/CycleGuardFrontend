@@ -473,66 +473,67 @@ class _SocialPageState extends State<SocialPage>
                   Align(
                     alignment: Alignment.topRight,
                     child: TextButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            PageRouteBuilder(
-                              pageBuilder:
-                                  (context, animation, secondaryAnimation) =>
-                                      SettingsPage(),
-                              transitionDuration: Duration(milliseconds: 300),
-                              transitionsBuilder: (context, animation,
-                                  secondaryAnimation, child) {
-                                var offsetAnimation = Tween<Offset>(
-                                  begin: Offset(-1.0, 0.0),
-                                  end: Offset.zero,
-                                ).animate(CurvedAnimation(
-                                  parent: animation,
-                                  curve: Curves.easeOut,
-                                ));
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          PageRouteBuilder(
+                            pageBuilder:
+                                (context, animation, secondaryAnimation) =>
+                                    SettingsPage(),
+                            transitionDuration: Duration(milliseconds: 300),
+                            transitionsBuilder: (context, animation,
+                                secondaryAnimation, child) {
+                              var offsetAnimation = Tween<Offset>(
+                                begin: Offset(-1.0, 0.0),
+                                end: Offset.zero,
+                              ).animate(CurvedAnimation(
+                                parent: animation,
+                                curve: Curves.easeOut,
+                              ));
 
-                                return SlideTransition(
-                                  position: offsetAnimation,
-                                  child: child,
-                                );
-                              },
-                            ),
-                          );
-                        },
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.settings,
-                              size: 40,
+                              return SlideTransition(
+                                position: offsetAnimation,
+                                child: child,
+                              );
+                            },
+                          ),
+                        );
+                      },
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.settings,
+                            size: 40,
+                            color: isDarkMode
+                                ? Theme.of(context)
+                                    .colorScheme
+                                    .secondaryFixedDim
+                                : Theme.of(context).colorScheme.secondary,
+                          ),
+                          SizedBox(height: 2),
+                          Text(
+                            'Settings',
+                            style: TextStyle(
+                              fontSize: 14,
                               color: isDarkMode
                                   ? Theme.of(context)
                                       .colorScheme
                                       .secondaryFixedDim
                                   : Theme.of(context).colorScheme.secondary,
                             ),
-                            SizedBox(height: 2),
-                            Text(
-                              'Settings',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: isDarkMode
-                                    ? Theme.of(context)
-                                        .colorScheme
-                                        .secondaryFixedDim
-                                    : Theme.of(context).colorScheme.secondary,
-                              ),
-                            ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
+                    ),
                   ),
                 ],
               ),
               Showcase(
                 key: _profileKey,
                 title: 'Profile Management',
-                description: 'Update your icon, profile, status, and health information.',
+                description:
+                    'Update your icon, profile, status, and health information.',
                 child: Column(
                   children: [
                     Column(
@@ -553,62 +554,67 @@ class _SocialPageState extends State<SocialPage>
                             String displayedIcon = _hasLocalProfileChanges
                                 ? _currentIconSelection
                                 : appState.selectedIcon;
-                            return DropdownButton<String>(
-                              value: allIcons.contains(displayedIcon)
-                                  ? displayedIcon
-                                  : (allIcons.isNotEmpty
-                                      ? allIcons.first
-                                      : null),
-                              items: allIcons.map((iconName) {
-                                return DropdownMenuItem<String>(
-                                  value: iconName,
-                                  child: Row(
-                                    children: [
-                                      SvgPicture.asset(
-                                        'assets/$iconName.svg',
-                                        height: 30,
-                                        width: 30,
-                                        colorFilter: ColorFilter.mode(
-                                          isDarkMode
-                                              ? Colors.white70
-                                              : Colors.black,
-                                          BlendMode.srcIn,
+                            return Align(
+                              // <-- Ensures DropdownButton aligns left
+                              alignment: Alignment.centerLeft,
+                              child: DropdownButton<String>(
+                                value: allIcons.contains(displayedIcon)
+                                    ? displayedIcon
+                                    : (allIcons.isNotEmpty
+                                        ? allIcons.first
+                                        : null),
+                                items: allIcons.map((iconName) {
+                                  return DropdownMenuItem<String>(
+                                    value: iconName,
+                                    child: Row(
+                                      children: [
+                                        SvgPicture.asset(
+                                          'assets/$iconName.svg',
+                                          height: 30,
+                                          width: 30,
+                                          colorFilter: ColorFilter.mode(
+                                            isDarkMode
+                                                ? Colors.white70
+                                                : Colors.black,
+                                            BlendMode.srcIn,
+                                          ),
                                         ),
-                                      ),
-                                      const SizedBox(width: 10),
-                                      Text(iconName),
-                                    ],
-                                  ),
-                                );
-                              }).toList(),
-                              onChanged: (String? newIcon) {
-                                if (newIcon != null) {
-                                  setState(() {
-                                    appState.selectedIcon = newIcon;
-                                    _currentIconSelection = newIcon;
-                                    _hasLocalProfileChanges = true;
-                                  });
-
-                                  UserProfile updatedProfile = UserProfile(
-                                    username: profile.username,
-                                    displayName: profile.displayName,
-                                    bio: profile.bio,
-                                    isPublic: isPublic,
-                                    isNewAccount: false,
-                                    profileIcon: newIcon,
+                                        const SizedBox(width: 10),
+                                        Text(iconName),
+                                      ],
+                                    ),
                                   );
+                                }).toList(),
+                                onChanged: (String? newIcon) {
+                                  if (newIcon != null) {
+                                    setState(() {
+                                      appState.selectedIcon = newIcon;
+                                      _currentIconSelection = newIcon;
+                                      _hasLocalProfileChanges = true;
+                                    });
 
-                                  UserProfileAccessor.updateOwnProfile(
-                                          updatedProfile)
-                                      .catchError((error) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                          content: Text(
-                                              "Failed to update profile icon: $error")),
+                                    UserProfile updatedProfile = UserProfile(
+                                      username: profile.username,
+                                      displayName: profile.displayName,
+                                      bio: profile.bio,
+                                      isPublic: isPublic,
+                                      isNewAccount: false,
+                                      profileIcon: newIcon,
                                     );
-                                  });
-                                }
-                              },
+
+                                    UserProfileAccessor.updateOwnProfile(
+                                            updatedProfile)
+                                        .catchError((error) {
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        SnackBar(
+                                            content: Text(
+                                                "Failed to update profile icon: $error")),
+                                      );
+                                    });
+                                  }
+                                },
+                              ),
                             );
                           },
                         ),

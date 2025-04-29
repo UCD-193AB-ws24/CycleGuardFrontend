@@ -71,13 +71,15 @@ class NotificationList {
 
 class Notification {
   final String title, body;
-  final int hour, minute;
+  final int hour, minute, frequency, dayOfWeek;
 
   const Notification({
     required this.title,
     required this.body,
     required this.hour,
     required this.minute,
+    required this.frequency,
+    required this.dayOfWeek,
   });
 
   factory Notification.fromJson(Map<String, dynamic> jsonInit) {
@@ -87,11 +89,15 @@ class Notification {
       "body": String body,
       "hour": int hour,
       "minute": int minute,
+      "frequency": int frequency,
+      "dayOfWeek": int dayOfWeek
       } => Notification(
         title: title,
         body: body,
         hour: hour,
-        minute: minute
+        minute: minute,
+        frequency: frequency,
+        dayOfWeek: dayOfWeek
       ),
       _ => throw const FormatException("failed to load Notification"),
     };
@@ -101,11 +107,14 @@ class Notification {
     'title': title,
     'body': body,
     'hour': hour,
-    'minute': minute
+    'minute': minute,
+    'frequency': frequency,
+    'dayOfWeek': dayOfWeek
   };
 
   @override
   String toString() {
-    return 'Notification{title: $title, body: $body, hour: $hour, minute: $minute}';
+    return 'Notification{title: $title, body: $body, hour: $hour, minute: $minute, '
+        'frequency: $frequency, dayOfWeek: $dayOfWeek}';
   }
 }

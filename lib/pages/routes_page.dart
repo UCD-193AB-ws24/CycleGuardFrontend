@@ -19,13 +19,12 @@ import '../data/submit_ride_service.dart';
 
 ApiService apiService = ApiService();
 
+int _timestamp = -1;
+void setRouteTimestamp(int timestamp) => _timestamp = timestamp;
 
 
 class RoutesPage extends StatefulWidget {
   static final String POLYLINE_USER = "poly", POLYLINE_GENERATED = "generated";
-
-  final int timestamp;
-  const RoutesPage({super.key, required this.timestamp});
 
   @override
   Widget build(BuildContext context) {
@@ -114,8 +113,9 @@ class mapState extends State<RoutesPage> {
   void onMapCreated(GoogleMapController controller) {
     mapController = controller;
     print("Map controller created");
-    if (widget.timestamp != -1) {
-      drawTimestampData(widget.timestamp);
+    if (_timestamp != -1) {
+      drawTimestampData(_timestamp);
+      _timestamp=-1;
     }
   }
 

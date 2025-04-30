@@ -10,6 +10,9 @@ import 'package:cycle_guard_app/pages/calendar_view.dart';
 import 'package:draggable_scrollbar/draggable_scrollbar.dart';
 import '../auth/dim_util.dart';
 
+import '../main.dart';
+import './routes_page.dart';
+
 class HistoryPage extends StatefulWidget {
   @override
   _HistoryPageState createState() => _HistoryPageState();
@@ -621,11 +624,9 @@ class _HistoryPageState extends State<HistoryPage> {
                                               ),
                                               onTap: () {
                                                 print(timestamp);
-                                                Navigator.push(
-                                                  context,
-                                                  MaterialPageRoute(
-                                                      builder: (context) => RoutesPage(timestamp: timestamp)),
-                                                );
+                                                selectedIndexGlobal.value = 0;
+                                                setRouteTimestamp(timestamp);
+                                                Navigator.pop(context);
                                               },
                                             ),
                                           ),

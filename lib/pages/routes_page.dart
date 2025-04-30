@@ -47,7 +47,7 @@ class mapState extends State<RoutesPage> {
   int rideDuration = 0;
 
   // Recalculate the route if far enough away: units are meters
-  static final double RECALCULATE_ROUTE_THRESHOLD = 100;
+  static final double RECALCULATE_ROUTE_THRESHOLD = 75;
 
   bool _helmetConnected = false;
 
@@ -120,11 +120,9 @@ class mapState extends State<RoutesPage> {
     _helmetConnected = isConnected();
     });
     stopwatch.start();
-    if (dest == null) {
-      recordedLocations.clear();
-      if (!_helmetConnected) {
-        recordedLocations.add(center!);
-      }
+    recordedLocations.clear();
+    if (!_helmetConnected) {
+      recordedLocations.add(center!);
     }
   }
 
@@ -176,7 +174,7 @@ class mapState extends State<RoutesPage> {
     toastMsg("${rideInfo.toJson()}", 5);
 
     // For now, don't send anything to backend yet
-    SubmitRideService.addRide(rideInfo);
+    // SubmitRideService.addRide(rideInfo);
     
     centerCamera(center!);
     totalDist = 0;
@@ -291,7 +289,6 @@ class mapState extends State<RoutesPage> {
               dstFound = true;
               showStartButton = true;
               getGooglePolylinePoints().then((coordinates) {
-                generatedPolylines = coordinates;
                 generatePolyLines(coordinates, RoutesPage.POLYLINE_GENERATED);
                 print(coordinates);
                 print(coordinates.length);
@@ -405,6 +402,9 @@ class mapState extends State<RoutesPage> {
 
     double distanceToRoute = minDistanceToRoute(generatedPolylines, center);
 
+    print("Center: $center");
+    print("Cur. distance to route: $distanceToRoute meters");
+
     return distanceToRoute > RECALCULATE_ROUTE_THRESHOLD;
   }
 
@@ -423,6 +423,9 @@ class mapState extends State<RoutesPage> {
       if (permissionGranted != PermissionStatus.granted) return;
     }
 
+    // locationController.changeSettings(accuracy: );
+    // locationController.
+
     locationController.onLocationChanged.listen((currentLocation) {
       if (currentLocation.latitude != null &&
           currentLocation.longitude != null) {
@@ -438,9 +441,8 @@ class mapState extends State<RoutesPage> {
                 recordedLocations.add(center!);
                 generatePolyLines(recordedLocations, RoutesPage.POLYLINE_USER);
                 if (isOffTrack(center!)) {
-
                   getGooglePolylinePoints().then((coordinates) {
-                    generatePolyLines(coordinates, RoutesPage.POLYLINE_USER);
+                    generatePolyLines(coordinates, RoutesPage.POLYLINE_GENERATED);
                   });
 
                   toastMsg("Recalculating route...", 5);
@@ -479,7 +481,6 @@ class mapState extends State<RoutesPage> {
   }
 
   Future<List<LatLng>> getGooglePolylinePoints() async {
-    List<LatLng> polylineCoordinates = [];
     PolylinePoints polylinePoints = PolylinePoints();
 
     if(dest!=null) {
@@ -491,17 +492,13 @@ class mapState extends State<RoutesPage> {
           mode: TravelMode.bicycling,
         ),
       );
-      for (var point in result.points) {
-        polylineCoordinates.add(LatLng(point.latitude, point.longitude));
-      }
 
-    } else if( dest == null && recordedLocations.isNotEmpty){
-      for (var point in recordedLocations) {
-        polylineCoordinates.add(point);
-      }
+      final res = result.points.map((point) => LatLng(point.latitude, point.longitude)).toList();
+      generatedPolylines = res;
+      return res;
     }
 
-    return polylineCoordinates;
+    return generatedPolylines;
   }
 
   void generatePolyLines(List<LatLng> polylineCoordinates, String polylineId) async {
@@ -530,13 +527,18 @@ class mapState extends State<RoutesPage> {
         center = LatLng(data.latitude, data.longitude);
         if (recordingDistance) {
           calcDist();
-          if (dest == null || (dest?.latitude == 0.0 && dest?.longitude == 0.0)) {
+          // if (dest == null || (dest?.latitude == 0.0 && dest?.longitude == 0.0)) {
 
-            recordedLocations.add(center!);
-            getGooglePolylinePoints().then((coordinates) {
-              generatePolyLines(coordinates, RoutesPage.POLYLINE_USER);
-            });
-          }
+                recordedLocations.add(center!);
+                generatePolyLines(recordedLocations, RoutesPage.POLYLINE_USER);
+                if (isOffTrack(center!)) {
+                  getGooglePolylinePoints().then((coordinates) {
+                    generatePolyLines(coordinates, RoutesPage.POLYLINE_GENERATED);
+                  });
+
+                  toastMsg("Recalculating route...", 5);
+                }
+          // }
           if (offCenter) animateCameraWithHeading(center!, heading ?? 0);
         } else {
           if (offCenter) centerCamera(center!);
@@ -552,14 +554,14 @@ class mapState extends State<RoutesPage> {
   }
 
   double minDistanceToRoute(List<LatLng> route, LatLng point) {
-    double max=0, cur;
+    double min=2000000000, cur;
 
     for (int i=0; i<route.length-1; i++) {
       cur = distanceToLine(point, route[i], route[i+1]);
-      if (cur>max) max=cur;
+      if (cur<min) min=cur;
     }
 
-    return max;
+    return min;
   }
 
   double distanceToLine(LatLng point, LatLng start, LatLng end) {
@@ -593,11 +595,14 @@ class mapState extends State<RoutesPage> {
     double closestY = y1 + t * dy;
 
     // Calculate the distance between the point and the closest point on the line segment
-    return Geolocator.distanceBetween(
+    final res =  Geolocator.distanceBetween(
       point.latitude,
       point.longitude,
-      closestX,
       closestY,
+      closestX,
     );
+
+    // print("Min distance calculation: $start, $end, $point, $res");
+    return res;
   }
 }

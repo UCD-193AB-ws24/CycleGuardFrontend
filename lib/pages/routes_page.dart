@@ -21,7 +21,11 @@ bool _useHelmet = false;
 
 ApiService apiService = ApiService();
 
+
+
 class RoutesPage extends StatefulWidget {
+  static final String POLYLINE_USER = "poly", POLYLINE_GENERATED = "generated";
+
   @override
   Widget build(BuildContext context) {
     return Center(child: Text('Routes Page'));
@@ -280,8 +284,10 @@ class mapState extends State<RoutesPage> {
               );
               dstFound = true;
               showStartButton = true;
-              getPolylinePoints().then((coordinates) {
-                generatePolyLines(coordinates);
+              getGooglePolylinePoints().then((coordinates) {
+                generatePolyLines(coordinates, RoutesPage.POLYLINE_GENERATED);
+                print(coordinates);
+                print(coordinates.length);
               });
             },
             itemClick: (prediction) {
@@ -387,6 +393,11 @@ class mapState extends State<RoutesPage> {
     );
   }
 
+  bool isOffTrack(LatLng center) {
+    if (dest == null || (dest?.latitude == 0.0 && dest?.longitude == 0.0)) return false;
+    return false;
+  }
+
   Future<void> fetchLocationUpdates() async {
     bool serviceEnabled;
     PermissionStatus permissionGranted;
@@ -412,13 +423,16 @@ class mapState extends State<RoutesPage> {
             center = LatLng(currentLocation.latitude!, currentLocation.longitude!);
             if (recordingDistance) {
               calcDist();
-              if (dest == null || (dest?.latitude == 0.0 && dest?.longitude == 0.0)) {
+              // if (dest == null || (dest?.latitude == 0.0 && dest?.longitude == 0.0)) {
 
                 recordedLocations.add(center!);
-                getPolylinePoints().then((coordinates) {
-                  generatePolyLines(coordinates);
-                });
-              }
+                generatePolyLines(recordedLocations, RoutesPage.POLYLINE_USER);
+                if (isOffTrack(center!)) {
+                  getGooglePolylinePoints().then((coordinates) {
+                    generatePolyLines(coordinates, RoutesPage.POLYLINE_USER);
+                  });
+                }
+              // }
               if (offCenter) animateCameraWithHeading(center!, heading ?? 0);
             } else {
               if (offCenter) centerCamera(center!);
@@ -451,7 +465,7 @@ class mapState extends State<RoutesPage> {
     );
   }
 
-  Future<List<LatLng>> getPolylinePoints() async {
+  Future<List<LatLng>> getGooglePolylinePoints() async {
     List<LatLng> polylineCoordinates = [];
     PolylinePoints polylinePoints = PolylinePoints();
 
@@ -477,11 +491,11 @@ class mapState extends State<RoutesPage> {
     return polylineCoordinates;
   }
 
-  void generatePolyLines(List<LatLng> polylineCoordinates) async {
-    PolylineId id = PolylineId("poly");
+  void generatePolyLines(List<LatLng> polylineCoordinates, String polylineId) async {
+    PolylineId id = PolylineId(polylineId);
     Polyline polyline = Polyline(
       polylineId: id,
-      color: Colors.blue,
+      color: polylineId==RoutesPage.POLYLINE_GENERATED?Colors.deepOrangeAccent:Colors.blue,
       points: polylineCoordinates,
       width: 6,
     );
@@ -506,8 +520,8 @@ class mapState extends State<RoutesPage> {
           if (dest == null || (dest?.latitude == 0.0 && dest?.longitude == 0.0)) {
 
             recordedLocations.add(center!);
-            getPolylinePoints().then((coordinates) {
-              generatePolyLines(coordinates);
+            getGooglePolylinePoints().then((coordinates) {
+              generatePolyLines(coordinates, RoutesPage.POLYLINE_USER);
             });
           }
           if (offCenter) animateCameraWithHeading(center!, heading ?? 0);

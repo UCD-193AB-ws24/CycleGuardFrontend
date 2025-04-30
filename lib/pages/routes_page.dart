@@ -48,6 +48,7 @@ class mapState extends State<RoutesPage> {
 
   // Recalculate the route if far enough away: units are meters
   static final double RECALCULATE_ROUTE_THRESHOLD = 75;
+  static final double DEFAULT_ZOOM = 16;
 
   bool _helmetConnected = false;
 
@@ -107,7 +108,18 @@ class mapState extends State<RoutesPage> {
     });
   }
 
-  void recenterMap() {
+  int recenterClickTime=0;
+  void recenterMap() async {
+    int curClickTime = DateTime.now().millisecondsSinceEpoch;
+    bool resetZoom = curClickTime-recenterClickTime < 500;
+    print("Recentering map: $offCenter");
+    mapController.animateCamera(
+      CameraUpdate.newCameraPosition(CameraPosition(
+        target: center!,
+        zoom: resetZoom?DEFAULT_ZOOM:(await mapController.getZoomLevel()),
+      )),
+    );
+    recenterClickTime = curClickTime;
     if (!offCenter) offCenter = true;
   }
 
@@ -233,7 +245,7 @@ class mapState extends State<RoutesPage> {
     mapType: currentMapType,
     initialCameraPosition: CameraPosition(
       target: center!,
-      zoom: 15.0,
+      zoom: DEFAULT_ZOOM,
     ),
     markers: {
       Marker(
@@ -456,15 +468,20 @@ class mapState extends State<RoutesPage> {
         });
       }
     });
+
+  
   }
 
+  int lastPress=0;
   Future<void> centerCamera(LatLng pos) async {
+    // print("Centering");
     await mapController.animateCamera(
       CameraUpdate.newCameraPosition(CameraPosition(
         target: pos,
-        zoom: 15,
+        zoom: DEFAULT_ZOOM
       )),
     );
+    // prevPos = pos;
   }
 
   Future<void> animateCameraWithHeading(LatLng pos, double heading) async {

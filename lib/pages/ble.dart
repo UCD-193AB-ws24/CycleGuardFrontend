@@ -49,8 +49,8 @@ class BluetoothController extends GetxController {
     } catch(e) {
       e.printError();
     }
-    
-    
+
+
   //   if (bluetoothScanStatus.isGranted) {
   //   // if (true) {
   //     FlutterBluePlus.startScan(timeout: const Duration(seconds: 5));
@@ -67,22 +67,26 @@ class BluetoothController extends GetxController {
   //   }
   }
 }
- Timer? timer;
+Timer? timer;
 
-Future<void> _connectAndRead(BluetoothDevice device) async {
+bool _isConnected = false;
+bool isConnected() => _isConnected;
+
+Future<void> _connectAndRead(BluetoothDevice device, Function(BluetoothData) callback) async {
+  _isConnected = false;
   if(!device.isConnected) await device.connect();
 
+  _isConnected = true;
   print("Connected to ${device.advName}: $device");
   if (timer != null) timer!.cancel();
   timer = Timer.periodic(Duration(seconds: 1), (Timer timer) async {
       BluetoothData data = await BluetoothData.fromBluetooth(device);
-      print(data);
+      callback(data);
     }
   );
-
 }
 
-void showCustomDialog(BuildContext context) async {
+Future<void> showCustomDialog(BuildContext context, Function(BluetoothData) callback) async {
   await requestBluetoothPermissions();
   showDialog(
     context: context,
@@ -96,18 +100,20 @@ void showCustomDialog(BuildContext context) async {
           width: 1000,
           padding: EdgeInsets.symmetric(horizontal: 4,vertical: 5),
           child: StreamBuilder<List<ScanResult>>(
-            
+
             stream: Get.put(BluetoothController()).scanResults,
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Center(child: CircularProgressIndicator());
               }
               if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+                final filteredScan = snapshot.data!.where((scanResult) =>
+                  scanResult.device.platformName.contains("CycleGuard")).toList(growable: false);
                 return ListView.builder(
                   shrinkWrap: true,
-                  itemCount: snapshot.data!.length,
+                  itemCount: filteredScan.length,
                   itemBuilder: (context, index) {
-                    final data = snapshot.data![index];
+                    final data = filteredScan[index];
                     return Card(
 
                       elevation: 2,
@@ -123,6 +129,11 @@ void showCustomDialog(BuildContext context) async {
                             if (data.device.isConnected)
                               ElevatedButton(
                                 onPressed: () async {
+                                  if (timer != null) {
+                                    timer!.cancel();
+                                    timer = null;
+                                    _isConnected = false;
+                                  }
                                   await data.device.disconnect();
                                   print("Device disconnected: ${data.device.platformName}");
                                 },
@@ -130,7 +141,7 @@ void showCustomDialog(BuildContext context) async {
                               ),
                           ],
                         ),
-                        onTap: () => _connectAndRead(data.device),
+                        onTap: () => _connectAndRead(data.device, callback),
                       ),
                     );
                   },
@@ -152,7 +163,7 @@ void showCustomDialog(BuildContext context) async {
               child: Text(
                 "Scan",
                 style: GoogleFonts.poppins(
-                    fontSize: 18, fontWeight: FontWeight.bold),
+                  fontSize: 18, fontWeight: FontWeight.bold),
               ),
             ),
           ),
@@ -212,7 +223,7 @@ class BluetoothData {
       for (int i=0; i<characteristics.length; i++) {
         var characteristic = characteristics[i];
         var cur = await characteristic.read();
-        
+
         int bitData = convertTo32Bit(cur);
         var byteData = ByteData(4);
         byteData.setInt32(0, bitData);

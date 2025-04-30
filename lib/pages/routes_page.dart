@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:cycle_guard_app/data/coordinates_accessor.dart';
 import 'package:cycle_guard_app/data/user_profile_accessor.dart';
 import 'package:cycle_guard_app/pages/ble.dart';
 import 'package:flutter/material.dart';
@@ -66,8 +67,16 @@ class mapState extends State<RoutesPage> {
   List<LatLng> recordedLocations = [], generatedPolylines = [];
   double? heading;
 
-  Future<void> drawTimestampData() async {
-    print("Drawing timestamp: ${widget.timestamp}");
+  Future<void> drawTimestampData(int timestamp) async {
+    final coords = await CoordinatesAccessor.getCoordinates(timestamp);
+    final latitudes = coords.latitudes, longitudes = coords.longitudes;
+
+    final polylines = [for(var i=0; i<latitudes.length; i++) i]
+        .map((i) => LatLng(latitudes[i], longitudes[i]))
+        .toList(growable: false);
+
+    generatedPolylines = polylines;
+    generatePolyLines(polylines, RoutesPage.POLYLINE_GENERATED);
   }
 
   Future<void> setCustomIcon() async {
@@ -91,7 +100,6 @@ class mapState extends State<RoutesPage> {
 
   @override
   void initState() {
-    print("Timestamp in mapState: ${widget.timestamp}");
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       setCustomIcon();
@@ -102,6 +110,10 @@ class mapState extends State<RoutesPage> {
         heading = position.heading;
       });
     });
+
+    if (widget.timestamp != -1) {
+      drawTimestampData(widget.timestamp);
+    }
   }
 
   void onMapCreated(GoogleMapController controller) {

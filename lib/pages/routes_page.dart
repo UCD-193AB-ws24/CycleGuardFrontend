@@ -532,41 +532,41 @@ class mapState extends State<RoutesPage> {
     });
   }
 
-  void connectHelmet(BuildContext context) async {
-    await showCustomDialog(context, (data) {
-      print("In callback function: $data");
-      {
-        final newCenter = LatLng(data.latitude, data.longitude);
-        if (newCenter == center) return;
+  void readHelmetData(BluetoothData data) {
+    print("In callback function: $data");
+    {
+      final newCenter = LatLng(data.latitude, data.longitude);
+      if (newCenter == center) return;
+    }
+
+    if (recordingDistance) prevLoc = center;
+    center = LatLng(data.latitude, data.longitude);
+    if (recordingDistance) {
+      calcDist();
+      // if (dest == null || (dest?.latitude == 0.0 && dest?.longitude == 0.0)) {
+
+      recordedLocations.add(center!);
+      generatePolyLines(recordedLocations, RoutesPage.POLYLINE_USER);
+      if (isOffTrack(center!)) {
+        getGooglePolylinePoints().then((coordinates) {
+          generatePolyLines(coordinates, RoutesPage.POLYLINE_GENERATED);
+        });
+
+        toastMsg("Recalculating route...", 5);
       }
+      // }
+      if (offCenter) animateCameraWithHeading(center!, heading ?? 0);
+    } else {
+      if (offCenter) centerCamera(center!);
+    }
+  }
 
-      if (recordingDistance) prevLoc = center;
-        center = LatLng(data.latitude, data.longitude);
-        if (recordingDistance) {
-          calcDist();
-          // if (dest == null || (dest?.latitude == 0.0 && dest?.longitude == 0.0)) {
-
-                recordedLocations.add(center!);
-                generatePolyLines(recordedLocations, RoutesPage.POLYLINE_USER);
-                if (isOffTrack(center!)) {
-                  getGooglePolylinePoints().then((coordinates) {
-                    generatePolyLines(coordinates, RoutesPage.POLYLINE_GENERATED);
-                  });
-
-                  toastMsg("Recalculating route...", 5);
-                }
-          // }
-          if (offCenter) animateCameraWithHeading(center!, heading ?? 0);
-        } else {
-          if (offCenter) centerCamera(center!);
-        }
-    });
-
-    print("After await");
-
-    print("Connected: ${isConnected()}");
-    setState(() {
-      _helmetConnected = isConnected();
+  void connectHelmet(BuildContext context) async {
+    await showCustomDialog(context, onNewDataCallback: readHelmetData,
+        onBluetoothSelectedCallback: (isConnected) {
+      setState(() {
+        _helmetConnected = isConnected;
+      });
     });
   }
 
@@ -581,6 +581,7 @@ class mapState extends State<RoutesPage> {
     return min;
   }
 
+  // Thanks GPT!
   double distanceToLine(LatLng point, LatLng start, LatLng end) {
     double x1 = start.longitude;
     double y1 = start.latitude;

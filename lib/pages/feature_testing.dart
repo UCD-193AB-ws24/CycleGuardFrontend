@@ -236,7 +236,7 @@ class TestingPage extends StatelessWidget {
     print("Testing notifications");
 
     // import 'package:cycle_guard_app/data/notifications_accessor.dart' as notif_accessor;
-    final notif = notif_accessor.Notification(title: "Test Notification", body: "Hello World!", hour: 12, minute: 30);
+    final notif = notif_accessor.Notification(title: "Test Notification", body: "Hello World!", hour: 12, minute: 30, frequency: 0, dayOfWeek: 0);
     print("Starting notifications: ${await notif_accessor.NotificationsAccessor.getNotifications()}");
     // All notifs are unique
     print("Adding notification: ${await notif_accessor.NotificationsAccessor.addNotification(notif)}");
@@ -439,7 +439,7 @@ class TestingPage extends StatelessWidget {
                 //   child: Text("user/all"),
                 // ),
                 ElevatedButton(
-                  onPressed: () => showCustomDialog(context),
+                  onPressed: () => showCustomDialog(context, (data) => print("Callback: $data")),
                   style: ElevatedButton.styleFrom(
                     elevation: 5,
                     padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),

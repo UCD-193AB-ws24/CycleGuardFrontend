@@ -449,7 +449,7 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget _getSelectedPage(int index) {
     switch (index) {
       case 0:
-        return RoutesPage();
+        return RoutesPage(timestamp: -1);
       case 1:
         return HomePage();
       case 2:

@@ -1,3 +1,4 @@
+import 'package:cycle_guard_app/pages/routes_page.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
@@ -618,6 +619,14 @@ class _HistoryPageState extends State<HistoryPage> {
                                                       Colors.red),
                                                 ],
                                               ),
+                                              onTap: () {
+                                                print(timestamp);
+                                                Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                      builder: (context) => RoutesPage(timestamp: timestamp)),
+                                                );
+                                              },
                                             ),
                                           ),
                                         );

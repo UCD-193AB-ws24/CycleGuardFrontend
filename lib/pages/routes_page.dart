@@ -23,6 +23,9 @@ ApiService apiService = ApiService();
 class RoutesPage extends StatefulWidget {
   static final String POLYLINE_USER = "poly", POLYLINE_GENERATED = "generated";
 
+  final int timestamp;
+  const RoutesPage({super.key, required this.timestamp});
+
   @override
   Widget build(BuildContext context) {
     return Center(child: Text('Routes Page'));
@@ -63,6 +66,10 @@ class mapState extends State<RoutesPage> {
   List<LatLng> recordedLocations = [], generatedPolylines = [];
   double? heading;
 
+  Future<void> drawTimestampData() async {
+    print("Drawing timestamp: ${widget.timestamp}");
+  }
+
   Future<void> setCustomIcon() async {
     try{
       UserProfile userProfile = await UserProfileAccessor.getOwnProfile();
@@ -84,6 +91,7 @@ class mapState extends State<RoutesPage> {
 
   @override
   void initState() {
+    print("Timestamp in mapState: ${widget.timestamp}");
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       setCustomIcon();

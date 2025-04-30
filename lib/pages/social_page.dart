@@ -797,17 +797,17 @@ class _SocialPageState extends State<SocialPage>
                         'Manage daily reminders here. Add notifications with a title, body, and time. Existing reminders will be shown here.',
                     child: NotificationScheduler(),
                   ),
-                  Positioned(
-                    bottom: 0,
-                    left: 0,
-                    child: Showcase(
-                      key: _finalMessageKey,
-                      title: 'Great job!',
-                      description:
-                          'You can restart the tutorial in settings, enjoy CycleGuard!',
-                      child: SizedBox(width: 1, height: 1),
-                    ),
-                  ),
+                  // Positioned(
+                  //   bottom: 0,
+                  //   left: 0,
+                  //   child: Showcase(
+                  //     key: _finalMessageKey,
+                  //     title: 'Great job!',
+                  //     description:
+                  //         'You can restart the tutorial in settings, enjoy CycleGuard!',
+                  //     child: SizedBox(width: 1, height: 1),
+                  //   ),
+                  // ),
                 ],
               ),
             ],

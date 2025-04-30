@@ -13,6 +13,8 @@ import '../auth/dim_util.dart';
 import '../data/submit_ride_service.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
+import 'package:fluttertoast/fluttertoast.dart';
+
 import './ble.dart';
 
 bool _useHelmet = false;
@@ -153,14 +155,25 @@ class mapState extends State<RoutesPage> {
         _toLngs(recordedLocations)
     );
     print(rideInfo.toJson());
+    Fluttertoast.showToast(
+      msg: "${rideInfo.toJson()}",
+      toastLength: Toast.LENGTH_LONG,
+      gravity: ToastGravity.CENTER,
+      timeInSecForIosWeb: 5,
+      backgroundColor: Colors.blueAccent,
+      textColor: Colors.white,
+      fontSize: 16.0
+    );
 
     // For now, don't send anything to backend yet
-    // SubmitRideService.addRide(rideInfo);
+    SubmitRideService.addRide(rideInfo);
     
     centerCamera(center!);
     totalDist = 0;
     rideDuration = 0;
 
+    stopwatch.stop();
+    stopwatch.reset();
   }
 
   void calcDist() {
@@ -170,6 +183,7 @@ class mapState extends State<RoutesPage> {
 
     if (prevLoc != center) {
       rideDuration += stopwatch.elapsedMilliseconds;
+      // stopwatch.reset();
       totalDist += Geolocator.distanceBetween(
         prevLoc!.latitude,
         prevLoc!.longitude,
@@ -185,7 +199,7 @@ class mapState extends State<RoutesPage> {
           dest!.latitude,
           dest!.longitude
       );
-      if (distBetweenDest <= 50) {
+    if (distBetweenDest <= 50) {
         stopwatch.reset();
         stopDistanceRecord();
         return;
@@ -480,6 +494,11 @@ class mapState extends State<RoutesPage> {
   void connectHelmet(BuildContext context) async {
     await showCustomDialog(context, (data) {
       print("In callback function: $data");
+      {
+        final newCenter = LatLng(data.latitude, data.longitude);
+        if (newCenter == center) return;
+      }
+
       if (recordingDistance) prevLoc = center;
         center = LatLng(data.latitude, data.longitude);
         if (recordingDistance) {
@@ -496,6 +515,10 @@ class mapState extends State<RoutesPage> {
           if (offCenter) centerCamera(center!);
         }
     });
+
+    print("After await");
+
+    print("Connected: ${isConnected()}");
     setState(() {
       _helmetConnected = isConnected();
     });

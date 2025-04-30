@@ -188,17 +188,17 @@ class _HomePageState extends State<HomePage> {
             controller: _controller,
             padding: const EdgeInsets.all(8.0),
             children: [
-              Positioned(
-                bottom: 0,
-                left: 0,
-                child: Showcase(
-                  key: _welcomeMessageKey,
-                  title: 'Welcome to CycleGuard!',
-                  description:
-                      "We've prepared a brief guide around the app for you! Tap on the screen when you are ready to be shown the home page!",
-                  child: SizedBox(width: 1, height: 1),
-                ),
-              ),
+              // Positioned(
+              //   bottom: 0,
+              //   left: 0,
+              //   child: Showcase(
+              //     key: _welcomeMessageKey,
+              //     title: 'Welcome to CycleGuard!',
+              //     description:
+              //         "We've prepared a brief guide around the app for you! Tap on the screen when you are ready to be shown the home page!",
+              //     child: SizedBox(width: 1, height: 1),
+              //   ),
+              // ),
               Showcase(
                 key: _pastWeekKey,
                 title: 'Past Week of Biking',

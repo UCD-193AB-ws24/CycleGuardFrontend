@@ -128,10 +128,11 @@ class MyApp extends StatelessWidget {
             enableAutoScroll: true,
             globalTooltipActions: [
               TooltipActionButton(
-                backgroundColor: Colors.orange,
+                backgroundColor: appState.selectedColor,
                 type: TooltipDefaultActionType.next,
               ),
               TooltipActionButton(
+                backgroundColor: appState.selectedColor,
                 type: TooltipDefaultActionType.skip,
                 onTap: () {
                   appState.skipTutorial();

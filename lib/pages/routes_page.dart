@@ -12,12 +12,9 @@ import '../auth/key_util.dart';
 import '../auth/dim_util.dart';
 import '../data/submit_ride_service.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-
 import 'package:fluttertoast/fluttertoast.dart';
 
 import './ble.dart';
-
-bool _useHelmet = false;
 
 ApiService apiService = ApiService();
 
@@ -49,6 +46,9 @@ class mapState extends State<RoutesPage> {
   final stopwatch = Stopwatch();
   int rideDuration = 0;
 
+  // Recalculate the route if far enough away: units are meters
+  static final double RECALCULATE_ROUTE_THRESHOLD = 100;
+
   bool _helmetConnected = false;
 
   BitmapDescriptor customIcon = BitmapDescriptor.defaultMarker;
@@ -59,7 +59,7 @@ class mapState extends State<RoutesPage> {
   LatLng? dest;
   LatLng? prevLoc;
   double totalDist = 0;
-  List<LatLng> recordedLocations = [];
+  List<LatLng> recordedLocations = [], generatedPolylines = [];
   double? heading;
 
   Future<void> setCustomIcon() async {
@@ -140,6 +140,18 @@ class mapState extends State<RoutesPage> {
     return 0;
   }
 
+  void toastMsg(String message, int time) {
+    Fluttertoast.showToast(
+        msg: message,
+        toastLength: Toast.LENGTH_LONG,
+        gravity: ToastGravity.CENTER,
+        timeInSecForIosWeb: time,
+        backgroundColor: Colors.blueAccent,
+        textColor: Colors.white,
+        fontSize: 16.0
+    );
+  }
+
   void stopDistanceRecord() {
     print(recordedLocations);
 
@@ -159,15 +171,9 @@ class mapState extends State<RoutesPage> {
         _toLngs(recordedLocations)
     );
     print(rideInfo.toJson());
-    Fluttertoast.showToast(
-      msg: "${rideInfo.toJson()}",
-      toastLength: Toast.LENGTH_LONG,
-      gravity: ToastGravity.CENTER,
-      timeInSecForIosWeb: 5,
-      backgroundColor: Colors.blueAccent,
-      textColor: Colors.white,
-      fontSize: 16.0
-    );
+
+
+    toastMsg("${rideInfo.toJson()}", 5);
 
     // For now, don't send anything to backend yet
     SubmitRideService.addRide(rideInfo);
@@ -285,6 +291,7 @@ class mapState extends State<RoutesPage> {
               dstFound = true;
               showStartButton = true;
               getGooglePolylinePoints().then((coordinates) {
+                generatedPolylines = coordinates;
                 generatePolyLines(coordinates, RoutesPage.POLYLINE_GENERATED);
                 print(coordinates);
                 print(coordinates.length);
@@ -395,7 +402,10 @@ class mapState extends State<RoutesPage> {
 
   bool isOffTrack(LatLng center) {
     if (dest == null || (dest?.latitude == 0.0 && dest?.longitude == 0.0)) return false;
-    return false;
+
+    double distanceToRoute = minDistanceToRoute(generatedPolylines, center);
+
+    return distanceToRoute > RECALCULATE_ROUTE_THRESHOLD;
   }
 
   Future<void> fetchLocationUpdates() async {
@@ -428,9 +438,12 @@ class mapState extends State<RoutesPage> {
                 recordedLocations.add(center!);
                 generatePolyLines(recordedLocations, RoutesPage.POLYLINE_USER);
                 if (isOffTrack(center!)) {
+
                   getGooglePolylinePoints().then((coordinates) {
                     generatePolyLines(coordinates, RoutesPage.POLYLINE_USER);
                   });
+
+                  toastMsg("Recalculating route...", 5);
                 }
               // }
               if (offCenter) animateCameraWithHeading(center!, heading ?? 0);
@@ -536,5 +549,55 @@ class mapState extends State<RoutesPage> {
     setState(() {
       _helmetConnected = isConnected();
     });
+  }
+
+  double minDistanceToRoute(List<LatLng> route, LatLng point) {
+    double max=0, cur;
+
+    for (int i=0; i<route.length-1; i++) {
+      cur = distanceToLine(point, route[i], route[i+1]);
+      if (cur>max) max=cur;
+    }
+
+    return max;
+  }
+
+  double distanceToLine(LatLng point, LatLng start, LatLng end) {
+    double x1 = start.longitude;
+    double y1 = start.latitude;
+    double x2 = end.longitude;
+    double y2 = end.latitude;
+    double x = point.longitude;
+    double y = point.latitude;
+
+    double dx = x2 - x1;
+    double dy = y2 - y1;
+    double distSq = dx * dx + dy * dy;
+
+    if (distSq == 0) {
+      return Geolocator.distanceBetween(
+        point.latitude,
+        point.longitude,
+        start.latitude,
+        start.longitude,
+      );
+    }
+
+    double t = ((x - x1) * dx + (y - y1) * dy) / distSq;
+
+    // Clamp t to [0, 1] to find the closest point on the line segment
+    t = t.clamp(0, 1);
+
+    // Calculate the closest point on the line segment
+    double closestX = x1 + t * dx;
+    double closestY = y1 + t * dy;
+
+    // Calculate the distance between the point and the closest point on the line segment
+    return Geolocator.distanceBetween(
+      point.latitude,
+      point.longitude,
+      closestX,
+      closestY,
+    );
   }
 }

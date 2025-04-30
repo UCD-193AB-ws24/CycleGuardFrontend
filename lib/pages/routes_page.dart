@@ -71,9 +71,7 @@ class mapState extends State<RoutesPage> {
     final coords = await CoordinatesAccessor.getCoordinates(timestamp);
     final latitudes = coords.latitudes, longitudes = coords.longitudes;
 
-    final polylines = [for(var i=0; i<latitudes.length; i++) i]
-        .map((i) => LatLng(latitudes[i], longitudes[i]))
-        .toList(growable: false);
+    final polylines = [for(var i=0; i<latitudes.length; i++) LatLng(latitudes[i], longitudes[i])];
 
     generatedPolylines = polylines;
     generatePolyLines(polylines, RoutesPage.POLYLINE_GENERATED);
@@ -111,13 +109,14 @@ class mapState extends State<RoutesPage> {
       });
     });
 
-    if (widget.timestamp != -1) {
-      drawTimestampData(widget.timestamp);
-    }
   }
 
   void onMapCreated(GoogleMapController controller) {
     mapController = controller;
+    print("Map controller created");
+    if (widget.timestamp != -1) {
+      drawTimestampData(widget.timestamp);
+    }
   }
 
   void changeMapType() {

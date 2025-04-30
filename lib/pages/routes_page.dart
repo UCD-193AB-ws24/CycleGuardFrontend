@@ -201,7 +201,7 @@ class mapState extends State<RoutesPage> {
     toastMsg("${rideInfo.toJson()}", 5);
 
     // For now, don't send anything to backend yet
-    // SubmitRideService.addRide(rideInfo);
+    SubmitRideService.addRide(rideInfo);
     
     centerCamera(center!);
     totalDist = 0;

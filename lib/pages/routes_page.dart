@@ -138,13 +138,9 @@ class mapState extends State<RoutesPage> {
     }
   }
 
-  List<double> _toLats(List<LatLng> list) {
-    return list.map((e) => e.latitude).toList(growable: false);
-  }
+  List<double> _toLats(List<LatLng> list) => list.map((e) => e.latitude).toList(growable: false);
 
-  List<double> _toLngs(List<LatLng> list) {
-    return list.map((e) => e.longitude).toList(growable: false);
-  }
+  List<double> _toLngs(List<LatLng> list) => list.map((e) => e.longitude).toList(growable: false);
 
   double _calculateCalories() {
     return 0;
@@ -561,7 +557,10 @@ class mapState extends State<RoutesPage> {
     }
   }
 
-  void onBluetoothSelected(bool isConnected) => setState(() => _helmetConnected = isConnected);
+  void onBluetoothSelected(bool isConnected) {
+    setState(() => _helmetConnected = isConnected);
+    Navigator.pop(context);
+  }
 
   void connectHelmet(BuildContext context) async {
     await showCustomDialog(context, onNewDataCallback: readHelmetData, onBluetoothSelectedCallback: onBluetoothSelected);

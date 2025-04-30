@@ -42,18 +42,20 @@ import 'package:showcaseview/showcaseview.dart';
 
 //const MethodChannel platform = MethodChannel('com.cycleguard.channel'); // Must match iOS
 
+final ValueNotifier selectedIndexGlobal = ValueNotifier(1);
+
 void main() async {
   // for local notifications
   WidgetsFlutterBinding.ensureInitialized();
   // init notifications 
   LocalNotificationService().initNotification();
 
-  await dotenv.load(fileName: ".env");
+  await dotenv.load(fileName: "env");
 
   String? apiKey = dotenv.env['API_KEY'];
 
   if (apiKey == null || apiKey.isEmpty) {
-    throw Exception("Google Maps API Key is missing in .env file.");
+    throw Exception("Google Maps API Key is missing in env file.");
   }
 
   print("Google Maps API Key: $apiKey");
@@ -419,18 +421,20 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
+    return ValueListenableBuilder(
+      valueListenable: selectedIndexGlobal,
+      builder: (context, val, child) {
         return Scaffold(
-          body: _getSelectedPage(selectedIndex),
+          body: _getSelectedPage(selectedIndexGlobal.value),
           bottomNavigationBar: CurvedNavigationBar(
             backgroundColor: getNavBarBackgroundColor(context),
             color: getNavBarColor(context),
             animationDuration: Duration(milliseconds: 270),
-            index: selectedIndex,
+            index: selectedIndexGlobal.value,
             onTap: (int index) {
               setState(() {
                 selectedIndex = index;
+                selectedIndexGlobal.value = index;
               });
             },
             items: [
@@ -449,7 +453,7 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget _getSelectedPage(int index) {
     switch (index) {
       case 0:
-        return RoutesPage(timestamp: -1);
+        return RoutesPage();
       case 1:
         return HomePage();
       case 2:

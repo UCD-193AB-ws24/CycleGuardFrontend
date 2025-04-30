@@ -26,7 +26,7 @@ class StartPage extends StatelessWidget {
 
     if (!AuthUtil.isLoggedIn()) return;
 
-    if (!_didLoad) return;
+    if (_didLoad) return;
     _didLoad = true;
 
     final appState = Provider.of<MyAppState>(context, listen: false);

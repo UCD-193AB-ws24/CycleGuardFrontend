@@ -213,13 +213,19 @@ class _HomePageState extends State<HomePage>
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 32.0),
-            child: SvgPicture.asset(
-              'assets/cg_logomark.svg',
-              height: 30,
-              width: 30,
-              colorFilter: ColorFilter.mode(
-                isDarkMode ? Colors.white70 : Colors.black,
-                BlendMode.srcIn,
+            child: Showcase(
+                key: _welcomeMessageKey,
+                title: 'Welcome to CycleGuard!',
+                description:
+                    "Tap on the screen or 'next' to continue or tap 'skip' to end the tutorial early.",
+                child: SvgPicture.asset(
+                'assets/cg_logomark.svg',
+                height: 30,
+                width: 30,
+                colorFilter: ColorFilter.mode(
+                  isDarkMode ? Colors.white70 : Colors.black,
+                  BlendMode.srcIn,
+                ),
               ),
             ),
           )
@@ -237,17 +243,6 @@ class _HomePageState extends State<HomePage>
             controller: _controller,
             padding: const EdgeInsets.all(8.0),
             children: [
-              Positioned(
-                bottom: 0,
-                left: 0,
-                child: Showcase(
-                  key: _welcomeMessageKey,
-                  title: 'Welcome to CycleGuard!',
-                  description:
-                      "Tap on the screen or 'next' to continue or tap 'skip' to end the tutorial early.",
-                  child: SizedBox(width: 1, height: 1),
-                ),
-              ),
               Showcase(
                 key: _homeUIKey,
                 title: 'Home Page',

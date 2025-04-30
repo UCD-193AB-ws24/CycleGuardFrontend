@@ -394,13 +394,19 @@ class _SocialPageState extends State<SocialPage>
                   ),
                 );
               },
-              child: SvgPicture.asset(
-                'assets/cg_logomark.svg',
-                height: 30,
-                width: 30,
-                colorFilter: ColorFilter.mode(
-                  isDarkMode ? Colors.white70 : Colors.black,
-                  BlendMode.srcIn,
+              child: Showcase(
+                key: _finalMessageKey,
+                title: 'Great job!',
+                description:
+                    'You can restart the tutorial in settings, enjoy CycleGuard!',
+                child: SvgPicture.asset(
+                  'assets/cg_logomark.svg',
+                  height: 30,
+                  width: 30,
+                  colorFilter: ColorFilter.mode(
+                    isDarkMode ? Colors.white70 : Colors.black,
+                    BlendMode.srcIn,
+                  ),
                 ),
               ),
             ),
@@ -870,17 +876,6 @@ class _SocialPageState extends State<SocialPage>
                     description:
                         'Manage daily reminders here. Add notifications with a title, body, and time. Existing reminders will be shown here.',
                     child: NotificationScheduler(),
-                  ),
-                  Positioned(
-                    bottom: 0,
-                    left: 0,
-                    child: Showcase(
-                      key: _finalMessageKey,
-                      title: 'Great job!',
-                      description:
-                          'You can restart the tutorial in settings, enjoy CycleGuard!',
-                      child: SizedBox(width: 1, height: 1),
-                    ),
                   ),
                 ],
               ),

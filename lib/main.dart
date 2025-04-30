@@ -50,12 +50,12 @@ void main() async {
   // init notifications 
   LocalNotificationService().initNotification();
 
-  await dotenv.load(fileName: "env");
+  await dotenv.load(fileName: ".env");
 
   String? apiKey = dotenv.env['API_KEY'];
 
   if (apiKey == null || apiKey.isEmpty) {
-    throw Exception("Google Maps API Key is missing in env file.");
+    throw Exception("Google Maps API Key is missing in .env file.");
   }
 
   print("Google Maps API Key: $apiKey");

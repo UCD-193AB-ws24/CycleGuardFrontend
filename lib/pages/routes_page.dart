@@ -561,13 +561,10 @@ class mapState extends State<RoutesPage> {
     }
   }
 
+  void onBluetoothSelected(bool isConnected) => setState(() => _helmetConnected = isConnected);
+
   void connectHelmet(BuildContext context) async {
-    await showCustomDialog(context, onNewDataCallback: readHelmetData,
-        onBluetoothSelectedCallback: (isConnected) {
-      setState(() {
-        _helmetConnected = isConnected;
-      });
-    });
+    await showCustomDialog(context, onNewDataCallback: readHelmetData, onBluetoothSelectedCallback: onBluetoothSelected);
   }
 
   double minDistanceToRoute(List<LatLng> route, LatLng point) {

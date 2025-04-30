@@ -72,7 +72,11 @@ Timer? timer;
 bool _isConnected = false;
 bool isConnected() => _isConnected;
 
-Future<void> _connectAndRead(BluetoothDevice device, Function(BluetoothData) callback) async {
+void _emptyBluetoothCallback(BluetoothData data) {}
+void _emptyBoolCallback(bool data) {}
+
+Future<void> _connectAndRead(BluetoothDevice device, Function(BluetoothData) onNewDataCallback) async {
+
   _isConnected = false;
   if(!device.isConnected) await device.connect();
 
@@ -81,12 +85,16 @@ Future<void> _connectAndRead(BluetoothDevice device, Function(BluetoothData) cal
   if (timer != null) timer!.cancel();
   timer = Timer.periodic(Duration(seconds: 1), (Timer timer) async {
       BluetoothData data = await BluetoothData.fromBluetooth(device);
-      callback(data);
+      onNewDataCallback(data);
     }
   );
 }
 
-Future<void> showCustomDialog(BuildContext context, Function(BluetoothData) callback) async {
+Future<void> showCustomDialog(BuildContext context,
+    {
+      Function(BluetoothData data) onNewDataCallback = _emptyBluetoothCallback,
+      Function(bool selected) onBluetoothSelectedCallback = _emptyBoolCallback,
+    }) async {
   await requestBluetoothPermissions();
   showDialog(
     context: context,
@@ -136,12 +144,16 @@ Future<void> showCustomDialog(BuildContext context, Function(BluetoothData) call
                                   }
                                   await data.device.disconnect();
                                   print("Device disconnected: ${data.device.platformName}");
+                                  onBluetoothSelectedCallback(false);
                                 },
                                 child: Text("Disconnect"),
                               ),
                           ],
                         ),
-                        onTap: () => _connectAndRead(data.device, callback),
+                        onTap: () {
+                          onBluetoothSelectedCallback(true);
+                          _connectAndRead(data.device, onNewDataCallback);
+                        },
                       ),
                     );
                   },

@@ -211,6 +211,29 @@ class _NotificationScheduler extends State<NotificationScheduler> {
       month: month,
     );
 
+    final int notificationId = notification.hour * 100000 +
+        notification.minute * 1000 +
+        notification.frequency * 100 +
+        notification.dayOfWeek * 10 +
+        notification.month;
+
+    bool notificationExists = _notifications.any((existingNotification) {
+      final existingNotificationId = existingNotification.hour * 100000 +
+                                    existingNotification.minute * 1000 +
+                                    existingNotification.frequency * 100 +
+                                    existingNotification.dayOfWeek * 10 +
+                                    existingNotification.month;
+
+      return existingNotificationId == notificationId;
+    });
+
+    if (notificationExists) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Notification with these parameters already exists')),
+      );
+      return false;
+    }
+
     try {
       final result =
           await app_notifications.NotificationsAccessor.addNotification(

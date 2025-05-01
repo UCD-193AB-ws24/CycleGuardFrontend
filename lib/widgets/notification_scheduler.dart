@@ -219,17 +219,18 @@ class _NotificationScheduler extends State<NotificationScheduler> {
 
     bool notificationExists = _notifications.any((existingNotification) {
       final existingNotificationId = existingNotification.hour * 100000 +
-                                    existingNotification.minute * 1000 +
-                                    existingNotification.frequency * 100 +
-                                    existingNotification.dayOfWeek * 10 +
-                                    existingNotification.month;
+          existingNotification.minute * 1000 +
+          existingNotification.frequency * 100 +
+          existingNotification.dayOfWeek * 10 +
+          existingNotification.month;
 
       return existingNotificationId == notificationId;
     });
 
     if (notificationExists) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Notification with these parameters already exists')),
+        const SnackBar(
+            content: Text('Notification with these parameters already exists')),
       );
       return false;
     }
@@ -549,8 +550,18 @@ class _NotificationScheduler extends State<NotificationScheduler> {
                       context: context,
                       builder: (context) {
                         return AlertDialog(
+                          backgroundColor: isDarkMode
+                              ? Colors.grey[900]
+                              : null, // Background color
                           scrollable: true,
-                          title: const Text('Add Notification'),
+                          title: Text(
+                            'Add Notification',
+                            style: TextStyle(
+                              color: isDarkMode
+                                  ? Colors.white
+                                  : Colors.black, // Title color
+                            ),
+                          ),
                           content: StatefulBuilder(
                             builder: (context, setState) {
                               return Column(
@@ -558,16 +569,32 @@ class _NotificationScheduler extends State<NotificationScheduler> {
                                 children: [
                                   TextField(
                                     controller: _titleController,
-                                    decoration: const InputDecoration(
+                                    style: TextStyle(
+                                        color: isDarkMode
+                                            ? Colors.white
+                                            : Colors.black),
+                                    decoration: InputDecoration(
                                       labelText: 'Notification Title',
+                                      labelStyle: TextStyle(
+                                          color: isDarkMode
+                                              ? Colors.white70
+                                              : Colors.black),
                                       border: OutlineInputBorder(),
                                     ),
                                   ),
                                   const SizedBox(height: 10),
                                   TextField(
                                     controller: _bodyController,
-                                    decoration: const InputDecoration(
+                                    style: TextStyle(
+                                        color: isDarkMode
+                                            ? Colors.white
+                                            : Colors.black),
+                                    decoration: InputDecoration(
                                       labelText: 'Notification Body',
+                                      labelStyle: TextStyle(
+                                          color: isDarkMode
+                                              ? Colors.white70
+                                              : Colors.black),
                                       border: OutlineInputBorder(),
                                     ),
                                     maxLines: 3,
@@ -583,8 +610,12 @@ class _NotificationScheduler extends State<NotificationScheduler> {
                                       ),
                                     ),
                                     trailing: IconButton(
-                                      icon: const Icon(Icons.access_time),
-                                      onPressed: () => _selectTime(context, setState),
+                                      icon: Icon(
+                                        Icons.access_time,
+                                        color: isDarkMode ? Colors.white70 : null, 
+                                      ),
+                                      onPressed: () =>
+                                          _selectTime(context, setState),
                                     ),
                                   ),
                                   ListTile(

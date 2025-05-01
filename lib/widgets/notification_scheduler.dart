@@ -21,7 +21,6 @@ class _NotificationScheduler extends State<NotificationScheduler> {
   List<app_notifications.Notification> _notifications = [];
   final LocalNotificationService _notificationService =
       LocalNotificationService();
-  bool _isAddingNotification = false;
 
   // Properties for frequency and day of week
   int _selectedFrequency = 0; // Default: 0 = Daily
@@ -531,9 +530,7 @@ class _NotificationScheduler extends State<NotificationScheduler> {
           ),
           const SizedBox(height: 12),
           Text(
-            _isAddingNotification
-                ? 'Create Notification'
-                : 'Add or Delete Notifications:',
+            'Add or Delete Notifications:',
             style: TextStyle(
                 fontSize: 16,
                 color: isDarkMode ? Colors.white70 : Colors.black),
@@ -543,7 +540,6 @@ class _NotificationScheduler extends State<NotificationScheduler> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              if (!_isAddingNotification) ...[
                 ElevatedButton.icon(
                   onPressed: () {
                     showDialog(
@@ -718,9 +714,6 @@ class _NotificationScheduler extends State<NotificationScheduler> {
                               onPressed: () async {
                                 bool success = await _addNotification();
                                 if (success) {
-                                  setState(() {
-                                    _isAddingNotification = false;
-                                  });
                                   Navigator.of(context).pop();
                                 }
                               },
@@ -733,7 +726,6 @@ class _NotificationScheduler extends State<NotificationScheduler> {
                             TextButton(
                               onPressed: () {
                                 setState(() {
-                                  _isAddingNotification = false;
                                   _titleController.clear();
                                   _bodyController.clear();
                                 });
@@ -772,7 +764,6 @@ class _NotificationScheduler extends State<NotificationScheduler> {
                     backgroundColor: Colors.red,
                   ),
                 ),
-              ],
             ],
           ),
         ],

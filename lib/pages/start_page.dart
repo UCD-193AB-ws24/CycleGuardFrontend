@@ -7,12 +7,18 @@ import '../auth/dim_util.dart';
 import '../main.dart';
 // import '../main.dart'; 
 
-class StartPage extends StatelessWidget {
+class StartPage extends StatefulWidget {
   final PageController pageController;
+
   StartPage(this.pageController);
 
+  @override
+  _StartPageState createState() => _StartPageState();
+}
+
+class _StartPageState extends State<StartPage> {
   void _handlePress() async {
-    pageController.nextPage(
+    widget.pageController.nextPage(
       duration: Duration(milliseconds: 300),
       curve: Curves.easeInOut,
     );
@@ -34,7 +40,7 @@ class StartPage extends StatelessWidget {
       appState.loadUserSettings().then(
               (onValue) => appState.fetchOwnedThemes().then(
                   (onValue) => Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => MyHomePage()))
-              )
+          )
       );
 
     }
@@ -49,14 +55,14 @@ class StartPage extends StatelessWidget {
       body: Stack(
         children: [
           Positioned(
-            left: DimUtil.safeWidth(context) * (-0.75), 
+            left: DimUtil.safeWidth(context) * (-0.75),
             top: 0,
             child: SvgPicture.asset(
               'assets/cg_logomark.svg',
               width:  DimUtil.safeWidth(context),
-              height: DimUtil.safeHeight(context) * 1.1, 
+              height: DimUtil.safeHeight(context) * 1.1,
               colorFilter: ColorFilter.mode(
-                Color(0xFFFFCC80), 
+                Color(0xFFFFCC80),
                 BlendMode.srcIn,
               ),
             ),
@@ -67,8 +73,8 @@ class StartPage extends StatelessWidget {
             right: 15,
             child: SvgPicture.asset(
               'assets/cg_type_logo.svg',
-              width: DimUtil.safeWidth(context) * 0.5, 
-              height: DimUtil.safeHeight(context) * 0.3, 
+              width: DimUtil.safeWidth(context) * 0.5,
+              height: DimUtil.safeHeight(context) * 0.3,
               //fit: BoxFit.contain,
             ),
           ),
@@ -83,7 +89,7 @@ class StartPage extends StatelessWidget {
                     textStyle: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.w500,
-                      color: Color(0xFF555555), 
+                      color: Color(0xFF555555),
                     ),
                   ),
                 ),

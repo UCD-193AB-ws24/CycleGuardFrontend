@@ -23,12 +23,14 @@ class _NotificationScheduler extends State<NotificationScheduler> {
       LocalNotificationService();
   bool _isAddingNotification = false;
 
-  // New properties for frequency and day of week
+  // Properties for frequency and day of week
   int _selectedFrequency = 0; // Default: 0 = Daily
   int _selectedDayOfWeek =
       DateTime.now().weekday; // Default: Current day of week
   DateTime _selectedDate =
       DateTime.now(); // Default: Today's date for one-time notifications
+  bool _showAllNotifications = false;
+  final int _notificationLimit = 3;
 
   // Map frequency values to their names for display
   final Map<int, String> _frequencyNames = {
@@ -61,7 +63,10 @@ class _NotificationScheduler extends State<NotificationScheduler> {
     super.dispose();
   }
 
-  Future<void> _selectTime(BuildContext context) async {
+  Future<void> _selectTime(
+    BuildContext context,
+    void Function(void Function()) dialogSetState,
+  ) async {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final colorScheme = Theme.of(context).colorScheme;
 
@@ -102,9 +107,12 @@ class _NotificationScheduler extends State<NotificationScheduler> {
     );
 
     if (picked != null && picked != _selectedTime) {
-      setState(() {
+      dialogSetState(() {
         _selectedTime = picked;
       });
+
+      // Also update parent if needed
+      setState(() {});
     }
   }
 
@@ -396,9 +404,13 @@ class _NotificationScheduler extends State<NotificationScheduler> {
                   textAlign: TextAlign.center,
                 ),
               if (_notifications.isNotEmpty)
-                SizedBox(
-                  child: Column(
-                    children: _notifications.map((notification) {
+                Column(
+                  children: [
+                    ..._notifications
+                        .take(_showAllNotifications
+                            ? _notifications.length
+                            : _notificationLimit)
+                        .map((notification) {
                       final isSelected = _selectedNotification == notification;
                       final notificationTiming =
                           _getNotificationTimingDescription(notification);
@@ -463,11 +475,37 @@ class _NotificationScheduler extends State<NotificationScheduler> {
                         ),
                       );
                     }).toList(),
-                  ),
+                    if (_notifications.length > _notificationLimit)
+                      TextButton(
+                        onPressed: () {
+                          setState(() {
+                            _showAllNotifications = !_showAllNotifications;
+                          });
+                        },
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              _showAllNotifications ? 'See less' : 'See more',
+                              style: TextStyle(
+                                color: isDarkMode ? Colors.white : Colors.black,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Icon(
+                              _showAllNotifications
+                                  ? Icons.expand_less
+                                  : Icons.expand_more,
+                              color: isDarkMode ? Colors.white : Colors.black,
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
                 ),
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 12),
           Text(
             _isAddingNotification
                 ? 'Create Notification'
@@ -484,13 +522,179 @@ class _NotificationScheduler extends State<NotificationScheduler> {
               if (!_isAddingNotification) ...[
                 ElevatedButton.icon(
                   onPressed: () {
-                    setState(() {
-                      _isAddingNotification = true;
-                      // Reset to defaults
-                      _selectedFrequency = 0;
-                      _selectedDayOfWeek = DateTime.now().weekday;
-                      _selectedDate = DateTime.now();
-                    });
+                    showDialog(
+                      context: context,
+                      builder: (context) {
+                        return AlertDialog(
+                          scrollable: true,
+                          title: const Text('Add Notification'),
+                          content: StatefulBuilder(
+                            builder: (context, setState) {
+                              return Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  TextField(
+                                    controller: _titleController,
+                                    decoration: const InputDecoration(
+                                      labelText: 'Notification Title',
+                                      border: OutlineInputBorder(),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 10),
+                                  TextField(
+                                    controller: _bodyController,
+                                    decoration: const InputDecoration(
+                                      labelText: 'Notification Body',
+                                      border: OutlineInputBorder(),
+                                    ),
+                                    maxLines: 3,
+                                  ),
+                                  const SizedBox(height: 10),
+                                  ListTile(
+                                    title: Text(
+                                      'Notification Time: ${_selectedTime.format(context)}',
+                                      style: TextStyle(
+                                        color: isDarkMode
+                                            ? Colors.white70
+                                            : Colors.black,
+                                      ),
+                                    ),
+                                    trailing: IconButton(
+                                      icon: const Icon(Icons.access_time),
+                                      onPressed: () => _selectTime(context, setState),
+                                    ),
+                                  ),
+                                  ListTile(
+                                    title: Text(
+                                      'Frequency: ${_frequencyNames[_selectedFrequency]}',
+                                      style: TextStyle(
+                                        color: isDarkMode
+                                            ? Colors.white70
+                                            : Colors.black,
+                                      ),
+                                    ),
+                                    trailing: DropdownButton<int>(
+                                      value: _selectedFrequency,
+                                      dropdownColor: isDarkMode
+                                          ? Colors.grey[800]
+                                          : Colors.white,
+                                      onChanged: (int? newValue) {
+                                        if (newValue != null) {
+                                          setState(() {
+                                            _selectedFrequency = newValue;
+                                          });
+                                        }
+                                      },
+                                      items: _frequencyNames.entries
+                                          .map<DropdownMenuItem<int>>((entry) {
+                                        return DropdownMenuItem<int>(
+                                          value: entry.key,
+                                          child: Text(
+                                            entry.value,
+                                            style: TextStyle(
+                                              color: isDarkMode
+                                                  ? Colors.white70
+                                                  : Colors.black,
+                                            ),
+                                          ),
+                                        );
+                                      }).toList(),
+                                    ),
+                                  ),
+                                  if (_selectedFrequency == 1)
+                                    ListTile(
+                                      title: Text(
+                                        'Day of Week: ${_dayNames[_selectedDayOfWeek]}',
+                                        style: TextStyle(
+                                          color: isDarkMode
+                                              ? Colors.white70
+                                              : Colors.black,
+                                        ),
+                                      ),
+                                      trailing: DropdownButton<int>(
+                                        value: _selectedDayOfWeek,
+                                        dropdownColor: isDarkMode
+                                            ? Colors.grey[800]
+                                            : Colors.white,
+                                        onChanged: (int? newValue) {
+                                          if (newValue != null) {
+                                            setState(() {
+                                              _selectedDayOfWeek = newValue;
+                                            });
+                                          }
+                                        },
+                                        items: _dayNames.entries
+                                            .map<DropdownMenuItem<int>>(
+                                                (entry) {
+                                          return DropdownMenuItem<int>(
+                                            value: entry.key,
+                                            child: Text(
+                                              entry.value,
+                                              style: TextStyle(
+                                                color: isDarkMode
+                                                    ? Colors.white70
+                                                    : Colors.black,
+                                              ),
+                                            ),
+                                          );
+                                        }).toList(),
+                                      ),
+                                    ),
+                                  if (_selectedFrequency == 2)
+                                    ListTile(
+                                      title: Text(
+                                        'Date: ${_formatDate(_selectedDate)}',
+                                        style: TextStyle(
+                                          color: isDarkMode
+                                              ? Colors.white70
+                                              : Colors.black,
+                                        ),
+                                      ),
+                                      trailing: IconButton(
+                                        icon: const Icon(Icons.calendar_today),
+                                        onPressed: () => _selectDate(context),
+                                      ),
+                                    ),
+                                ],
+                              );
+                            },
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () async {
+                                bool success = await _addNotification();
+                                if (success) {
+                                  setState(() {
+                                    _isAddingNotification = false;
+                                  });
+                                  Navigator.of(context).pop();
+                                }
+                              },
+                              style: ElevatedButton.styleFrom(
+                                foregroundColor: Colors.white,
+                                backgroundColor: Colors.green,
+                              ),
+                              child: const Text('Confirm'),
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                setState(() {
+                                  _isAddingNotification = false;
+                                  _titleController.clear();
+                                  _bodyController.clear();
+                                });
+                                Navigator.of(context).pop();
+                              },
+                              style: ElevatedButton.styleFrom(
+                                foregroundColor: Colors.white,
+                                backgroundColor: Colors.red,
+                              ),
+                              child: const Text('Cancel'),
+                            ),
+                          ],
+                        );
+                      },
+                    );
                   },
                   icon: Icon(
                     Icons.add,
@@ -517,156 +721,6 @@ class _NotificationScheduler extends State<NotificationScheduler> {
               ],
             ],
           ),
-          const SizedBox(height: 20),
-          if (_isAddingNotification) ...[
-            TextField(
-              controller: _titleController,
-              decoration: const InputDecoration(
-                labelText: 'Notification Title',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 10),
-            TextField(
-              controller: _bodyController,
-              decoration: const InputDecoration(
-                labelText: 'Notification Body',
-                border: OutlineInputBorder(),
-              ),
-              maxLines: 3,
-            ),
-            const SizedBox(height: 10),
-            ListTile(
-              title: Text(
-                'Notification Time: ${_selectedTime.format(context)}',
-                style: TextStyle(
-                  color: isDarkMode ? Colors.white70 : Colors.black,
-                ),
-              ),
-              trailing: IconButton(
-                icon: const Icon(Icons.access_time),
-                onPressed: () => _selectTime(context),
-              ),
-            ),
-            const SizedBox(height: 10),
-
-            // Frequency selector
-            ListTile(
-              title: Text(
-                'Frequency: ${_frequencyNames[_selectedFrequency]}',
-                style: TextStyle(
-                  color: isDarkMode ? Colors.white70 : Colors.black,
-                ),
-              ),
-              trailing: DropdownButton<int>(
-                value: _selectedFrequency,
-                dropdownColor: isDarkMode ? Colors.grey[800] : Colors.white,
-                onChanged: (int? newValue) {
-                  if (newValue != null) {
-                    setState(() {
-                      _selectedFrequency = newValue;
-                    });
-                  }
-                },
-                items:
-                    _frequencyNames.entries.map<DropdownMenuItem<int>>((entry) {
-                  return DropdownMenuItem<int>(
-                    value: entry.key,
-                    child: Text(
-                      entry.value,
-                      style: TextStyle(
-                        color: isDarkMode ? Colors.white70 : Colors.black,
-                      ),
-                    ),
-                  );
-                }).toList(),
-              ),
-            ),
-
-            // Day of Week selector - only shown for weekly notifications
-            if (_selectedFrequency == 1) // Weekly
-              ListTile(
-                title: Text(
-                  'Day of Week: ${_dayNames[_selectedDayOfWeek]}',
-                  style: TextStyle(
-                    color: isDarkMode ? Colors.white70 : Colors.black,
-                  ),
-                ),
-                trailing: DropdownButton<int>(
-                  value: _selectedDayOfWeek,
-                  dropdownColor: isDarkMode ? Colors.grey[800] : Colors.white,
-                  onChanged: (int? newValue) {
-                    if (newValue != null) {
-                      setState(() {
-                        _selectedDayOfWeek = newValue;
-                      });
-                    }
-                  },
-                  items: _dayNames.entries.map<DropdownMenuItem<int>>((entry) {
-                    return DropdownMenuItem<int>(
-                      value: entry.key,
-                      child: Text(
-                        entry.value,
-                        style: TextStyle(
-                          color: isDarkMode ? Colors.white70 : Colors.black,
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ),
-
-            // Date picker - only shown for one-time notifications
-            if (_selectedFrequency == 2) // One-time
-              ListTile(
-                title: Text(
-                  'Date: ${_formatDate(_selectedDate)}',
-                  style: TextStyle(
-                    color: isDarkMode ? Colors.white70 : Colors.black,
-                  ),
-                ),
-                trailing: IconButton(
-                  icon: const Icon(Icons.calendar_today),
-                  onPressed: () => _selectDate(context),
-                ),
-              ),
-
-            const SizedBox(height: 10),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                ElevatedButton(
-                  onPressed: () async {
-                    bool success = await _addNotification();
-                    if (success) {
-                      setState(() {
-                        _isAddingNotification = false;
-                      });
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    foregroundColor: Colors.white,
-                    backgroundColor: Colors.green,
-                  ),
-                  child: const Text('Confirm'),
-                ),
-                ElevatedButton(
-                  onPressed: () {
-                    setState(() {
-                      _isAddingNotification = false;
-                      _titleController.clear();
-                      _bodyController.clear();
-                    });
-                  },
-                  style: ElevatedButton.styleFrom(
-                    foregroundColor: Colors.white,
-                    backgroundColor: Colors.red,
-                  ),
-                  child: const Text('Cancel'),
-                ),
-              ],
-            ),
-          ]
         ],
       ),
     );

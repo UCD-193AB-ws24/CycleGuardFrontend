@@ -244,20 +244,46 @@ class _PacksPageState extends State<PacksPage> {
             onPressed: () async {
               final name = nameController.text.trim();
               final pass = passController.text;
-              await PacksAccessor.createPack(name, pass);
-              await PacksAccessor.setPackGoal(
-                60 * 60 * 24 * 7,
-                PacksAccessor.GOAL_DISTANCE,
-                goalAmount,
-              );
-              Navigator.of(context).pop();
-              _loadData();
+
+              // Check if either field is empty
+              if (name.isEmpty || pass.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                      content:
+                          Text('Please fill in both the name and password.')),
+                );
+                return;
+              }
+
+              try {
+                // Create the pack if both fields are filled
+                bool success = await PacksAccessor.createPack(name, pass);
+                if (success) {
+                  await PacksAccessor.setPackGoal(
+                    60 * 60 * 24 * 7,
+                    PacksAccessor.GOAL_DISTANCE,
+                    goalAmount,
+                  );
+                  Navigator.of(context).pop();
+                  _loadData();
+                }
+              } catch (e) {
+                String errorMessage = 'An unexpected error occurred';
+                if (e is String) {
+                  errorMessage =
+                      e;
+                }
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(errorMessage)),
+                );
+              }
             },
             child: Text(
               'Create',
               style: TextStyle(color: isDarkMode ? Colors.white : null),
             ),
-          ),
+          )
         ],
       ),
     );

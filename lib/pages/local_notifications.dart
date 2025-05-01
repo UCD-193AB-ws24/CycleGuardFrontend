@@ -191,10 +191,11 @@ class LocalNotificationService {
     
     // If the specified date and time has already passed, don't schedule
     if (scheduledDate.isBefore(now)) {
-      developer.log('Warning: Attempting to schedule notification in the past. Scheduling for now + 1 minute instead.',
-        name: 'LocalNotificationService');
-      // Schedule for 1 minute from now as fallback
-      scheduledDate = now.add(const Duration(minutes: 1));
+      developer.log(
+        'Info: Not scheduling notification because the date/time has already passed.',
+        name: 'LocalNotificationService',
+      );
+      return; // Exit early, do not schedule
     }
 
     await _notifications.cancel(id);

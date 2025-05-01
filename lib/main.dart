@@ -472,6 +472,7 @@ AppBar createAppBar(BuildContext context, String titleText) {
         padding: const EdgeInsets.only(right: 32.0),
         child: GestureDetector(
           onTap: () {
+            selectedIndexGlobal.value = 1;
             Navigator.pushAndRemoveUntil(
               context,
               PageRouteBuilder(
@@ -492,7 +493,7 @@ AppBar createAppBar(BuildContext context, String titleText) {
                   );
                 },
               ),
-              (Route<dynamic> route) => route.settings.name == '/home', 
+              (_) => false,
             );
           },
           child: SvgPicture.asset(

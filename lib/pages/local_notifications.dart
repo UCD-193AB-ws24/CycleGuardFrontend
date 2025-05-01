@@ -3,11 +3,12 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 
 import 'package:android_intent_plus/android_intent.dart';
-//import 'package:android_intent_plus/intent.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest_all.dart' as tz;
+
+import 'dart:developer' as developer;
 
 class LocalNotificationService {
   static final _notifications = FlutterLocalNotificationsPlugin();
@@ -57,7 +58,7 @@ class LocalNotificationService {
       android: AndroidNotificationDetails(
         'daily_channel_id', 
         'Daily Notifications', 
-        channelDescription: 'Daily Notificaiton Channel',
+        channelDescription: 'Daily Notification Channel',
         importance: Importance.max,
         priority: Priority.high,
       ),
@@ -65,12 +66,14 @@ class LocalNotificationService {
     );
   }
 
+  // Modified to add matchDateTimeComponents parameter
   Future<void> scheduleNotification({
     required int hour,
     required int minute,
     required int id, 
     String? title,
     String? body,
+    DateTimeComponents? matchDateTimeComponents = DateTimeComponents.time,
   }) async {
     final permissionStatus = await Permission.notification.status;
     if (!permissionStatus.isGranted) {
@@ -102,7 +105,108 @@ class LocalNotificationService {
       scheduledDate,
       notificationDetails(),
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      matchDateTimeComponents: DateTimeComponents.time,
+      matchDateTimeComponents: matchDateTimeComponents,
+    );
+  }
+
+  // New method for weekly notifications
+  Future<void> scheduleWeeklyNotification({
+    required int hour,
+    required int minute,
+    required int dayOfWeek,
+    required int id, 
+    String? title,
+    String? body,
+  }) async {
+    final permissionStatus = await Permission.notification.status;
+    if (!permissionStatus.isGranted) {
+      requestExactAlarmPermission();
+      return;
+    }
+
+    final now = tz.TZDateTime.now(tz.local);
+    
+    // Calculate days until the next occurrence of the specified day of week
+    int daysUntilTarget = dayOfWeek - now.weekday;
+    if (daysUntilTarget < 0) {
+      daysUntilTarget += 7;
+    }
+    
+    // If it's the same day but the time has passed, add 7 days
+    if (daysUntilTarget == 0 && 
+        (now.hour > hour || (now.hour == hour && now.minute >= minute))) {
+      daysUntilTarget = 7;
+    }
+    
+    var scheduledDate = tz.TZDateTime(
+      tz.local,
+      now.year,
+      now.month,
+      now.day,
+      hour,
+      minute,
+    ).add(Duration(days: daysUntilTarget));
+
+    await _notifications.cancel(id);
+
+    await _notifications.zonedSchedule(
+      id,
+      title,
+      body,
+      scheduledDate,
+      notificationDetails(),
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
+    );
+  }
+
+  // Enhanced method for one-time notifications with specific date
+  Future<void> scheduleOneTimeNotification({
+    required int hour,
+    required int minute,
+    required int id,
+    required int year,
+    required int month,
+    required int day,
+    String? title,
+    String? body,
+  }) async {
+    final permissionStatus = await Permission.notification.status;
+    if (!permissionStatus.isGranted) {
+      requestExactAlarmPermission();
+      return;
+    }
+
+    // Create a scheduled date with the specific date and time
+    var scheduledDate = tz.TZDateTime(
+      tz.local,
+      year,
+      month,
+      day,
+      hour,
+      minute,
+    );
+
+    final now = tz.TZDateTime.now(tz.local);
+    
+    // If the specified date and time has already passed, don't schedule
+    if (scheduledDate.isBefore(now)) {
+      developer.log('Warning: Attempting to schedule notification in the past. Scheduling for now + 1 minute instead.',
+        name: 'LocalNotificationService');
+      // Schedule for 1 minute from now as fallback
+      scheduledDate = now.add(const Duration(minutes: 1));
+    }
+
+    await _notifications.cancel(id);
+
+    // For one-time notification, don't set matchDateTimeComponents
+    await _notifications.zonedSchedule(
+      id,
+      title,
+      body,
+      scheduledDate,
+      notificationDetails(),
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
     );
   }
 }

@@ -30,11 +30,11 @@ class _PacksPageState extends State<PacksPage> {
     setState(() {
       _loading = true;
     });
-    
+
     try {
       final pack = await PacksAccessor.getPackData();
       final invites = await PackInvitesAccessor.getInvites();
-      
+
       setState(() {
         _myPack = pack;
         _myInvites = invites;
@@ -49,6 +49,8 @@ class _PacksPageState extends State<PacksPage> {
   }
 
   void _showMessage(String message) {
+    if (!mounted) return;
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message)),
     );
@@ -118,7 +120,7 @@ class _PacksPageState extends State<PacksPage> {
                 setState(() {
                   _sendingInvite = true;
                 });
-                
+
                 try {
                   await PackInvitesAccessor.sendInvite(username);
                   _showMessage('Invite sent to $username');
@@ -242,20 +244,46 @@ class _PacksPageState extends State<PacksPage> {
             onPressed: () async {
               final name = nameController.text.trim();
               final pass = passController.text;
-              await PacksAccessor.createPack(name, pass);
-              await PacksAccessor.setPackGoal(
-                60 * 60 * 24 * 7,
-                PacksAccessor.GOAL_DISTANCE,
-                goalAmount,
-              );
-              Navigator.of(context).pop();
-              _loadData();
+
+              // Check if either field is empty
+              if (name.isEmpty || pass.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                      content:
+                          Text('Please fill in both the name and password.')),
+                );
+                return;
+              }
+
+              try {
+                // Create the pack if both fields are filled
+                bool success = await PacksAccessor.createPack(name, pass);
+                if (success) {
+                  await PacksAccessor.setPackGoal(
+                    60 * 60 * 24 * 7,
+                    PacksAccessor.GOAL_DISTANCE,
+                    goalAmount,
+                  );
+                  Navigator.of(context).pop();
+                  _loadData();
+                }
+              } catch (e) {
+                String errorMessage = 'An unexpected error occurred';
+                if (e is String) {
+                  errorMessage =
+                      e;
+                }
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(errorMessage)),
+                );
+              }
             },
             child: Text(
               'Create',
               style: TextStyle(color: isDarkMode ? Colors.white : null),
             ),
-          ),
+          )
         ],
       ),
     );
@@ -351,7 +379,8 @@ class _PacksPageState extends State<PacksPage> {
     );
   }
 
-  Map<String, Color> _buildMemberColors(Map<String, double> contributions, BuildContext context) {
+  Map<String, Color> _buildMemberColors(
+      Map<String, double> contributions, BuildContext context) {
     final colors = [
       Theme.of(context).colorScheme.primary,
       Theme.of(context).colorScheme.secondary,
@@ -395,7 +424,7 @@ class _PacksPageState extends State<PacksPage> {
     // Add "Remaining" slice
     sections.add(PieChartSectionData(
       color: Colors.grey.shade400,
-      value: remainder == 0.0 ? total : remainder,
+      value: remainder,
       title: '',
       radius: 60,
     ));
@@ -458,37 +487,52 @@ class _PacksPageState extends State<PacksPage> {
                     : null,
               ),
               const SizedBox(height: 8),
-              Text.rich(
-                TextSpan(
-                  children: [
-                    TextSpan(
-                      text: goal.goalAmount == 0
-                          ? 'No goal set, the pack owner can set a new goal!\n'
-                          : 'Goal: ${goal.goalAmount} mi\n',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: isDarkMode ? Colors.white : null,
+              goal.totalContribution >= goal.goalAmount && goal.goalAmount != 0
+                  ? Text.rich(
+                      TextSpan(
+                        text:
+                            'Congratulations! You completed the ${goal.goalAmount.toStringAsFixed(1)} mi challenge!',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: isDarkMode ? Colors.white : Colors.black,
+                        ),
+                      ),
+                      textAlign: TextAlign.center,
+                    )
+                  : Text.rich(
+                      TextSpan(
+                        children: [
+                          TextSpan(
+                            text: goal.goalAmount == 0
+                                ? 'No goal set, the pack owner can set a new goal!\n'
+                                : 'Goal: ${goal.goalAmount} mi\n',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: isDarkMode ? Colors.white : null,
+                            ),
+                          ),
+                          if (goal.goalAmount != 0) ...[
+                            TextSpan(
+                              text:
+                                  'Total: ${goal.totalContribution.toStringAsFixed(1)} mi\n',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: isDarkMode ? Colors.white : null,
+                              ),
+                            ),
+                            TextSpan(
+                              text:
+                                  'Remaining: ${(goal.goalAmount - goal.totalContribution).clamp(0.0, goal.goalAmount).toStringAsFixed(1)} mi',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: isDarkMode ? Colors.white : null,
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
                     ),
-                    TextSpan(
-                      text:
-                          'Total: ${goal.totalContribution.toStringAsFixed(1)} mi\n',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: isDarkMode ? Colors.white : null,
-                      ),
-                    ),
-                    TextSpan(
-                      text:
-                          'Remaining: ${(goal.goalAmount - goal.totalContribution).clamp(0.0, goal.goalAmount).toStringAsFixed(1)} mi',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: isDarkMode ? Colors.white : null,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
               const Divider(height: 28),
               Center(
                 child: Text(
@@ -563,7 +607,7 @@ class _PacksPageState extends State<PacksPage> {
                 ),
                 const SizedBox(height: 24),
               ],
-              
+
               // Invites section (for pack owner)
               if (isOwner) ...[
                 const Divider(height: 24),
@@ -579,11 +623,12 @@ class _PacksPageState extends State<PacksPage> {
                       ),
                     ),
                     ElevatedButton.icon(
-                      onPressed: _sendingInvite ? null : _showInviteMemberDialog,
-                      icon: _sendingInvite 
+                      onPressed:
+                          _sendingInvite ? null : _showInviteMemberDialog,
+                      icon: _sendingInvite
                           ? SizedBox(
-                              width: 18, 
-                              height: 18, 
+                              width: 18,
+                              height: 18,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
                                 color: isDarkMode ? Colors.white54 : null,
@@ -607,31 +652,33 @@ class _PacksPageState extends State<PacksPage> {
                     ),
                   )
                 else
-                  ...invites.map((username) => Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          username,
-                          style: TextStyle(
-                            color: isDarkMode ? Colors.white : null,
-                          ),
-                        ),
-                        TextButton.icon(
-                          onPressed: () => _cancelInvite(username),
-                          icon: const Icon(Icons.close),
-                          label: const Text('Cancel'),
-                          style: TextButton.styleFrom(
-                            foregroundColor: Colors.red,
-                          ),
-                        ),
-                      ],
-                    ),
-                  )).toList(),
+                  ...invites
+                      .map((username) => Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 4.0),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  username,
+                                  style: TextStyle(
+                                    color: isDarkMode ? Colors.white : null,
+                                  ),
+                                ),
+                                TextButton.icon(
+                                  onPressed: () => _cancelInvite(username),
+                                  icon: const Icon(Icons.close),
+                                  label: const Text('Cancel'),
+                                  style: TextButton.styleFrom(
+                                    foregroundColor: Colors.red,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ))
+                      .toList(),
                 const Divider(height: 24),
               ],
-              
+
               if (isOwner) ...[
                 if (goal.goalAmount > 0)
                   ElevatedButton(
@@ -795,11 +842,11 @@ class _PacksPageState extends State<PacksPage> {
   Widget _buildInvitesSection() {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final invites = _myInvites?.invites ?? [];
-    
+
     if (invites.isEmpty) {
       return const SizedBox.shrink();
     }
-    
+
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       elevation: 2,
@@ -818,39 +865,41 @@ class _PacksPageState extends State<PacksPage> {
               ),
             ),
             const SizedBox(height: 12),
-            ...invites.map((packName) => Padding(
-              padding: const EdgeInsets.only(bottom: 12.0),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      packName,
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: isDarkMode ? Colors.white : null,
+            ...invites
+                .map((packName) => Padding(
+                      padding: const EdgeInsets.only(bottom: 12.0),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              packName,
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: isDarkMode ? Colors.white : null,
+                              ),
+                            ),
+                          ),
+                          TextButton.icon(
+                            onPressed: () => _acceptInvite(packName),
+                            icon: const Icon(Icons.check),
+                            label: const Text('Accept'),
+                            style: TextButton.styleFrom(
+                              foregroundColor: Colors.green,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          TextButton.icon(
+                            onPressed: () => _declineInvite(packName),
+                            icon: const Icon(Icons.close),
+                            label: const Text('Decline'),
+                            style: TextButton.styleFrom(
+                              foregroundColor: Colors.red,
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                  ),
-                  TextButton.icon(
-                    onPressed: () => _acceptInvite(packName),
-                    icon: const Icon(Icons.check),
-                    label: const Text('Accept'),
-                    style: TextButton.styleFrom(
-                      foregroundColor: Colors.green,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  TextButton.icon(
-                    onPressed: () => _declineInvite(packName),
-                    icon: const Icon(Icons.close),
-                    label: const Text('Decline'),
-                    style: TextButton.styleFrom(
-                      foregroundColor: Colors.red,
-                    ),
-                  ),
-                ],
-              ),
-            )).toList(),
+                    ))
+                .toList(),
           ],
         ),
       ),
@@ -916,11 +965,11 @@ class _PacksPageState extends State<PacksPage> {
     return ListView(
       children: [
         const SizedBox(height: 12),
-        
+
         // Show invites section if there are any
         if (_myInvites != null && _myInvites!.invites.isNotEmpty)
           _buildInvitesSection(),
-          
+
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           child: ElevatedButton(

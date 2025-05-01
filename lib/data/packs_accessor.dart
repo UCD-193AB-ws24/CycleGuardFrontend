@@ -29,6 +29,10 @@ class PacksAccessor {
     print(body);
 
     final response = await RequestsUtil.postWithToken("/packs/createPack", body);
+    if (response.statusCode == 409) {
+      throw 'Pack name is already taken';
+    }
+
     if (response.statusCode != 200) {
       throw "Error in createPack: response code ${response.statusCode}";
     }

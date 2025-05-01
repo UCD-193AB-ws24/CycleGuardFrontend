@@ -24,16 +24,18 @@ class _StartPageState extends State<StartPage> {
     );
   }
 
-  bool _didLoad = false;
-  void _afterLoadToken(BuildContext context) {
-    if (_didLoad) return;
+  @override
+  void initState() {
+    super.initState();
 
+    AuthUtil.loadToken().then((onValue) => _afterLoadToken(context));
+  }
+
+  void _afterLoadToken(BuildContext context) {
     print("Logged in? ${AuthUtil.isLoggedIn()}");
     print("Token found: ${AuthUtil.token}");
 
     if (!AuthUtil.isLoggedIn()) return;
-
-    _didLoad = true;
 
     final appState = Provider.of<MyAppState>(context, listen: false);
     if (context.mounted) {
@@ -48,8 +50,6 @@ class _StartPageState extends State<StartPage> {
 
   @override
   Widget build(BuildContext context) {
-    print("Building startpage");
-    AuthUtil.loadToken().then((onValue) => _afterLoadToken(context));
     return Scaffold(
       backgroundColor: Color(0xFFF5E7C4),
       body: Stack(

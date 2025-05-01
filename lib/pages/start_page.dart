@@ -20,12 +20,13 @@ class StartPage extends StatelessWidget {
 
   bool _didLoad = false;
   void _afterLoadToken(BuildContext context) {
+    if (_didLoad) return;
+
     print("Logged in? ${AuthUtil.isLoggedIn()}");
     print("Token found: ${AuthUtil.token}");
 
     if (!AuthUtil.isLoggedIn()) return;
 
-    if (_didLoad) return;
     _didLoad = true;
 
     final appState = Provider.of<MyAppState>(context, listen: false);
@@ -41,6 +42,7 @@ class StartPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    print("Building startpage");
     AuthUtil.loadToken().then((onValue) => _afterLoadToken(context));
     return Scaffold(
       backgroundColor: Color(0xFFF5E7C4),

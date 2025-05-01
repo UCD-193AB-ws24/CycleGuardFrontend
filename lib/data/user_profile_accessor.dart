@@ -60,6 +60,7 @@ class UserProfileAccessor {
 class UserProfile {
   final String username, displayName, bio, profileIcon;
   final bool isPublic, isNewAccount;
+  final String? pack;
 
   const UserProfile({
     required this.username,
@@ -67,7 +68,8 @@ class UserProfile {
     required this.bio,
     required this.profileIcon,
     required this.isPublic,
-    required this.isNewAccount
+    required this.isNewAccount,
+    this.pack,
   });
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
@@ -78,14 +80,16 @@ class UserProfile {
         "bio": String bio,
         "isPublic": bool isPublic,
         "isNewAccount": bool isNewAccount,
-        "profileIcon": String profileIcon
+        "profileIcon": String profileIcon,
+        "pack": String pack
       } => UserProfile(
           username: username,
           displayName: displayName,
           bio: bio,
           profileIcon: profileIcon,
           isPublic: isPublic,
-          isNewAccount: isNewAccount
+          isNewAccount: isNewAccount,
+          pack: pack
       ),
       _ => throw const FormatException("failed to load UserProfile"),
     };
@@ -97,7 +101,8 @@ class UserProfile {
     'bio': bio,
     'isPublic': isPublic,
     'isNewAccount': isNewAccount,
-    'profileIcon': profileIcon
+    'profileIcon': profileIcon,
+    'pack': pack
   };
 
   /// **Converts a List of JSON user entries into a List<UserProfile>**

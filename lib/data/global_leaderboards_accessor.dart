@@ -1,8 +1,6 @@
 import 'dart:convert';
 
 import 'package:cycle_guard_app/auth/requests_util.dart';
-import 'package:cycle_guard_app/data/single_trip_history.dart';
-import 'package:get_storage/get_storage.dart';
 class GlobalLeaderboardsAccessor {
   GlobalLeaderboardsAccessor._();
 

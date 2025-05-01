@@ -1,6 +1,5 @@
 import 'dart:developer' as developer;
 import 'package:cycle_guard_app/pages/local_notifications.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cycle_guard_app/data/notifications_accessor.dart'
     as app_notifications;
 import 'package:flutter/material.dart';

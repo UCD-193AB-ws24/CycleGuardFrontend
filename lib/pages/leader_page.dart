@@ -1,8 +1,6 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:cycle_guard_app/data/global_leaderboards_accessor.dart';
 import 'package:cycle_guard_app/pages/leader.dart'; // Import Leader model'
-import 'package:http/http.dart' as http;
 import 'package:flutter_svg/flutter_svg.dart';
 import '../main.dart';
 

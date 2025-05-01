@@ -7,11 +7,7 @@ import 'package:cycle_guard_app/data/trip_history_provider.dart';
 import 'package:cycle_guard_app/data/user_stats_provider.dart';
 import 'package:cycle_guard_app/data/single_trip_history.dart';
 import 'package:cycle_guard_app/pages/calendar_view.dart';
-import 'package:draggable_scrollbar/draggable_scrollbar.dart';
 import '../auth/dim_util.dart';
-
-import '../main.dart';
-import './routes_page.dart';
 
 class HistoryPage extends StatefulWidget {
   @override

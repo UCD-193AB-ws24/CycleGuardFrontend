@@ -1,11 +1,6 @@
-import 'package:cycle_guard_app/data/user_stats_accessor.dart';
 import 'package:flutter/material.dart';
-import 'dart:convert';
-import 'package:cycle_guard_app/pages/leader.dart'; // Import Leader model
-import 'package:http/http.dart' as http;
 import 'package:cycle_guard_app/data/user_profile_accessor.dart';
 import 'package:cycle_guard_app/data/user_daily_goal_provider.dart';
-import 'package:cycle_guard_app/data/user_daily_goal_accessor.dart';
 import 'package:cycle_guard_app/data/friends_list_accessor.dart';
 import 'package:cycle_guard_app/data/friend_requests_accessor.dart';
 import 'package:cycle_guard_app/data/health_info_accessor.dart';
@@ -19,11 +14,6 @@ import 'package:showcaseview/showcaseview.dart';
 
 import 'package:cycle_guard_app/pages/packs_page.dart';
 
-// for local notifications
-import 'dart:developer';
-/*import 'package:cycle_guard_app/pages/local_notifications.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:cycle_guard_app/data/notifications_accessor.dart';*/
 import 'package:cycle_guard_app/widgets/notification_scheduler.dart';
 
 class SocialPage extends StatefulWidget {
@@ -218,53 +208,6 @@ class _SocialPageState extends State<SocialPage>
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Failed to send request: $e")),
-      );
-    }
-  }
-
-  /// **Fetch pending friend requests from the backend**
-  Future<List<String>> _fetchFriendRequests() async {
-    try {
-      final FriendRequestList friendRequestsList =
-          await FriendRequestsListAccessor.getFriendRequestList();
-      return friendRequestsList
-          .pendingFriendRequests; // List of usernames who sent friend requests
-    } catch (e) {
-      print("Error fetching friend requests: $e");
-      return [];
-    }
-  }
-
-  /// **Accept a Friend Request**
-  Future<void> _acceptFriendRequest(String username) async {
-    try {
-      await FriendRequestsListAccessor.acceptFriendRequest(username);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("You are now friends with $username!")),
-      );
-
-      // Refresh friend request list
-      setState(() {});
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error while accepting friend request: $e")),
-      );
-    }
-  }
-
-  /// **Reject a Friend Request**
-  Future<void> _rejectFriendRequest(String username) async {
-    try {
-      await FriendRequestsListAccessor.rejectFriendRequest(username);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Friend request from $username rejected.")),
-      );
-
-      // Refresh friend request list
-      setState(() {});
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Failed to reject friend request: $e")),
       );
     }
   }

@@ -1,8 +1,6 @@
 import 'dart:convert';
 
 import 'package:cycle_guard_app/auth/requests_util.dart';
-import 'package:cycle_guard_app/data/friends_list_accessor.dart';
-
 class UserProfileAccessor {
   UserProfileAccessor._();
 

@@ -1,8 +1,4 @@
-import 'dart:math';
-
 import 'package:cycle_guard_app/auth/auth_util.dart';
-import 'package:cycle_guard_app/pages/home_page.dart';
-import 'package:cycle_guard_app/pages/login_page.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:flutter/services.dart' show rootBundle;

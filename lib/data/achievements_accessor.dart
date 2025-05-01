@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'package:cycle_guard_app/auth/requests_util.dart';
-import 'package:flutter/semantics.dart';
 class AchievementInfoAccessor {
   AchievementInfoAccessor._();
 

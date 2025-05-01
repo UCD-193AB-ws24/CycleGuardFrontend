@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:cycle_guard_app/data/user_stats_provider.dart';
 import 'package:cycle_guard_app/data/user_daily_goal_provider.dart';
 import 'package:cycle_guard_app/data/achievements_progress_provider.dart';
@@ -16,28 +15,15 @@ import 'package:cycle_guard_app/data/user_settings_accessor.dart';
 import 'package:cycle_guard_app/data/user_profile_accessor.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'constants.dart';
 
 // import pages 
 import 'pages/start_page.dart';
 import 'pages/login_page.dart';
 import 'pages/home_page.dart';
 import 'pages/social_page.dart';
-import 'pages/history_page.dart';
-import 'pages/achievements_page.dart';
 import 'pages/routes_page.dart';
-import 'pages/store_page.dart';
-import 'pages/leader_page.dart';
-import 'pages/settings_page.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 
-// notifications
 import 'pages/local_notifications.dart';
-import 'package:android_intent_plus/android_intent.dart';
-//import 'package:android_intent_plus/intent.dart';
-import 'package:permission_handler/permission_handler.dart';
-
-// tutorial
 import 'package:showcaseview/showcaseview.dart';
 
 //const MethodChannel platform = MethodChannel('com.cycleguard.channel'); // Must match iOS

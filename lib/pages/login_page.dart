@@ -1,5 +1,3 @@
-import 'dart:ffi';
-
 import 'package:cycle_guard_app/auth/auth_util.dart';
 import 'package:cycle_guard_app/pages/create_account.dart';
 import 'package:flutter/material.dart';
@@ -10,8 +8,6 @@ import 'package:cycle_guard_app/data/notifications_accessor.dart' as app_notific
 import 'package:cycle_guard_app/pages/local_notifications.dart';
 
 import 'package:fluttertoast/fluttertoast.dart';
-
-import '../main.dart';
 
 /*
 Username: javagod123

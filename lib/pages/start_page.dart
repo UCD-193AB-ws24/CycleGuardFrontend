@@ -1,5 +1,4 @@
 import 'package:cycle_guard_app/auth/auth_util.dart';
-import 'package:cycle_guard_app/pages/login_page.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_svg/flutter_svg.dart';

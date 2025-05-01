@@ -16,7 +16,7 @@ import 'package:cycle_guard_app/data/user_profile_accessor.dart';
 import 'package:cycle_guard_app/data/user_settings_accessor.dart';
 import 'package:cycle_guard_app/data/user_stats_accessor.dart';
 import 'package:cycle_guard_app/data/week_history_accessor.dart';
-import 'package:cycle_guard_app/pages/start_page.dart';
+//import 'package:cycle_guard_app/pages/start_page.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import './ble.dart';

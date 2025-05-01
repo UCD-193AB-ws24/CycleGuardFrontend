@@ -555,8 +555,6 @@ class _PacksPageState extends State<PacksPage> {
                   final member = entry.key;
                   final value = entry.value;
                   final color = memberColors[member];
-                  final percent =
-                      (value / goal.goalAmount * 100).toStringAsFixed(1);
 
                   return Padding(
                     padding: const EdgeInsets.symmetric(vertical: 2),

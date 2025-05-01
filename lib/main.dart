@@ -482,7 +482,7 @@ AppBar createAppBar(BuildContext context, String titleText) {
         padding: const EdgeInsets.only(right: 32.0),
         child: GestureDetector(
           onTap: () {
-            Navigator.pushReplacement(
+            Navigator.pushAndRemoveUntil(
               context,
               PageRouteBuilder(
                 pageBuilder: (context, animation, secondaryAnimation) => MyHomePage(),
@@ -493,7 +493,7 @@ AppBar createAppBar(BuildContext context, String titleText) {
                     end: Offset.zero,           
                   ).animate(CurvedAnimation(
                     parent: animation,
-                    curve: Curves.easeOut,    
+                    curve: Curves.easeOut,
                   ));
 
                   return SlideTransition(
@@ -502,6 +502,7 @@ AppBar createAppBar(BuildContext context, String titleText) {
                   );
                 },
               ),
+              (Route<dynamic> route) => route.settings.name == '/home', 
             );
           },
           child: SvgPicture.asset(

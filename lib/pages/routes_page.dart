@@ -424,6 +424,16 @@ class mapState extends State<RoutesPage> {
     );
   }
 
+  StreamSubscription<LocationData>? googleLocationUpdates;
+  @override
+  void dispose() {
+    super.dispose();
+    print("Disposing route page");
+    if (googleLocationUpdates != null) {
+      googleLocationUpdates!.cancel();
+    }
+  }
+
   bool isOffTrack(LatLng center) {
     if (dest == null || (dest?.latitude == 0.0 && dest?.longitude == 0.0)) return false;
 
@@ -453,7 +463,7 @@ class mapState extends State<RoutesPage> {
     // locationController.changeSettings(accuracy: );
     // locationController.
 
-    locationController.onLocationChanged.listen((currentLocation) {
+    googleLocationUpdates = locationController.onLocationChanged.listen((currentLocation) {
       if (currentLocation.latitude != null &&
           currentLocation.longitude != null) {
 
@@ -490,12 +500,14 @@ class mapState extends State<RoutesPage> {
   int lastPress=0;
   Future<void> centerCamera(LatLng pos) async {
     // print("Centering");
-    await mapController.animateCamera(
-      CameraUpdate.newCameraPosition(CameraPosition(
-        target: pos,
-        zoom: DEFAULT_ZOOM
-      )),
-    );
+    try {
+      await mapController.animateCamera(
+        CameraUpdate.newCameraPosition(CameraPosition(
+            target: pos,
+            zoom: DEFAULT_ZOOM
+        )),
+      );
+    } catch(e) {}
     // prevPos = pos;
   }
 

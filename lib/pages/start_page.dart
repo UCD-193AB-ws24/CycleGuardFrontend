@@ -19,11 +19,15 @@ class StartPage extends StatelessWidget {
     );
   }
 
+  bool _didLoad = false;
   void _afterLoadToken(BuildContext context) {
     print("Logged in? ${AuthUtil.isLoggedIn()}");
     print("Token found: ${AuthUtil.token}");
 
     if (!AuthUtil.isLoggedIn()) return;
+
+    if (_didLoad) return;
+    _didLoad = true;
 
     final appState = Provider.of<MyAppState>(context, listen: false);
     if (context.mounted) {

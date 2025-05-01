@@ -98,7 +98,7 @@ flutter:
   # To add assets to your application, add an assets section, like this:
   assets:
     - assets/cg_img_1.png
-    - .env
+    - env
     - assets/cg_logomark.svg
     - assets/terms_of_service.txt
     - assets/cg_logo_typog.svg

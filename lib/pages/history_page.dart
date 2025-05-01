@@ -1,3 +1,4 @@
+import 'package:cycle_guard_app/pages/routes_page.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
@@ -8,6 +9,9 @@ import 'package:cycle_guard_app/data/single_trip_history.dart';
 import 'package:cycle_guard_app/pages/calendar_view.dart';
 import 'package:draggable_scrollbar/draggable_scrollbar.dart';
 import '../auth/dim_util.dart';
+
+import '../main.dart';
+import './routes_page.dart';
 
 class HistoryPage extends StatefulWidget {
   @override
@@ -618,6 +622,12 @@ class _HistoryPageState extends State<HistoryPage> {
                                                       Colors.red),
                                                 ],
                                               ),
+                                              onTap: () {
+                                                print(timestamp);
+                                                selectedIndexGlobal.value = 0;
+                                                setRouteTimestamp(timestamp);
+                                                Navigator.pop(context);
+                                              },
                                             ),
                                           ),
                                         );

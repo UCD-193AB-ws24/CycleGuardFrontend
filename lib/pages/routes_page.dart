@@ -1,23 +1,31 @@
 import 'dart:async';
 import 'dart:math';
+
+import 'package:cycle_guard_app/data/coordinates_accessor.dart';
 import 'package:cycle_guard_app/data/user_profile_accessor.dart';
 import 'package:cycle_guard_app/pages/ble.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:location/location.dart' hide LocationAccuracy;
 import 'package:google_places_flutter/google_places_flutter.dart';
-import '../auth/key_util.dart';
-import '../auth/dim_util.dart';
-import '../data/submit_ride_service.dart';
-import 'package:flutter_svg/flutter_svg.dart';
+import 'package:location/location.dart' hide LocationAccuracy;
 
-import './ble.dart';
+import '../auth/dim_util.dart';
+import '../auth/key_util.dart';
+import '../data/submit_ride_service.dart';
 
 ApiService apiService = ApiService();
 
+int _timestamp = -1;
+void setRouteTimestamp(int timestamp) => _timestamp = timestamp;
+
+
 class RoutesPage extends StatefulWidget {
+  static final String POLYLINE_USER = "poly", POLYLINE_GENERATED = "generated";
+
   @override
   Widget build(BuildContext context) {
     return Center(child: Text('Routes Page'));
@@ -41,7 +49,11 @@ class mapState extends State<RoutesPage> {
   final stopwatch = Stopwatch();
   int rideDuration = 0;
 
-  bool helmetConnected = false;
+  // Recalculate the route if far enough away: units are meters
+  static final double RECALCULATE_ROUTE_THRESHOLD = 75;
+  static final double DEFAULT_ZOOM = 16;
+
+  bool _helmetConnected = false;
 
   BitmapDescriptor customIcon = BitmapDescriptor.defaultMarker;
 
@@ -51,8 +63,18 @@ class mapState extends State<RoutesPage> {
   LatLng? dest;
   LatLng? prevLoc;
   double totalDist = 0;
-  List<LatLng> recordedLocations = [];
+  List<LatLng> recordedLocations = [], generatedPolylines = [];
   double? heading;
+
+  Future<void> drawTimestampData(int timestamp) async {
+    final coords = await CoordinatesAccessor.getCoordinates(timestamp);
+    final latitudes = coords.latitudes, longitudes = coords.longitudes;
+
+    final polylines = [for(var i=0; i<latitudes.length; i++) LatLng(latitudes[i], longitudes[i])];
+
+    generatedPolylines = polylines;
+    generatePolyLines(polylines, RoutesPage.POLYLINE_GENERATED);
+  }
 
   Future<void> setCustomIcon() async {
     try{
@@ -85,10 +107,16 @@ class mapState extends State<RoutesPage> {
         heading = position.heading;
       });
     });
+
   }
 
   void onMapCreated(GoogleMapController controller) {
     mapController = controller;
+    print("Map controller created");
+    if (_timestamp != -1) {
+      drawTimestampData(_timestamp);
+      _timestamp=-1;
+    }
   }
 
   void changeMapType() {
@@ -99,7 +127,18 @@ class mapState extends State<RoutesPage> {
     });
   }
 
-  void recenterMap() {
+  int recenterClickTime=0;
+  void recenterMap() async {
+    int curClickTime = DateTime.now().millisecondsSinceEpoch;
+    bool resetZoom = curClickTime-recenterClickTime < 500;
+    print("Recentering map: $offCenter");
+    mapController.animateCamera(
+      CameraUpdate.newCameraPosition(CameraPosition(
+        target: center!,
+        zoom: resetZoom?DEFAULT_ZOOM:(await mapController.getZoomLevel()),
+      )),
+    );
+    recenterClickTime = curClickTime;
     if (!offCenter) offCenter = true;
   }
 
@@ -109,24 +148,33 @@ class mapState extends State<RoutesPage> {
       showStopButton = true;
       recordingDistance = true;
       offCenter = true;
+    _helmetConnected = isConnected();
     });
     stopwatch.start();
-    if (dest == null) {
-      recordedLocations.clear();
+    recordedLocations.clear();
+    if (!_helmetConnected) {
       recordedLocations.add(center!);
     }
   }
 
-  List<double> _toLats(List<LatLng> list) {
-    return list.map((e) => e.latitude).toList(growable: false);
-  }
+  List<double> _toLats(List<LatLng> list) => list.map((e) => e.latitude).toList(growable: false);
 
-  List<double> _toLngs(List<LatLng> list) {
-    return list.map((e) => e.longitude).toList(growable: false);
-  }
+  List<double> _toLngs(List<LatLng> list) => list.map((e) => e.longitude).toList(growable: false);
 
   double _calculateCalories() {
     return 0;
+  }
+
+  void toastMsg(String message, int time) {
+    Fluttertoast.showToast(
+        msg: message,
+        toastLength: Toast.LENGTH_LONG,
+        gravity: ToastGravity.CENTER,
+        timeInSecForIosWeb: time,
+        backgroundColor: Colors.blueAccent,
+        textColor: Colors.white,
+        fontSize: 16.0
+    );
   }
 
   void stopDistanceRecord() {
@@ -149,13 +197,18 @@ class mapState extends State<RoutesPage> {
     );
     print(rideInfo.toJson());
 
+
+    toastMsg("${rideInfo.toJson()}", 5);
+
     // For now, don't send anything to backend yet
-    // SubmitRideService.addRide(rideInfo);
+    SubmitRideService.addRide(rideInfo);
     
     centerCamera(center!);
     totalDist = 0;
     rideDuration = 0;
 
+    stopwatch.stop();
+    stopwatch.reset();
   }
 
   void calcDist() {
@@ -165,6 +218,7 @@ class mapState extends State<RoutesPage> {
 
     if (prevLoc != center) {
       rideDuration += stopwatch.elapsedMilliseconds;
+      // stopwatch.reset();
       totalDist += Geolocator.distanceBetween(
         prevLoc!.latitude,
         prevLoc!.longitude,
@@ -180,7 +234,7 @@ class mapState extends State<RoutesPage> {
           dest!.latitude,
           dest!.longitude
       );
-      if (distBetweenDest <= 50) {
+    if (distBetweenDest <= 50) {
         stopwatch.reset();
         stopDistanceRecord();
         return;
@@ -206,7 +260,7 @@ class mapState extends State<RoutesPage> {
     mapType: currentMapType,
     initialCameraPosition: CameraPosition(
       target: center!,
-      zoom: 15.0,
+      zoom: DEFAULT_ZOOM,
     ),
     markers: {
       Marker(
@@ -261,8 +315,10 @@ class mapState extends State<RoutesPage> {
               );
               dstFound = true;
               showStartButton = true;
-              getPolylinePoints().then((coordinates) {
-                generatePolyLines(coordinates);
+              getGooglePolylinePoints().then((coordinates) {
+                generatePolyLines(coordinates, RoutesPage.POLYLINE_GENERATED);
+                print(coordinates);
+                print(coordinates.length);
               });
             },
             itemClick: (prediction) {
@@ -301,14 +357,14 @@ class mapState extends State<RoutesPage> {
             right: DimUtil.safeWidth(context) * 1 / 20,
             child: FloatingActionButton(
               onPressed: () => connectHelmet(context),
-              backgroundColor: helmetConnected?Colors.green:Colors.white,
+              backgroundColor: _helmetConnected?Colors.green:Colors.white,
               elevation: 4,
               child: SvgPicture.asset(
                 'assets/cg_logomark.svg',
                 height: 30,
                 width: 30,
                 colorFilter: ColorFilter.mode(
-                  helmetConnected?Colors.white:Colors.black,
+                  _helmetConnected?Colors.white:Colors.black,
                   BlendMode.srcIn,
                 ),
               ),
@@ -368,6 +424,17 @@ class mapState extends State<RoutesPage> {
     );
   }
 
+  bool isOffTrack(LatLng center) {
+    if (dest == null || (dest?.latitude == 0.0 && dest?.longitude == 0.0)) return false;
+
+    double distanceToRoute = minDistanceToRoute(generatedPolylines, center);
+
+    print("Center: $center");
+    print("Cur. distance to route: $distanceToRoute meters");
+
+    return distanceToRoute > RECALCULATE_ROUTE_THRESHOLD;
+  }
+
   Future<void> fetchLocationUpdates() async {
     bool serviceEnabled;
     PermissionStatus permissionGranted;
@@ -383,38 +450,53 @@ class mapState extends State<RoutesPage> {
       if (permissionGranted != PermissionStatus.granted) return;
     }
 
+    // locationController.changeSettings(accuracy: );
+    // locationController.
+
     locationController.onLocationChanged.listen((currentLocation) {
       if (currentLocation.latitude != null &&
           currentLocation.longitude != null) {
 
         setState(() {
-          if (recordingDistance) prevLoc = center;
-          center = LatLng(currentLocation.latitude!, currentLocation.longitude!);
-          if (recordingDistance) {
-            calcDist();
-            if (dest == null || (dest?.latitude == 0.0 && dest?.longitude == 0.0)) {
+          if (!_helmetConnected) {
+            if (recordingDistance) prevLoc = center;
+            center = LatLng(currentLocation.latitude!, currentLocation.longitude!);
+            if (recordingDistance) {
+              calcDist();
+              // if (dest == null || (dest?.latitude == 0.0 && dest?.longitude == 0.0)) {
 
-              recordedLocations.add(center!);
-              getPolylinePoints().then((coordinates) {
-                generatePolyLines(coordinates);
-              });
+                recordedLocations.add(center!);
+                generatePolyLines(recordedLocations, RoutesPage.POLYLINE_USER);
+                if (isOffTrack(center!)) {
+                  getGooglePolylinePoints().then((coordinates) {
+                    generatePolyLines(coordinates, RoutesPage.POLYLINE_GENERATED);
+                  });
+
+                  toastMsg("Recalculating route...", 5);
+                }
+              // }
+              if (offCenter) animateCameraWithHeading(center!, heading ?? 0);
+            } else {
+              if (offCenter) centerCamera(center!);
             }
-            if(offCenter)animateCameraWithHeading(center!, heading ?? 0);
-          } else {
-            if(offCenter) centerCamera(center!);
           }
         });
       }
     });
+
+
   }
 
+  int lastPress=0;
   Future<void> centerCamera(LatLng pos) async {
+    // print("Centering");
     await mapController.animateCamera(
       CameraUpdate.newCameraPosition(CameraPosition(
         target: pos,
-        zoom: 15,
+        zoom: DEFAULT_ZOOM
       )),
     );
+    // prevPos = pos;
   }
 
   Future<void> animateCameraWithHeading(LatLng pos, double heading) async {
@@ -430,8 +512,7 @@ class mapState extends State<RoutesPage> {
     );
   }
 
-  Future<List<LatLng>> getPolylinePoints() async {
-    List<LatLng> polylineCoordinates = [];
+  Future<List<LatLng>> getGooglePolylinePoints() async {
     PolylinePoints polylinePoints = PolylinePoints();
 
     if(dest!=null) {
@@ -443,24 +524,20 @@ class mapState extends State<RoutesPage> {
           mode: TravelMode.bicycling,
         ),
       );
-      for (var point in result.points) {
-        polylineCoordinates.add(LatLng(point.latitude, point.longitude));
-      }
 
-    } else if( dest == null && recordedLocations.isNotEmpty){
-      for (var point in recordedLocations) {
-        polylineCoordinates.add(point);
-      }
+      final res = result.points.map((point) => LatLng(point.latitude, point.longitude)).toList();
+      generatedPolylines = res;
+      return res;
     }
 
-    return polylineCoordinates;
+    return generatedPolylines;
   }
 
-  void generatePolyLines(List<LatLng> polylineCoordinates) async {
-    PolylineId id = PolylineId("poly");
+  void generatePolyLines(List<LatLng> polylineCoordinates, String polylineId) async {
+    PolylineId id = PolylineId(polylineId);
     Polyline polyline = Polyline(
       polylineId: id,
-      color: Colors.blue,
+      color: polylineId==RoutesPage.POLYLINE_GENERATED?Colors.deepOrangeAccent:Colors.blue,
       points: polylineCoordinates,
       width: 6,
     );
@@ -470,10 +547,95 @@ class mapState extends State<RoutesPage> {
     });
   }
 
-  void connectHelmet(BuildContext context) {
-    showCustomDialog(context);
-    setState(() {
-      helmetConnected = !helmetConnected;
-    });
+  void readHelmetData(BluetoothData data) {
+    print("In callback function: $data");
+    {
+      final newCenter = LatLng(data.latitude, data.longitude);
+      if (newCenter == center) return;
+    }
+
+    if (recordingDistance) prevLoc = center;
+    center = LatLng(data.latitude, data.longitude);
+    if (recordingDistance) {
+      calcDist();
+      // if (dest == null || (dest?.latitude == 0.0 && dest?.longitude == 0.0)) {
+
+      recordedLocations.add(center!);
+      generatePolyLines(recordedLocations, RoutesPage.POLYLINE_USER);
+      if (isOffTrack(center!)) {
+        getGooglePolylinePoints().then((coordinates) {
+          generatePolyLines(coordinates, RoutesPage.POLYLINE_GENERATED);
+        });
+
+        toastMsg("Recalculating route...", 5);
+      }
+      // }
+      if (offCenter) animateCameraWithHeading(center!, heading ?? 0);
+    } else {
+      if (offCenter) centerCamera(center!);
+    }
+  }
+
+  void onBluetoothSelected(bool isConnected) {
+    setState(() => _helmetConnected = isConnected);
+    Navigator.pop(context);
+  }
+
+  void connectHelmet(BuildContext context) async {
+    await showCustomDialog(context, onNewDataCallback: readHelmetData, onBluetoothSelectedCallback: onBluetoothSelected);
+  }
+
+  double minDistanceToRoute(List<LatLng> route, LatLng point) {
+    double min=2000000000, cur;
+
+    for (int i=0; i<route.length-1; i++) {
+      cur = distanceToLine(point, route[i], route[i+1]);
+      if (cur<min) min=cur;
+    }
+
+    return min;
+  }
+
+  // Thanks GPT!
+  double distanceToLine(LatLng point, LatLng start, LatLng end) {
+    double x1 = start.longitude;
+    double y1 = start.latitude;
+    double x2 = end.longitude;
+    double y2 = end.latitude;
+    double x = point.longitude;
+    double y = point.latitude;
+
+    double dx = x2 - x1;
+    double dy = y2 - y1;
+    double distSq = dx * dx + dy * dy;
+
+    if (distSq == 0) {
+      return Geolocator.distanceBetween(
+        point.latitude,
+        point.longitude,
+        start.latitude,
+        start.longitude,
+      );
+    }
+
+    double t = ((x - x1) * dx + (y - y1) * dy) / distSq;
+
+    // Clamp t to [0, 1] to find the closest point on the line segment
+    t = t.clamp(0, 1);
+
+    // Calculate the closest point on the line segment
+    double closestX = x1 + t * dx;
+    double closestY = y1 + t * dy;
+
+    // Calculate the distance between the point and the closest point on the line segment
+    final res =  Geolocator.distanceBetween(
+      point.latitude,
+      point.longitude,
+      closestY,
+      closestX,
+    );
+
+    // print("Min distance calculation: $start, $end, $point, $res");
+    return res;
   }
 }

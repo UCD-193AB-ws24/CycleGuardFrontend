@@ -42,6 +42,8 @@ import 'package:showcaseview/showcaseview.dart';
 
 //const MethodChannel platform = MethodChannel('com.cycleguard.channel'); // Must match iOS
 
+final ValueNotifier selectedIndexGlobal = ValueNotifier(1);
+
 void main() async {
   // for local notifications
   WidgetsFlutterBinding.ensureInitialized();
@@ -419,18 +421,20 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
+    return ValueListenableBuilder(
+      valueListenable: selectedIndexGlobal,
+      builder: (context, val, child) {
         return Scaffold(
-          body: _getSelectedPage(selectedIndex),
+          body: _getSelectedPage(selectedIndexGlobal.value),
           bottomNavigationBar: CurvedNavigationBar(
             backgroundColor: getNavBarBackgroundColor(context),
             color: getNavBarColor(context),
             animationDuration: Duration(milliseconds: 270),
-            index: selectedIndex,
+            index: selectedIndexGlobal.value,
             onTap: (int index) {
               setState(() {
                 selectedIndex = index;
+                selectedIndexGlobal.value = index;
               });
             },
             items: [

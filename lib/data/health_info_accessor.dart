@@ -33,6 +33,14 @@ class HealthInfoAccessor {
   static Future<void> setHealthInfoInts(int height, int weight, int age) async {
     await setHealthInfo("$height", "$weight", "$age");
   }
+
+  static Future<double> getCaloriesBurned(double miles, double minutes) async {
+    final info = await getHealthInfo();
+    if (info.weightPounds==0 || info.ageYears==0 || info.heightInches==0) return 0;
+
+    
+    return 0;
+  }
 }
 
 class HealthInfo {

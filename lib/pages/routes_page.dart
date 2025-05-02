@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:cycle_guard_app/data/coordinates_accessor.dart';
+import 'package:cycle_guard_app/data/health_info_accessor.dart';
 import 'package:cycle_guard_app/data/single_trip_history.dart';
 import 'package:cycle_guard_app/data/user_profile_accessor.dart';
 import 'package:cycle_guard_app/pages/ble.dart';
@@ -173,8 +174,8 @@ class mapState extends State<RoutesPage> {
 
   List<double> _toLngs(List<LatLng> list) => list.map((e) => e.longitude).toList(growable: false);
 
-  double _calculateCalories() {
-    return 0;
+  Future<double> _calculateCalories(double miles, double minutes) async {
+    return await HealthInfoAccessor.getCaloriesBurned(miles, minutes);
   }
 
   void toastMsg(String message, int time) {
@@ -189,7 +190,7 @@ class mapState extends State<RoutesPage> {
     );
   }
 
-  void stopDistanceRecord() {
+  Future<void> stopDistanceRecord() async {
     print(recordedLocations);
 
     setState(() {
@@ -198,12 +199,15 @@ class mapState extends State<RoutesPage> {
       recordingDistance = false;
     });
 
+
+    final miles = totalDist * 0.000621371;
+    final minutes = rideDuration/60000;
     // Distance is in miles
     // Time is in milliseconds
     final rideInfo = RideInfo(
-        totalDist * 0.000621371,
-        _calculateCalories(),
-        rideDuration/60000,
+        miles,
+        await _calculateCalories(miles, minutes),
+        minutes,
         _toLats(recordedLocations),
         _toLngs(recordedLocations)
     );
@@ -719,7 +723,7 @@ class PostRideData {
             child: ListView(
               children: [
                 Text("You biked $miles miles", style: TextStyle(fontSize: 16, color: Colors.black)),
-                Text("You burned $cals calories", style: TextStyle(fontSize: 16, color: Colors.black)),
+                Text("You burned around $cals calories", style: TextStyle(fontSize: 16, color: Colors.black)),
                 Text("Time: $mins minutes and $secs seconds", style: TextStyle(fontSize: 16, color: Colors.black)),
               ],
             )

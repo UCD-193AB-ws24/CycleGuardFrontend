@@ -36,4 +36,9 @@ class RideInfo {
     'longitudes': longitudes,
     'latitudes': latitudes
   };
+
+  @override
+  String toString() {
+    return 'RideInfo{distance: $distance, calories: $calories, time: $time, latitudes: $latitudes, longitudes: $longitudes}';
+  }
 }

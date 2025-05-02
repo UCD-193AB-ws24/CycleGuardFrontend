@@ -10,6 +10,7 @@ import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:google_places_flutter/google_places_flutter.dart';
 import 'package:location/location.dart' hide LocationAccuracy;
@@ -208,11 +209,8 @@ class mapState extends State<RoutesPage> {
     );
     print(rideInfo.toJson());
 
-
-    toastMsg("${rideInfo.toJson()}", 5);
-
     // For now, don't send anything to backend yet
-    SubmitRideService.addRide(rideInfo);
+    // SubmitRideService.addRide(rideInfo);
     
     centerCamera(center!);
     totalDist = 0;
@@ -220,6 +218,8 @@ class mapState extends State<RoutesPage> {
 
     stopwatch.stop();
     stopwatch.reset();
+
+    PostRideData.showPostRideDialog(context, rideInfo);
   }
 
   void calcDist() {
@@ -445,7 +445,7 @@ class mapState extends State<RoutesPage> {
                   setState(() => {});
                 },
                 label: Text(
-                  "Ride ${_rideIdx} on ${_rideDate}:\n"
+                  "Ride $_rideIdx on $_rideDate:\n"
                     "${_tripInfo!.distance} miles, "
                     "${_tripInfo!.time} minutes, "
                     "${_tripInfo!.calories} calories",
@@ -683,5 +683,64 @@ class mapState extends State<RoutesPage> {
 
     // print("Min distance calculation: $start, $end, $point, $res");
     return res;
+  }
+}
+
+
+class PostRideData {
+  static final random = Random();
+  static final _postRidePrefixes = ["Nice", "Great", "Fun", "Cool"];
+  static final _postRideSuffixes = ["ride", "trip", "journey"];
+
+  static String _getRandomPostRideText() {
+    final i1 = random.nextInt(_postRidePrefixes.length);
+    final i2 = random.nextInt(_postRideSuffixes.length);
+    return "${_postRidePrefixes[i1]} ${_postRideSuffixes[i2]}!";
+  }
+
+  static Future<void> showPostRideDialog(BuildContext context, RideInfo rideInfo) async {
+    print(rideInfo);
+
+    final mins = rideInfo.time.floor();
+    final secs = ((rideInfo.time-mins)*60).floor();
+    final miles = rideInfo.distance.toStringAsFixed(1);
+    final cals = rideInfo.calories.toStringAsFixed(1);
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          contentPadding: EdgeInsets.symmetric(horizontal: 10,vertical: 10),
+          title: Text(_getRandomPostRideText(), style: TextStyle(color: Colors.black)),
+          content: Container(
+            height: 100,
+            width: 500,
+            padding: EdgeInsets.symmetric(horizontal: 4,vertical: 5),
+            child: ListView(
+              children: [
+                Text("You biked $miles miles", style: TextStyle(fontSize: 16, color: Colors.black)),
+                Text("You burned $cals calories", style: TextStyle(fontSize: 16, color: Colors.black)),
+                Text("Time: $mins minutes and $secs seconds", style: TextStyle(fontSize: 16, color: Colors.black)),
+              ],
+            )
+          ),
+          actions: <Widget>[
+            const SizedBox(height: 20),
+            Center(
+              child: ElevatedButton(
+                onPressed: () async {
+                  Navigator.pop(context);
+                },
+                child: Text(
+                  "Nice!",
+                  style: GoogleFonts.poppins(
+                      fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 }

@@ -8,26 +8,35 @@ import '../main.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 // import '../main.dart';
 
-class StartPage extends StatelessWidget {
+class StartPage extends StatefulWidget {
   final PageController pageController;
+
   StartPage(this.pageController);
 
+  @override
+  _StartPageState createState() => _StartPageState();
+}
+
+class _StartPageState extends State<StartPage> {
   void _handlePress() async {
-    pageController.nextPage(
+    widget.pageController.nextPage(
       duration: Duration(milliseconds: 300),
       curve: Curves.easeInOut,
     );
   }
 
-  bool _didLoad = false;
+  @override
+  void initState() {
+    super.initState();
+
+    AuthUtil.loadToken().then((onValue) => _afterLoadToken(context));
+  }
+
   void _afterLoadToken(BuildContext context) {
     print("Logged in? ${AuthUtil.isLoggedIn()}");
     print("Token found: ${AuthUtil.token}");
 
     if (!AuthUtil.isLoggedIn()) return;
-
-    if (_didLoad) return;
-    _didLoad = true;
 
     final appState = Provider.of<MyAppState>(context, listen: false);
     if (context.mounted) {
@@ -40,7 +49,6 @@ class StartPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    AuthUtil.loadToken().then((onValue) => _afterLoadToken(context));
     return Scaffold(
       backgroundColor: Color(0xFFF5E7C4),
       body: Stack(

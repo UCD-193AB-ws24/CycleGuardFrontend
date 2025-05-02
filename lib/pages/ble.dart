@@ -101,7 +101,7 @@ Future<void> showCustomDialog(BuildContext context,
     builder: (BuildContext context) {
       return AlertDialog(
         contentPadding: EdgeInsets.symmetric(horizontal: 10,vertical: 10),
-        title: Text('Select Your Helmet'),
+        title: Text('Select Your Helmet', style: TextStyle(color: Colors.black)),
         content: Container(
 
           height: 1000,

@@ -36,7 +36,6 @@ class _HomePageState extends State<HomePage>
   final GlobalKey _rideHistoryKey = GlobalKey();
   final GlobalKey _achievementsKey = GlobalKey();
   final GlobalKey _storeKey = GlobalKey();
-  final GlobalKey _finalMessageKey = GlobalKey();
 
   @override
   void dispose() {
@@ -83,7 +82,6 @@ class _HomePageState extends State<HomePage>
           _rideHistoryKey,
           _achievementsKey,
           _storeKey,
-          _finalMessageKey,
         ]);
 
         appState.isHomeTutorialActive = false;
@@ -748,17 +746,6 @@ class _HomePageState extends State<HomePage>
                   ),
                 ),
               ),
-              Positioned(
-                bottom: 0,
-                left: 0,
-                child: Showcase(
-                  key: _finalMessageKey,
-                  title: 'Great job!',
-                  description:
-                      'When you are ready, go to the Social tab (navigation bar person icon) to continue the tutorial.',
-                  child: SizedBox(width: 1, height: 1),
-                ),
-              ),
             ],
           ),
         ),
@@ -766,7 +753,9 @@ class _HomePageState extends State<HomePage>
       floatingActionButton: Showcase(
         key: _storeKey,
         title: 'Open Store',
-        description: 'Tap here to check out items in the store!',
+        description: 'Tap here to check out items in the store!'
+            '\nWhen you are ready, go to the Social tab (person icon on the navigation bar at the bottom of the screen) '
+            'to continue the tutorial!',
         child: FloatingActionButton(
           onPressed: () {
             Navigator.push(

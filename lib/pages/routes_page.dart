@@ -22,9 +22,13 @@ ApiService apiService = ApiService();
 
 SingleTripInfo? _tripInfo;
 int _timestamp = -1;
-void setSelectedRoute(int timestamp, SingleTripInfo? tripInfo) {
+int _rideIdx=-1;
+String? _rideDate;
+void setSelectedRoute(int timestamp, SingleTripInfo? tripInfo, int rideIdx, String rideDate) {
   _timestamp = timestamp;
   _tripInfo = tripInfo;
+  _rideIdx = rideIdx;
+  _rideDate = rideDate;
 }
 
 
@@ -41,8 +45,6 @@ class RoutesPage extends StatefulWidget {
 }
 
 class mapState extends State<RoutesPage> {
-  SingleTripInfo? _tripInfo;
-
   List<dynamic> listForSuggestions = [];
   MapType currentMapType = MapType.terrain;
   Map<PolylineId, Polyline> polylines = {};
@@ -122,12 +124,9 @@ class mapState extends State<RoutesPage> {
     print("Map controller created");
     if (_timestamp != -1) {
       drawTimestampData(_timestamp);
-      // displayTripInfo(_tripInfo);
-      _timestamp=-1;
 
-      setState(() {
-        _tripInfo = wid
-      });
+      // setState(() {
+      // });
     }
   }
 
@@ -358,6 +357,9 @@ class mapState extends State<RoutesPage> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDarkTheme = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
       body: Stack(
         children: [
@@ -393,12 +395,6 @@ class mapState extends State<RoutesPage> {
               elevation: 4,
             ),
           ),
-          if (_timestamp>-1)
-            Positioned(
-              bottom: DimUtil.safeHeight(context) * 1 / 4,
-              left: DimUtil.safeWidth(context) * 1 / 20,
-              child: Text("data")
-            ),
           Positioned(
             bottom: DimUtil.safeHeight(context) * 1 / 20,
             left: DimUtil.safeWidth(context) * 1 / 20,
@@ -433,6 +429,30 @@ class mapState extends State<RoutesPage> {
                 label: Text("Stop"),
                 backgroundColor: Colors.red,
                 foregroundColor: Colors.white,
+                elevation: 4,
+              ),
+            ),
+          if (_timestamp>-1)
+            Positioned(
+              top: DimUtil.safeHeight(context) * 3 / 16,
+              width: DimUtil.safeWidth(context) * 9.5 / 10,
+              height: DimUtil.safeHeight(context) * 1.8 / 16,
+              right: DimUtil.safeWidth(context) * .2 / 10,
+              child: FloatingActionButton.extended(
+                onPressed: () {
+                  print("Ride info display pressed");
+                  _timestamp=-1;
+                  setState(() => {});
+                },
+                label: Text(
+                  "Ride ${_rideIdx} on ${_rideDate}:\n"
+                    "${_tripInfo!.distance} miles, "
+                    "${_tripInfo!.time} minutes, "
+                    "${_tripInfo!.calories} calories",
+                  style: TextStyle(fontSize: 16, height: 1.5),
+                ),
+                backgroundColor: colorScheme.primary,
+                foregroundColor: isDarkTheme?Colors.white:Colors.black,
                 elevation: 4,
               ),
             ),

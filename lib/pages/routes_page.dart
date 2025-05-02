@@ -214,7 +214,7 @@ class mapState extends State<RoutesPage> {
     print(rideInfo.toJson());
 
     // For now, don't send anything to backend yet
-    // SubmitRideService.addRide(rideInfo);
+    SubmitRideService.addRide(rideInfo);
     
     centerCamera(center!);
     totalDist = 0;

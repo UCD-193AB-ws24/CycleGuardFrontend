@@ -16,6 +16,9 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:google_places_flutter/google_places_flutter.dart';
 import 'package:location/location.dart' hide LocationAccuracy;
 
+import 'package:provider/provider.dart';
+import 'package:cycle_guard_app/main.dart';
+
 import '../auth/dim_util.dart';
 import '../auth/key_util.dart';
 import '../data/submit_ride_service.dart';
@@ -703,48 +706,90 @@ class PostRideData {
   }
 
   static Future<void> showPostRideDialog(BuildContext context, RideInfo rideInfo) async {
+    Color selectedColor = Provider.of<MyAppState>(context, listen: false).selectedColor;
     print(rideInfo);
 
     final mins = rideInfo.time.floor();
-    final secs = ((rideInfo.time-mins)*60).floor();
+    final secs = ((rideInfo.time - mins) * 60).floor();
     final miles = rideInfo.distance.toStringAsFixed(1);
     final cals = rideInfo.calories.toStringAsFixed(1);
 
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          contentPadding: EdgeInsets.symmetric(horizontal: 10,vertical: 10),
-          title: Text(_getRandomPostRideText(), style: TextStyle(color: Colors.black)),
-          content: Container(
-            height: 100,
-            width: 500,
-            padding: EdgeInsets.symmetric(horizontal: 4,vertical: 5),
-            child: ListView(
-              children: [
-                Text("You biked $miles miles", style: TextStyle(fontSize: 16, color: Colors.black)),
-                Text("You burned around $cals calories", style: TextStyle(fontSize: 16, color: Colors.black)),
-                Text("Time: $mins minutes and $secs seconds", style: TextStyle(fontSize: 16, color: Colors.black)),
-              ],
-            )
-          ),
-          actions: <Widget>[
-            const SizedBox(height: 20),
-            Center(
-              child: ElevatedButton(
-                onPressed: () async {
-                  Navigator.pop(context);
-                },
-                child: Text(
-                  "Nice!",
-                  style: GoogleFonts.poppins(
-                      fontSize: 18, fontWeight: FontWeight.bold),
-                ),
+        return Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          backgroundColor: Colors.white,
+          child: Container(
+            width: 320,
+            padding: EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              gradient: LinearGradient(
+                colors: [selectedColor, Theme.of(context).colorScheme.primary],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
             ),
-          ],
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  _getRandomPostRideText(),
+                  style: GoogleFonts.poppins(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                SizedBox(height: 20),
+                _buildInfoRow(Icons.directions_bike, "$miles miles biked"),
+                _buildInfoRow(Icons.local_fire_department, "$cals calories burned"),
+                _buildInfoRow(Icons.timer, "$mins min $secs sec"),
+                SizedBox(height: 25),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    padding: EdgeInsets.symmetric(horizontal: 30, vertical: 12),
+                    backgroundColor: selectedColor, 
+                    elevation: 4,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  onPressed: () => Navigator.pop(context),
+                  child: Text(
+                    "Nice!",
+                    style: GoogleFonts.poppins(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         );
       },
     );
   }
+
+  static Widget _buildInfoRow(IconData icon, String text) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6.0),
+      child: Row(
+        children: [
+          Icon(icon, color: Colors.white),
+          SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              text,
+              style: GoogleFonts.poppins(fontSize: 16, color: Colors.white),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
 }

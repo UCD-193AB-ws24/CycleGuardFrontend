@@ -5,7 +5,8 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import '../auth/dim_util.dart';
 import '../main.dart';
-// import '../main.dart'; 
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+// import '../main.dart';
 
 class StartPage extends StatefulWidget {
   final PageController pageController;
@@ -39,12 +40,10 @@ class _StartPageState extends State<StartPage> {
 
     final appState = Provider.of<MyAppState>(context, listen: false);
     if (context.mounted) {
-      appState.loadUserSettings().then(
-              (onValue) => appState.fetchOwnedThemes().then(
-                  (onValue) => Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => MyHomePage()))
-          )
-      );
-
+      appState.loadUserSettings().then((onValue) => appState
+          .fetchOwnedThemes()
+          .then((onValue) => Navigator.pushReplacement(
+              context, MaterialPageRoute(builder: (context) => MyHomePage()))));
     }
   }
 
@@ -54,61 +53,84 @@ class _StartPageState extends State<StartPage> {
       backgroundColor: Color(0xFFF5E7C4),
       body: Stack(
         children: [
+          // Background logomark
           Positioned(
             left: DimUtil.safeWidth(context) * (-0.75),
             top: 0,
             child: SvgPicture.asset(
               'assets/cg_logomark.svg',
-              width:  DimUtil.safeWidth(context),
+              width: DimUtil.safeWidth(context),
               height: DimUtil.safeHeight(context) * 1.1,
               colorFilter: ColorFilter.mode(
-                Color(0xFFFFCC80),
+                Color(0xFFFFD88E),
                 BlendMode.srcIn,
               ),
             ),
           ),
+          // Type logo
           Positioned(
-            top: DimUtil.safeHeight(context) * 0.3,
-            left: 15,
-            right: 15,
+            top: DimUtil.safeHeight(context) * 0.2,
+            left: 16,
+            right: 16,
             child: SvgPicture.asset(
               'assets/cg_type_logo.svg',
               width: DimUtil.safeWidth(context) * 0.5,
               height: DimUtil.safeHeight(context) * 0.3,
-              //fit: BoxFit.contain,
             ),
           ),
-          Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                SizedBox(height: DimUtil.safeHeight(context) * 0.15),
-                Text(
-                  "Ready to Ride?",
-                  style: GoogleFonts.poppins(
-                    textStyle: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w500,
-                      color: Color(0xFF555555),
+          // CTA
+          Positioned(
+            top: DimUtil.safeHeight(context) * 0.55,
+            left: 16,
+            child: SvgPicture.asset(
+              'assets/cg_cta.svg',
+              width: DimUtil.safeWidth(context) * 0.2,
+              height: DimUtil.safeHeight(context) * 0.4,
+            ),
+          ),
+          // Button
+          Positioned(
+            top: DimUtil.safeHeight(context) * 0.8, 
+            right: 16,
+            child: ElevatedButton(
+              onPressed: () {
+                _handlePress();
+              },
+              style: ButtonStyle(
+                backgroundColor: WidgetStateProperty.all(Colors.orange),
+                elevation: WidgetStateProperty.all(4),
+                shape: WidgetStateProperty.all(
+                  RoundedRectangleBorder(
+                    borderRadius: BorderRadius.horizontal(
+                      left: Radius.circular(28),
+                      right: Radius.circular(28),
                     ),
                   ),
                 ),
-                SizedBox(height: 50),
-
-                ElevatedButton(
-                  onPressed: () {
-                    _handlePress();
-                  },
-                  style: ElevatedButton.styleFrom(
-                    elevation: 10,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                    padding: EdgeInsets.symmetric(horizontal: 40, vertical: 15),
-                  ),
-                  child: Text('Get Started', style: TextStyle(fontSize: 18)),
+                padding: WidgetStateProperty.all(
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 ),
-              ],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: const [
+                  FaIcon(
+                    FontAwesomeIcons.chevronRight,
+                    color: Colors.white38,
+                    size: 36,
+                  ),
+                  FaIcon(
+                    FontAwesomeIcons.chevronRight,
+                    color: Colors.white60,
+                    size: 36,
+                  ),
+                  FaIcon(
+                    FontAwesomeIcons.chevronRight,
+                    color: Colors.white,
+                    size: 36,
+                  ),
+                ],
+              ),
             ),
           ),
         ],

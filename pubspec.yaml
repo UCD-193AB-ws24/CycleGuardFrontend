@@ -65,6 +65,7 @@ dependencies:
   shared_preferences: ^2.5.3
   showcaseview: ^4.0.1
   geolocator: ^12.0.0
+  font_awesome_flutter: ^10.8.0
 
 dev_dependencies:
   flutter_test:
@@ -114,6 +115,7 @@ flutter:
     - assets/icon_2_M.svg
     - assets/cg_type_logo.svg
     - assets/cg_launcher_icon.png
+    - assets/cg_cta.svg
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

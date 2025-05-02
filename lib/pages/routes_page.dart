@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:cycle_guard_app/data/coordinates_accessor.dart';
+import 'package:cycle_guard_app/data/health_info_accessor.dart';
+import 'package:cycle_guard_app/data/single_trip_history.dart';
 import 'package:cycle_guard_app/data/user_profile_accessor.dart';
 import 'package:cycle_guard_app/pages/ble.dart';
 import 'package:flutter/material.dart';
@@ -9,6 +11,7 @@ import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:google_places_flutter/google_places_flutter.dart';
 import 'package:location/location.dart' hide LocationAccuracy;
@@ -19,8 +22,16 @@ import '../data/submit_ride_service.dart';
 
 ApiService apiService = ApiService();
 
+SingleTripInfo? _tripInfo;
 int _timestamp = -1;
-void setRouteTimestamp(int timestamp) => _timestamp = timestamp;
+int _rideIdx=-1;
+String? _rideDate;
+void setSelectedRoute(int timestamp, SingleTripInfo? tripInfo, int rideIdx, String rideDate) {
+  _timestamp = timestamp;
+  _tripInfo = tripInfo;
+  _rideIdx = rideIdx;
+  _rideDate = rideDate;
+}
 
 
 class RoutesPage extends StatefulWidget {
@@ -115,7 +126,9 @@ class mapState extends State<RoutesPage> {
     print("Map controller created");
     if (_timestamp != -1) {
       drawTimestampData(_timestamp);
-      _timestamp=-1;
+
+      // setState(() {
+      // });
     }
   }
 
@@ -161,8 +174,8 @@ class mapState extends State<RoutesPage> {
 
   List<double> _toLngs(List<LatLng> list) => list.map((e) => e.longitude).toList(growable: false);
 
-  double _calculateCalories() {
-    return 0;
+  Future<double> _calculateCalories(double miles, double minutes) async {
+    return await HealthInfoAccessor.getCaloriesBurned(miles, minutes);
   }
 
   void toastMsg(String message, int time) {
@@ -177,7 +190,7 @@ class mapState extends State<RoutesPage> {
     );
   }
 
-  void stopDistanceRecord() {
+  Future<void> stopDistanceRecord() async {
     print(recordedLocations);
 
     setState(() {
@@ -186,19 +199,19 @@ class mapState extends State<RoutesPage> {
       recordingDistance = false;
     });
 
+
+    final miles = totalDist * 0.000621371;
+    final minutes = rideDuration/60000;
     // Distance is in miles
     // Time is in milliseconds
     final rideInfo = RideInfo(
-        totalDist * 0.000621371,
-        _calculateCalories(),
-        rideDuration/60000,
+        miles,
+        await _calculateCalories(miles, minutes),
+        minutes,
         _toLats(recordedLocations),
         _toLngs(recordedLocations)
     );
     print(rideInfo.toJson());
-
-
-    toastMsg("${rideInfo.toJson()}", 5);
 
     // For now, don't send anything to backend yet
     SubmitRideService.addRide(rideInfo);
@@ -209,6 +222,8 @@ class mapState extends State<RoutesPage> {
 
     stopwatch.stop();
     stopwatch.reset();
+
+    PostRideData.showPostRideDialog(context, rideInfo);
   }
 
   void calcDist() {
@@ -246,7 +261,7 @@ class mapState extends State<RoutesPage> {
     }
 
 
-    print(totalDist);
+    // print(totalDist);
   }
 
   Widget mainMap() => GoogleMap(
@@ -317,8 +332,8 @@ class mapState extends State<RoutesPage> {
               showStartButton = true;
               getGooglePolylinePoints().then((coordinates) {
                 generatePolyLines(coordinates, RoutesPage.POLYLINE_GENERATED);
-                print(coordinates);
-                print(coordinates.length);
+                // print(coordinates);
+                // print(coordinates.length);
               });
             },
             itemClick: (prediction) {
@@ -346,6 +361,9 @@ class mapState extends State<RoutesPage> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDarkTheme = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
       body: Stack(
         children: [
@@ -418,6 +436,30 @@ class mapState extends State<RoutesPage> {
                 elevation: 4,
               ),
             ),
+          if (_timestamp>-1)
+            Positioned(
+              top: DimUtil.safeHeight(context) * 3 / 16,
+              width: DimUtil.safeWidth(context) * 9.5 / 10,
+              height: DimUtil.safeHeight(context) * 1.8 / 16,
+              right: DimUtil.safeWidth(context) * .2 / 10,
+              child: FloatingActionButton.extended(
+                onPressed: () {
+                  print("Ride info display pressed");
+                  _timestamp=-1;
+                  setState(() => {});
+                },
+                label: Text(
+                  "Ride $_rideIdx on $_rideDate:\n"
+                    "${_tripInfo!.distance} miles, "
+                    "${_tripInfo!.time} minutes, "
+                    "${_tripInfo!.calories} calories",
+                  style: TextStyle(fontSize: 16, height: 1.5),
+                ),
+                backgroundColor: colorScheme.primary,
+                foregroundColor: isDarkTheme?Colors.white:Colors.black,
+                elevation: 4,
+              ),
+            ),
           locationTextInput(),
         ],
       ),
@@ -428,7 +470,6 @@ class mapState extends State<RoutesPage> {
   @override
   void dispose() {
     super.dispose();
-    print("Disposing route page");
     if (googleLocationUpdates != null) {
       googleLocationUpdates!.cancel();
     }
@@ -438,9 +479,6 @@ class mapState extends State<RoutesPage> {
     if (dest == null || (dest?.latitude == 0.0 && dest?.longitude == 0.0)) return false;
 
     double distanceToRoute = minDistanceToRoute(generatedPolylines, center);
-
-    print("Center: $center");
-    print("Cur. distance to route: $distanceToRoute meters");
 
     return distanceToRoute > RECALCULATE_ROUTE_THRESHOLD;
   }
@@ -649,5 +687,64 @@ class mapState extends State<RoutesPage> {
 
     // print("Min distance calculation: $start, $end, $point, $res");
     return res;
+  }
+}
+
+
+class PostRideData {
+  static final random = Random();
+  static final _postRidePrefixes = ["Nice", "Great", "Fun", "Cool"];
+  static final _postRideSuffixes = ["ride", "trip", "journey"];
+
+  static String _getRandomPostRideText() {
+    final i1 = random.nextInt(_postRidePrefixes.length);
+    final i2 = random.nextInt(_postRideSuffixes.length);
+    return "${_postRidePrefixes[i1]} ${_postRideSuffixes[i2]}!";
+  }
+
+  static Future<void> showPostRideDialog(BuildContext context, RideInfo rideInfo) async {
+    print(rideInfo);
+
+    final mins = rideInfo.time.floor();
+    final secs = ((rideInfo.time-mins)*60).floor();
+    final miles = rideInfo.distance.toStringAsFixed(1);
+    final cals = rideInfo.calories.toStringAsFixed(1);
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          contentPadding: EdgeInsets.symmetric(horizontal: 10,vertical: 10),
+          title: Text(_getRandomPostRideText(), style: TextStyle(color: Colors.black)),
+          content: Container(
+            height: 100,
+            width: 500,
+            padding: EdgeInsets.symmetric(horizontal: 4,vertical: 5),
+            child: ListView(
+              children: [
+                Text("You biked $miles miles", style: TextStyle(fontSize: 16, color: Colors.black)),
+                Text("You burned around $cals calories", style: TextStyle(fontSize: 16, color: Colors.black)),
+                Text("Time: $mins minutes and $secs seconds", style: TextStyle(fontSize: 16, color: Colors.black)),
+              ],
+            )
+          ),
+          actions: <Widget>[
+            const SizedBox(height: 20),
+            Center(
+              child: ElevatedButton(
+                onPressed: () async {
+                  Navigator.pop(context);
+                },
+                child: Text(
+                  "Nice!",
+                  style: GoogleFonts.poppins(
+                      fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 }

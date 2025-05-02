@@ -620,8 +620,8 @@ class _HistoryPageState extends State<HistoryPage> {
                                               ),
                                               onTap: () {
                                                 print(timestamp);
+                                                setSelectedRoute(timestamp, trip, sortedTimestamps.indexOf(timestamp)+1, "$date, $formattedTime");
                                                 selectedIndexGlobal.value = 0;
-                                                setRouteTimestamp(timestamp);
                                                 Navigator.pop(context);
                                               },
                                             ),

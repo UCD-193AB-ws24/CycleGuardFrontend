@@ -8,7 +8,6 @@ class CoordinatesAccessor {
 
   static Future<CoordinatesInfo> getCoordinates(int timestamp) async {
     final response = await RequestsUtil.getWithToken("/history/getCoordinates/$timestamp");
-    print(response.body);
 
     if (response.statusCode == 200) {
       return CoordinatesInfo.fromJson(jsonDecode(response.body) as Map<String, dynamic>);

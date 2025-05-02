@@ -621,7 +621,7 @@ class _HistoryPageState extends State<HistoryPage> {
                                               onTap: () {
                                                 print(timestamp);
                                                 selectedIndexGlobal.value = 0;
-                                                setRouteTimestamp(timestamp);
+                                                setSelectedRoute(timestamp, trip);
                                                 Navigator.pop(context);
                                               },
                                             ),

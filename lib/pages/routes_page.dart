@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:cycle_guard_app/data/coordinates_accessor.dart';
+import 'package:cycle_guard_app/data/single_trip_history.dart';
 import 'package:cycle_guard_app/data/user_profile_accessor.dart';
 import 'package:cycle_guard_app/pages/ble.dart';
 import 'package:flutter/material.dart';
@@ -19,8 +20,12 @@ import '../data/submit_ride_service.dart';
 
 ApiService apiService = ApiService();
 
+SingleTripInfo? _tripInfo;
 int _timestamp = -1;
-void setRouteTimestamp(int timestamp) => _timestamp = timestamp;
+void setSelectedRoute(int timestamp, SingleTripInfo? tripInfo) {
+  _timestamp = timestamp;
+  _tripInfo = tripInfo;
+}
 
 
 class RoutesPage extends StatefulWidget {
@@ -36,6 +41,8 @@ class RoutesPage extends StatefulWidget {
 }
 
 class mapState extends State<RoutesPage> {
+  SingleTripInfo? _tripInfo;
+
   List<dynamic> listForSuggestions = [];
   MapType currentMapType = MapType.terrain;
   Map<PolylineId, Polyline> polylines = {};
@@ -115,7 +122,12 @@ class mapState extends State<RoutesPage> {
     print("Map controller created");
     if (_timestamp != -1) {
       drawTimestampData(_timestamp);
+      // displayTripInfo(_tripInfo);
       _timestamp=-1;
+
+      setState(() {
+        _tripInfo = wid
+      });
     }
   }
 
@@ -246,7 +258,7 @@ class mapState extends State<RoutesPage> {
     }
 
 
-    print(totalDist);
+    // print(totalDist);
   }
 
   Widget mainMap() => GoogleMap(
@@ -317,8 +329,8 @@ class mapState extends State<RoutesPage> {
               showStartButton = true;
               getGooglePolylinePoints().then((coordinates) {
                 generatePolyLines(coordinates, RoutesPage.POLYLINE_GENERATED);
-                print(coordinates);
-                print(coordinates.length);
+                // print(coordinates);
+                // print(coordinates.length);
               });
             },
             itemClick: (prediction) {
@@ -381,6 +393,12 @@ class mapState extends State<RoutesPage> {
               elevation: 4,
             ),
           ),
+          if (_timestamp>-1)
+            Positioned(
+              bottom: DimUtil.safeHeight(context) * 1 / 4,
+              left: DimUtil.safeWidth(context) * 1 / 20,
+              child: Text("data")
+            ),
           Positioned(
             bottom: DimUtil.safeHeight(context) * 1 / 20,
             left: DimUtil.safeWidth(context) * 1 / 20,
@@ -428,7 +446,6 @@ class mapState extends State<RoutesPage> {
   @override
   void dispose() {
     super.dispose();
-    print("Disposing route page");
     if (googleLocationUpdates != null) {
       googleLocationUpdates!.cancel();
     }
@@ -438,9 +455,6 @@ class mapState extends State<RoutesPage> {
     if (dest == null || (dest?.latitude == 0.0 && dest?.longitude == 0.0)) return false;
 
     double distanceToRoute = minDistanceToRoute(generatedPolylines, center);
-
-    print("Center: $center");
-    print("Cur. distance to route: $distanceToRoute meters");
 
     return distanceToRoute > RECALCULATE_ROUTE_THRESHOLD;
   }

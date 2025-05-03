@@ -217,7 +217,7 @@ class mapState extends State<RoutesPage> {
     print(rideInfo.toJson());
 
     // For now, don't send anything to backend yet
-    SubmitRideService.addRide(rideInfo);
+    // SubmitRideService.addRide(rideInfo);
     
     centerCamera(center!);
     totalDist = 0;
@@ -342,7 +342,10 @@ class mapState extends State<RoutesPage> {
             itemClick: (prediction) {
               textController.text = prediction.description!;
               recordedLocations.clear();
+              print("Destination selected");
               FocusScope.of(context).unfocus();
+              // FocusManager.instance.primaryFocus?.unfocus();
+              // FocusScope.of(context).requestFocus(FocusNode());
             },
           ),
         ],
@@ -501,8 +504,7 @@ class mapState extends State<RoutesPage> {
       if (permissionGranted != PermissionStatus.granted) return;
     }
 
-    // locationController.changeSettings(accuracy: );
-    // locationController.
+    locationController.enableBackgroundMode(enable: true);
 
     googleLocationUpdates = locationController.onLocationChanged.listen((currentLocation) {
       if (currentLocation.latitude != null &&

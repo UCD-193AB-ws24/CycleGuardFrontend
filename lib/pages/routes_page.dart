@@ -384,7 +384,7 @@ class mapState extends State<RoutesPage> {
   @override
   Widget build(BuildContext context) {
     Color selectedColor = Provider.of<MyAppState>(context, listen: false).selectedColor;
-    //final colorScheme = Theme.of(context).colorScheme;
+    final colorScheme = Theme.of(context).colorScheme;
     //final isDarkTheme = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(

@@ -496,47 +496,59 @@ class mapState extends State<RoutesPage> {
     return ValueListenableBuilder(
       valueListenable: _notifyCurrentRideData,
       builder: (BuildContext context, AccumRideData rideData, Widget? child) {
-        return Positioned(
-          top: DimUtil.safeHeight(context) * 3 / 16,
-          width: DimUtil.safeWidth(context) * 9.5 / 10,
-          height: DimUtil.safeHeight(context) * 1.5 / 16,
-          right: DimUtil.safeWidth(context) * .2 / 10,
-          child: _getStatsRow(rideData)
+        return Stack(
+          children: [
+            Positioned(
+              top: DimUtil.safeHeight(context) * 3 / 16,
+              width: DimUtil.safeWidth(context) * 3 / 10,
+              height: DimUtil.safeHeight(context) * 1.1 / 16,
+              left: DimUtil.safeWidth(context) * .2 / 10,
+              child: _buildStatCard(
+                Icons.directions_bike,
+                'Distance',
+                rideData.distance,
+                'mi',
+                Colors.redAccent),
+            ),
+            Positioned(
+              top: DimUtil.safeHeight(context) * 4.2 / 16,
+              width: DimUtil.safeWidth(context) * 3 / 10,
+              height: DimUtil.safeHeight(context) * 1.1 / 16,
+              left: DimUtil.safeWidth(context) * .2 / 10,
+              child: _buildStatCard(
+                  Icons.speed,
+                  'Speed',
+                  rideData.speed,
+                  'mph',
+                  Colors.lightGreen),
+            ),
+            Positioned(
+              top: DimUtil.safeHeight(context) * 3 / 16,
+              width: DimUtil.safeWidth(context) * 3 / 10,
+              height: DimUtil.safeHeight(context) * 1.1 / 16,
+              right: DimUtil.safeWidth(context) * .2 / 10,
+              child: _buildStatCard(
+                  Icons.timer,
+                  'Time',
+                  rideData.time,
+                  'min',
+                  Colors.blueAccent),
+            ),
+            Positioned(
+              top: DimUtil.safeHeight(context) * 4.2 / 16,
+              width: DimUtil.safeWidth(context) * 3 / 10,
+              height: DimUtil.safeHeight(context) * 1.1 / 16,
+              right: DimUtil.safeWidth(context) * .2 / 10,
+              child: _buildStatCard(
+                  Icons.local_fire_department,
+                  'Calories',
+                  rideData.calories,
+                  'cal',
+                  Colors.orangeAccent),
+            ),
+          ],
         );
       });
-  }
-
-  Row _getStatsRow(AccumRideData rideData) {
-    return Row(
-      children: [
-        Flexible(
-          child: _buildStatCard(
-              Icons.timer,
-              'Time',
-              rideData.time,
-              'min',
-              Colors.blueAccent),
-        ),
-        SizedBox(width: 8),
-        Flexible(
-          child: _buildStatCard(
-              Icons.directions_bike,
-              'Distance',
-              rideData.distance,
-              'mi',
-              Colors.orangeAccent),
-        ),
-        SizedBox(width: 8),
-        Flexible(
-          child: _buildStatCard(
-              Icons.local_fire_department,
-              'Calories',
-              rideData.calories,
-              'cal',
-              Colors.redAccent),
-        ),
-      ],
-    );
   }
 
   Widget _buildStatCard(IconData icon, String label, double value, String unit, Color color) {
@@ -553,9 +565,9 @@ class mapState extends State<RoutesPage> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label,
-                    style:
-                    TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                // Text(label,
+                //     style:
+                //     TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
                 Text("${value.toStringAsFixed(1)} $unit",
                     style:
                     TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
@@ -791,16 +803,17 @@ class mapState extends State<RoutesPage> {
 }
 
 class AccumRideData {
-  final double distance, time, calories;
-  AccumRideData(this.distance, this.time, this.calories);
+  final double distance, time, calories, speed;
+  AccumRideData(this.distance, this.time, this.calories, this.speed);
 
   factory AccumRideData.blank() {
-    return AccumRideData(0, 0, 0);
+    return AccumRideData(0, 0, 0, 0);
   }
 
   /// AccumRideData is immutable. Instead, return a new object with the accumulated data.
   AccumRideData addToCur(double distance, double time, double calories) {
-    return AccumRideData(this.distance+distance, this.time+time, this.calories+calories);
+    final speed = distance/time;
+    return AccumRideData(this.distance+distance, this.time+time, this.calories+calories, speed);
   }
 }
 

@@ -33,33 +33,6 @@ class HealthInfoAccessor {
   static Future<void> setHealthInfoInts(int height, int weight, int age) async {
     await setHealthInfo("$height", "$weight", "$age");
   }
-
-  static double _computeMET(double mph) {
-    if (mph < 10) {
-      // mph 0-10
-      // Range 4-6
-      return mph/10 * 2 + 4;
-    } else if (mph < 19) {
-      // mph 10-19
-      // Range 6-16
-      return (mph-10)/9 * 10 + 6;
-    } else {
-      return 16;
-    }
-  }
-
-  static Future<double> getCaloriesBurned(double miles, double minutes) async {
-    final info = await getHealthInfo();
-    if (info.weightPounds==0 || info.ageYears==0 || info.heightInches==0) return 0;
-
-    double kg = info.weightPounds * 0.453592;
-    double mph = (miles/minutes) * 60;
-
-    // Calories Burned per minute = MET value × body weight in Kg × 3.5/200
-    double met = _computeMET(mph);
-
-    return minutes * met * kg * 7/400;
-  }
 }
 
 class HealthInfo {
@@ -82,5 +55,31 @@ class HealthInfo {
       ),
       _ => throw const FormatException("failed to load HealthInfo"),
     };
+  }
+
+  static double _computeMET(double mph) {
+    if (mph < 10) {
+      // mph 0-10
+      // Range 4-6
+      return mph/10 * 2 + 4;
+    } else if (mph < 19) {
+      // mph 10-19
+      // Range 6-16
+      return (mph-10)/9 * 10 + 6;
+    } else {
+      return 16;
+    }
+  }
+
+  double getCaloriesBurned(double miles, double minutes) {
+    if (weightPounds==0 || ageYears==0 || heightInches==0) return 0;
+
+    double kg = weightPounds * 0.453592;
+    double mph = (miles/minutes) * 60;
+
+    // Calories Burned per minute = MET value × body weight in Kg × 3.5/200
+    double met = _computeMET(mph);
+
+    return minutes * met * kg * 7/400;
   }
 }

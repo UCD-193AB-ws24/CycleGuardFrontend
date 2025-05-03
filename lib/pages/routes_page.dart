@@ -364,8 +364,9 @@ class mapState extends State<RoutesPage> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final isDarkTheme = Theme.of(context).brightness == Brightness.dark;
+    Color selectedColor = Provider.of<MyAppState>(context, listen: false).selectedColor;
+    //final colorScheme = Theme.of(context).colorScheme;
+    //final isDarkTheme = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       body: Stack(
@@ -458,8 +459,8 @@ class mapState extends State<RoutesPage> {
                     "${_tripInfo!.calories} calories",
                   style: TextStyle(fontSize: 16, height: 1.5),
                 ),
-                backgroundColor: colorScheme.primary,
-                foregroundColor: isDarkTheme?Colors.white:Colors.black,
+                backgroundColor: selectedColor,
+                foregroundColor: Colors.white,
                 elevation: 4,
               ),
             ),

@@ -130,6 +130,7 @@ class mapState extends State<RoutesPage> {
     });
 
     initHealthInfo();
+    SubmitRideService.tryAddAllRides();
   }
 
   void onMapCreated(GoogleMapController controller) {
@@ -256,7 +257,7 @@ class mapState extends State<RoutesPage> {
       // stopwatch.reset();
       totalDist += distanceMeters;
 
-      final newVal = _notifyCurrentRideData.value.addToCur(distanceMeters * METERS_TO_MILES, elapsedMs/60000, 0);
+      final newVal = _notifyCurrentRideData.value.addToCur(distanceMeters * METERS_TO_MILES, elapsedMs/60000, healthInfo);
       _notifyCurrentRideData.value = newVal;
 
       offCenter = true;
@@ -812,8 +813,9 @@ class AccumRideData {
   }
 
   /// AccumRideData is immutable. Instead, return a new object with the accumulated data.
-  AccumRideData addToCur(double distance, double time, double calories) {
+  AccumRideData addToCur(double distance, double time, HealthInfo healthInfo) {
     final speed = distance/time;
+    final calories = healthInfo.getCaloriesBurned(distance, time);
     return AccumRideData(this.distance+distance, this.time+time, this.calories+calories, speed);
   }
 }

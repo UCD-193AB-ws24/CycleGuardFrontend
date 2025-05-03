@@ -4,6 +4,8 @@ import 'package:cycle_guard_app/data/purchase_info_accessor.dart';
 import 'package:cycle_guard_app/pages/feature_testing.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:hive/hive.dart';
+import 'package:hive_flutter/adapters.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:cycle_guard_app/data/user_stats_provider.dart';
@@ -56,6 +58,12 @@ void main() async {
   } catch (e) {
     print("Error: $e");
   }
+
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Hive
+  await Hive.initFlutter();
+  await Hive.openBox("localRideData");
 
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,

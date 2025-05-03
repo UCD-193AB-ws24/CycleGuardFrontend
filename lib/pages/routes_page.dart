@@ -66,6 +66,7 @@ class mapState extends State<RoutesPage> {
   // Recalculate the route if far enough away: units are meters
   static final double RECALCULATE_ROUTE_THRESHOLD = 75;
   static final double DEFAULT_ZOOM = 16;
+  static final double METERS_TO_MILES = 0.000621371;
 
   bool _helmetConnected = false;
 
@@ -109,6 +110,12 @@ class mapState extends State<RoutesPage> {
 
   }
 
+  late HealthInfo healthInfo;
+
+  Future<void> initHealthInfo() async {
+    healthInfo = await HealthInfoAccessor.getHealthInfo();
+  }
+
   @override
   void initState() {
     super.initState();
@@ -122,6 +129,7 @@ class mapState extends State<RoutesPage> {
       });
     });
 
+    initHealthInfo();
   }
 
   void onMapCreated(GoogleMapController controller) {
@@ -159,6 +167,7 @@ class mapState extends State<RoutesPage> {
   }
 
   void startDistanceRecord() {
+    _notifyCurrentRideData.value = AccumRideData.blank();
     setState(() {
       showStartButton = false;
       showStopButton = true;
@@ -177,8 +186,8 @@ class mapState extends State<RoutesPage> {
 
   List<double> _toLngs(List<LatLng> list) => list.map((e) => e.longitude).toList(growable: false);
 
-  Future<double> _calculateCalories(double miles, double minutes) async {
-    return await HealthInfoAccessor.getCaloriesBurned(miles, minutes);
+  double _calculateCalories(double miles, double minutes) {
+    return healthInfo.getCaloriesBurned(miles, minutes);
   }
 
   void toastMsg(String message, int time) {
@@ -193,7 +202,7 @@ class mapState extends State<RoutesPage> {
     );
   }
 
-  Future<void> stopDistanceRecord() async {
+  void stopDistanceRecord() {
     print(recordedLocations);
 
     setState(() {
@@ -203,13 +212,13 @@ class mapState extends State<RoutesPage> {
     });
 
 
-    final miles = totalDist * 0.000621371;
+    final miles = totalDist * METERS_TO_MILES;
     final minutes = rideDuration/60000;
     // Distance is in miles
     // Time is in milliseconds
     final rideInfo = RideInfo(
         miles,
-        await _calculateCalories(miles, minutes),
+        _notifyCurrentRideData.value.calories,
         minutes,
         _toLats(recordedLocations),
         _toLngs(recordedLocations)
@@ -235,14 +244,21 @@ class mapState extends State<RoutesPage> {
 
 
     if (prevLoc != center) {
-      rideDuration += stopwatch.elapsedMilliseconds;
-      // stopwatch.reset();
-      totalDist += Geolocator.distanceBetween(
+      int elapsedMs = stopwatch.elapsedMilliseconds;
+      double distanceMeters = Geolocator.distanceBetween(
         prevLoc!.latitude,
         prevLoc!.longitude,
         center!.latitude,
         center!.longitude,
       );
+
+      rideDuration += elapsedMs;
+      // stopwatch.reset();
+      totalDist += distanceMeters;
+
+      final newVal = _notifyCurrentRideData.value.addToCur(distanceMeters * METERS_TO_MILES, elapsedMs/60000, 0);
+      _notifyCurrentRideData.value = newVal;
+
       offCenter = true;
     }
     if(dest != null) {
@@ -476,7 +492,6 @@ class mapState extends State<RoutesPage> {
 
   final ValueNotifier<AccumRideData> _notifyCurrentRideData = ValueNotifier<AccumRideData>(AccumRideData.blank());
 
-
   Widget _curRideInfoWidget(Color bg) {
     return ValueListenableBuilder(
       valueListenable: _notifyCurrentRideData,
@@ -523,7 +538,6 @@ class mapState extends State<RoutesPage> {
       ],
     );
   }
-
 
   Widget _buildStatCard(IconData icon, String label, double value, String unit, Color color) {
     return Card(

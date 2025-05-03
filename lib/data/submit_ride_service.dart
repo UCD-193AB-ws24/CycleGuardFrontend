@@ -12,26 +12,54 @@ class SubmitRideService {
     print(rideInfo);
 
     await _localRideDataBox.put("$timestamp", rideInfo.toJson());
-
-    print("Reading from database: ${RideInfo.fromJson(await _localRideDataBox.get('$timestamp'))}");
   }
 
-  static void _removeFromDatabase(int timestamp) {
-
+  static Future<void> _removeFromDatabase(int timestamp) async {
+    await _localRideDataBox.delete("$timestamp");
   }
 
-  static List<int> getDatabaseKeys() {
+  static List<int> _getDatabaseKeys() {
     return _localRideDataBox.keys.map((e) => int.parse(e)).toList(growable: false);
+  }
+
+  static Future<bool> tryAddAllRides() async {
+    final timestamps = _getDatabaseKeys();
+
+    bool success = true;
+    for (int timestamp in timestamps) {
+      RideInfo rideInfo = await _getRideInfo(timestamp);
+      if (await _tryAddRide(rideInfo)) {
+        _removeFromDatabase(timestamp);
+      } else {
+        success = false;
+        break;
+      }
+    }
+    return success;
+  }
+
+  static Future<bool> _tryAddRide(RideInfo rideInfo) async {
+    try {
+      print("Trying to add ride $rideInfo");
+      await RequestsUtil.postWithToken("/rides/addRide", rideInfo.toJson());
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  static Future<RideInfo> _getRideInfo(int timestamp) async {
+    return RideInfo.fromJson(await _localRideDataBox.get("$timestamp"));
   }
 
   static Future<int> addRide(RideInfo rideInfo) async {
     final body = rideInfo.toJson();
     final timestamp = DateTime.now().millisecondsSinceEpoch;
 
-    _addRideToDatabase(timestamp, rideInfo);
+    await _addRideToDatabase(timestamp, rideInfo);
 
-    // final response = await RequestsUtil.postWithToken("/rides/addRide", body);
-    final response = await RequestsUtil.getWithToken("/rides/getProfile");
+    final response = await RequestsUtil.postWithToken("/rides/addRide", body);
+    // final response = await RequestsUtil.getWithToken("/rides/getProfile");
 
     if (response.statusCode == 200) {
       _removeFromDatabase(timestamp);

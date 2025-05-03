@@ -164,7 +164,7 @@ class mapState extends State<RoutesPage> {
       showStopButton = true;
       recordingDistance = true;
       offCenter = true;
-    _helmetConnected = isConnected();
+      _helmetConnected = isConnected();
     });
     stopwatch.start();
     recordedLocations.clear();
@@ -442,7 +442,7 @@ class mapState extends State<RoutesPage> {
                 elevation: 4,
               ),
             ),
-          if (_timestamp>-1)
+          if (!recordingDistance && _timestamp>-1)
             Positioned(
               top: DimUtil.safeHeight(context) * 3 / 16,
               width: DimUtil.safeWidth(context) * 9.5 / 10,
@@ -466,8 +466,89 @@ class mapState extends State<RoutesPage> {
                 elevation: 4,
               ),
             ),
+          if (recordingDistance)
+            _curRideInfoWidget(colorScheme.primary),
           locationTextInput(),
         ],
+      ),
+    );
+  }
+
+  final ValueNotifier<AccumRideData> _notifyCurrentRideData = ValueNotifier<AccumRideData>(AccumRideData.blank());
+
+
+  Widget _curRideInfoWidget(Color bg) {
+    return ValueListenableBuilder(
+      valueListenable: _notifyCurrentRideData,
+      builder: (BuildContext context, AccumRideData rideData, Widget? child) {
+        return Positioned(
+          top: DimUtil.safeHeight(context) * 3 / 16,
+          width: DimUtil.safeWidth(context) * 9.5 / 10,
+          height: DimUtil.safeHeight(context) * 1.5 / 16,
+          right: DimUtil.safeWidth(context) * .2 / 10,
+          child: _getStatsRow(rideData)
+        );
+      });
+  }
+
+  Row _getStatsRow(AccumRideData rideData) {
+    return Row(
+      children: [
+        Flexible(
+          child: _buildStatCard(
+              Icons.timer,
+              'Time',
+              rideData.time,
+              'min',
+              Colors.blueAccent),
+        ),
+        SizedBox(width: 8),
+        Flexible(
+          child: _buildStatCard(
+              Icons.directions_bike,
+              'Distance',
+              rideData.distance,
+              'mi',
+              Colors.orangeAccent),
+        ),
+        SizedBox(width: 8),
+        Flexible(
+          child: _buildStatCard(
+              Icons.local_fire_department,
+              'Calories',
+              rideData.calories,
+              'cal',
+              Colors.redAccent),
+        ),
+      ],
+    );
+  }
+
+
+  Widget _buildStatCard(IconData icon, String label, double value, String unit, Color color) {
+    return Card(
+      color: color.withAlpha(192),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      elevation: 2,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 10.0),
+        child: Row(
+          children: [
+            Icon(icon, color: Colors.white),
+            SizedBox(width: 8),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label,
+                    style:
+                    TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                Text("${value.toStringAsFixed(1)} $unit",
+                    style:
+                    TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -695,6 +776,19 @@ class mapState extends State<RoutesPage> {
   }
 }
 
+class AccumRideData {
+  final double distance, time, calories;
+  AccumRideData(this.distance, this.time, this.calories);
+
+  factory AccumRideData.blank() {
+    return AccumRideData(0, 0, 0);
+  }
+
+  /// AccumRideData is immutable. Instead, return a new object with the accumulated data.
+  AccumRideData addToCur(double distance, double time, double calories) {
+    return AccumRideData(this.distance+distance, this.time+time, this.calories+calories);
+  }
+}
 
 class PostRideData {
   static final random = Random();

@@ -130,6 +130,7 @@ class mapState extends State<RoutesPage> {
     });
 
     initHealthInfo();
+    SubmitRideService.tryAddAllRides();
   }
 
   void onMapCreated(GoogleMapController controller) {

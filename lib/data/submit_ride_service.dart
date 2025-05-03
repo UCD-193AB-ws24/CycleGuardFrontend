@@ -42,6 +42,7 @@ class SubmitRideService {
     try {
       print("Trying to add ride $rideInfo");
       await RequestsUtil.postWithToken("/rides/addRide", rideInfo.toJson());
+      print("Success!");
       return true;
     } catch (e) {
       return false;

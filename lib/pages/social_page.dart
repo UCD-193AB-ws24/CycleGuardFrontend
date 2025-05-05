@@ -24,6 +24,9 @@ class SocialPage extends StatefulWidget {
 class _SocialPageState extends State<SocialPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  late TextEditingController _searchController;
+  late Future<Map<String, dynamic>> _usersAndFriendsFuture;
+
   int numOfTabs = 5;
   bool isPublic = true; // Move isPublic to the state class
   bool _hasFetchedIcons = false;
@@ -54,6 +57,9 @@ class _SocialPageState extends State<SocialPage>
             .fetchDailyGoals());
     nameController = TextEditingController();
     bioController = TextEditingController();
+    _searchController = TextEditingController();
+    _usersAndFriendsFuture = _fetchUsersAndFriends();
+    _searchController.addListener(() => setState(() {}));
     _loadProfile();
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
@@ -171,6 +177,7 @@ class _SocialPageState extends State<SocialPage>
   void dispose() {
     nameController.dispose();
     bioController.dispose();
+    _searchController.dispose();   
     _tabController.dispose();
     super.dispose();
   }
@@ -298,6 +305,7 @@ class _SocialPageState extends State<SocialPage>
               unselectedLabelColor: isDarkMode ? Colors.white70 : null,
               labelColor: isDarkMode ? null : selectedColor,
               indicatorColor: isDarkMode ? null : selectedColor,
+              labelPadding: EdgeInsets.symmetric(horizontal: 5.0),
               tabs: const [
                 Tab(icon: Icon(Icons.person), text: "Profile"),
                 Tab(icon: Icon(Icons.groups_3), text: "Friends"),
@@ -829,10 +837,8 @@ class _SocialPageState extends State<SocialPage>
     );
   }
 
-  /// **2️⃣ Bikers Tab - Fetch All Users & Friend Status**
+  /// **2️⃣ Bikers Tab — show all bikers and filter by the search field**
   Widget _buildSearchTab() {
-    TextEditingController searchController = TextEditingController();
-    List<String> _friends = []; // Stores the user's friends
     bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return Column(
@@ -840,91 +846,86 @@ class _SocialPageState extends State<SocialPage>
         Padding(
           padding: const EdgeInsets.all(16.0),
           child: TextField(
-            controller: searchController,
+            controller: _searchController,
             decoration: InputDecoration(
               labelText: "Search bikers...",
-              suffixIcon: IconButton(
-                icon: Icon(Icons.search),
-                onPressed: () {
-                  setState(() {}); // Trigger UI update for search filtering
-                },
-              ),
+              prefixIcon: Icon(Icons.search),
+              suffixIcon: _searchController.text.isEmpty
+                  ? null
+                  : IconButton(
+                      icon: Icon(Icons.clear),
+                      onPressed: () {
+                        _searchController.clear();
+                      },
+                    ),
             ),
           ),
         ),
         Expanded(
           child: FutureBuilder<Map<String, dynamic>>(
-            future: _fetchUsersAndFriends(), // Fetch users & friend list
+            future: _usersAndFriendsFuture, // only fetched once
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
-                return Center(
-                    child:
-                        CircularProgressIndicator()); // Show loading indicator
-              } else if (snapshot.hasError) {
-                return Center(child: Text("Error loading users"));
-              } else if (!snapshot.hasData || snapshot.data!['users'].isEmpty) {
-                return Center(child: Text("No bikers found."));
-              } else {
-                final List<String> users = snapshot.data!['users'];
-                _friends = snapshot.data!['friends']; // Update friend list
-
-                return ListView.builder(
-                  itemCount: users.length,
-                  itemBuilder: (context, index) {
-                    String user = users[index];
-                    bool isFriend =
-                        _friends.contains(user); // Check if user is a friend
-
-                    // Search filtering logic
-                    if (searchController.text.isNotEmpty &&
-                        !user
-                            .toLowerCase()
-                            .contains(searchController.text.toLowerCase())) {
-                      return SizedBox
-                          .shrink(); // Hide users who don't match the search query
-                    }
-
-                    return Card(
-                      margin: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                      color: isDarkMode
-                          ? Theme.of(context)
-                              .colorScheme
-                              .onSecondaryFixedVariant
-                          : Colors.white,
-                      child: ListTile(
-                        leading:
-                            CircleAvatar(child: Text(user[0].toUpperCase())),
-                        title: Text(
-                          user,
-                          style: TextStyle(
-                            color: isDarkMode ? Colors.white70 : null,
-                          ),
-                        ),
-                        subtitle: isFriend
-                            ? Text("Friend",
-                                style: TextStyle(color: Colors.green))
-                            : null,
-                        trailing: isFriend
-                            ? null // Don't show add friend button for existing friends
-                            : ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: isDarkMode
-                                      ? Theme.of(context).colorScheme.secondary
-                                      : Theme.of(context)
-                                          .colorScheme
-                                          .onInverseSurface,
-                                  foregroundColor: isDarkMode
-                                      ? Colors.white70
-                                      : Theme.of(context).colorScheme.primary,
-                                ),
-                                onPressed: () => _sendFriendRequest(user),
-                                child: Text("Add Friend"),
-                              ),
-                      ),
-                    );
-                  },
-                );
+                return Center(child: CircularProgressIndicator());
               }
+              if (snapshot.hasError) {
+                return Center(child: Text("Error loading users"));
+              }
+              //final users = snapshot.data!['users'] as List<String>;
+              //final friends = snapshot.data!['friends'] as List<String>;
+              // snapshot.data is Map<String, dynamic>, so its lists come back as List<dynamic>
+              final usersRaw   = snapshot.data!['users']   as List<dynamic>;
+              final friendsRaw = snapshot.data!['friends'] as List<dynamic>;
+              final users   = usersRaw.map((e) => e as String).toList();
+              final friends = friendsRaw.map((e) => e as String).toList();
+
+              // filter locally
+              final query = _searchController.text.toLowerCase();
+              final filtered = query.isEmpty
+                  ? users
+                  : users.where((u) => u.toLowerCase().contains(query)).toList();
+
+              if (filtered.isEmpty) {
+                return Center(child: Text("No bikers found."));
+              }
+
+              return ListView.builder(
+                itemCount: filtered.length,
+                itemBuilder: (context, idx) {
+                  final user = filtered[idx];
+                  final isFriend = friends.contains(user);
+                  return Card(
+                    margin: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    color: isDarkMode
+                        ? Theme.of(context).colorScheme.onSecondaryFixedVariant
+                        : Colors.white,
+                    child: ListTile(
+                      leading: CircleAvatar(child: Text(user[0].toUpperCase())),
+                      title: Text(
+                        user,
+                        style: TextStyle(color: isDarkMode ? Colors.white70 : null),
+                      ),
+                      subtitle: isFriend
+                          ? Text("Friend", style: TextStyle(color: Colors.green))
+                          : null,
+                      trailing: isFriend
+                          ? null
+                          : ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: isDarkMode
+                                    ? Theme.of(context).colorScheme.secondary
+                                    : Theme.of(context).colorScheme.onInverseSurface,
+                                foregroundColor: isDarkMode
+                                    ? Colors.white70
+                                    : Theme.of(context).colorScheme.primary,
+                              ),
+                              onPressed: () => _sendFriendRequest(user),
+                              child: Text("Add Friend"),
+                            ),
+                    ),
+                  );
+                },
+              );
             },
           ),
         ),
@@ -1115,14 +1116,12 @@ class _RequestsTabState extends State<RequestsTab> {
     _loadFriendRequests(); // Fetch friend requests on init
   }
 
-  /// **Fetch pending friend requests from backend**
   Future<void> _loadFriendRequests() async {
     try {
-      final FriendRequestList friendRequestList =
-          await FriendRequestsListAccessor.getFriendRequestList();
+      final friendRequestList = await FriendRequestsListAccessor.getFriendRequestList();
+      if (!mounted) return;
       setState(() {
-        _requests = friendRequestList
-            .receivedFriendRequests; // Only show received requests
+        _requests = friendRequestList.receivedFriendRequests;
         _isLoading = false;
       });
     } catch (e) {

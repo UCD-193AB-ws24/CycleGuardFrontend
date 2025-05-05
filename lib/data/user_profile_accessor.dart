@@ -38,14 +38,16 @@ class UserProfileAccessor {
   static Future<List<String>> fetchAllUsernames() async {
     final UsersList allUsers = await UserProfileAccessor.getAllUsers();
     print(allUsers);
-    return [];
-    // return allUsers.users; // Directly return the List<String>
+    // Extract just the usernames from each UserProfile
+    final usernames = allUsers.getUsernames();
+    print("Fetched usernames: $usernames");
+    return usernames;
   }
 
   /// **Fetches all users from the system**
   static Future<UsersList> getAllUsers() async {
     final response = await RequestsUtil.getWithToken("/user/all");
-    print(response.body);
+    print("All users fetched: ${response.body}");
 
     if (response.statusCode == 200) {
       return UsersList.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
@@ -79,7 +81,7 @@ class UserProfile {
         "isPublic": bool isPublic,
         "isNewAccount": bool isNewAccount,
         "profileIcon": String profileIcon,
-        "pack": String pack
+        "pack": Object? pack
       } => UserProfile(
           username: username,
           displayName: displayName,
@@ -87,7 +89,7 @@ class UserProfile {
           profileIcon: profileIcon,
           isPublic: isPublic,
           isNewAccount: isNewAccount,
-          pack: pack
+          pack: (pack is String) ? pack : '', // fallback to empty string
       ),
       _ => throw const FormatException("failed to load UserProfile"),
     };

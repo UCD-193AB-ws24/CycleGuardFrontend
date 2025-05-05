@@ -32,22 +32,16 @@ class FriendsList {
 
   const FriendsList({required this.username, required this.friends});
 
-  static List<String> _parseUsernameList(List<dynamic> list) {
-    return List<String>.from(list);
-  }
+  static List<String> _parseUsernameList(List<dynamic> raw) =>
+      raw.map((e) => e as String).toList();
+
 
   factory FriendsList.fromJson(Map<String, dynamic> jsonInit) {
-    return switch (jsonInit) {
-      {
-      "username": String username,
-      "friends": List<dynamic> friends,
-      } => FriendsList(
-        // username: username,
-        username: username,
-        friends: _parseUsernameList(friends)
-      ),
-      _ => throw const FormatException("failed to load FriendsList"),
-    };
+    final username = jsonInit['username'] as String;
+    final raw = jsonInit['friends'] as List<dynamic>;
+    final friends = raw.map((e) => e as String).toList();
+
+    return FriendsList(username: username, friends: friends);
   }
 
   @override

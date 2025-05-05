@@ -72,13 +72,13 @@ class _AchievementsPageState extends State<AchievementsPage> {
                 selectedColor, isDarkMode),
             _buildSection(
                 'Distance',
-                'Total Miles Traveled : \n\t${userStats.totalDistance} miles',
+                'Total Miles Traveled : \n\t${userStats.totalDistance.toStringAsFixed(1)} miles',
                 achievementsProgress.distanceAchievements,
                 selectedColor,
                 isDarkMode),
             _buildSection(
                 'Time',
-                'Total Time Spent Riding : \n\t${userStats.totalTime ~/ 60} hours\n\t${userStats.totalTime % 60} minutes',
+                'Total Time Spent Riding : \n\t${userStats.totalTime ~/ 60} hours\n\t${(userStats.totalTime%60).toStringAsFixed(1)} minutes',
                 achievementsProgress.timeAchievements,
                 selectedColor,
                 isDarkMode),
@@ -86,6 +86,12 @@ class _AchievementsPageState extends State<AchievementsPage> {
                 'Consistency',
                 'Current Days in a Row : ${userStats.rideStreak} \nBest : ${userStats.bestStreak}',
                 achievementsProgress.consistencyAchievements,
+                selectedColor,
+                isDarkMode),
+            _buildSection(
+                'Packs',
+                'Best Pack Goal Progress : ${userStats.bestPackGoalProgress}',
+                achievementsProgress.packsAchievements,
                 selectedColor,
                 isDarkMode),
           ],

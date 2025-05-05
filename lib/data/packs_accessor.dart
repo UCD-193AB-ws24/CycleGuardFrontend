@@ -91,6 +91,28 @@ class PacksAccessor {
     }
     return response.statusCode==200;
   }
+
+  static Future<bool> changeOwner(String newOwner) async {
+    final body = {
+      "newOwner": newOwner
+    };
+    final response = await RequestsUtil.postWithToken("/packs/changeOwner", body);
+    if (response.statusCode != 200) {
+      throw "Error in changeOwner: response code ${response.statusCode}";
+    }
+    return response.statusCode==200;
+  }
+
+  static Future<bool> kickUser(String username) async {
+    final body = {
+      "username": username
+    };
+    final response = await RequestsUtil.postWithToken("/packs/kickUser", body);
+    if (response.statusCode != 200) {
+      throw "Error in kickUser: response code ${response.statusCode}";
+    }
+    return response.statusCode==200;
+  }
 }
 
 // PackData now has invites field, which is a list of usernames invited to the pack

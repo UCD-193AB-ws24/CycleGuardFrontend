@@ -129,6 +129,17 @@ class _HomePageState extends State<HomePage>
     }
   }
 
+  String formatTime(double timeInMinutes) {
+    int minutes = timeInMinutes.floor();
+    int seconds = ((timeInMinutes - minutes) * 60).round();
+
+    if (seconds == 0) {
+      return '$minutes min';
+    } else {
+      return '$minutes min $seconds sec';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final userStats = Provider.of<UserStatsProvider>(context);
@@ -547,7 +558,7 @@ class _HomePageState extends State<HomePage>
                           children: [
                             _buildCircularStat(
                               context,
-                              title: '$todayTime min',
+                              title: formatTime(todayTime),
                               icon: Icons.access_time,
                               percent: userGoals.dailyTimeGoal == 0
                                   ? 0

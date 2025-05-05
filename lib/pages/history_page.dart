@@ -114,6 +114,17 @@ class _HistoryPageState extends State<HistoryPage> {
     );
   }
 
+  String formatTime(double timeInMinutes) {
+    int minutes = timeInMinutes.floor();
+    int seconds = ((timeInMinutes - minutes) * 60).round();
+
+    if (seconds == 0) {
+      return '$minutes min';
+    } else {
+      return '$minutes min $seconds sec';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
@@ -276,7 +287,7 @@ class _HistoryPageState extends State<HistoryPage> {
                                       : colorScheme.onPrimaryFixed),
                             ),
                             Text(
-                              '${userStatsProvider.totalTime} min',
+                              formatTime(userStatsProvider.totalTime),
                               style: TextStyle(
                                   fontSize: 16,
                                   color: isDarkMode
@@ -609,7 +620,8 @@ class _HistoryPageState extends State<HistoryPage> {
                                                       Colors.blueAccent),
                                                   _buildDetailRow(
                                                       Icons.timer,
-                                                      '${trip.time} min',
+                                                      //'${trip.time} min',
+                                                      formatTime(trip.time),
                                                       Colors.orange),
                                                   _buildDetailRow(
                                                       Icons

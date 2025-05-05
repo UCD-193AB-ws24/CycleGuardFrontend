@@ -321,17 +321,16 @@ class _SocialPageState extends State<SocialPage>
             padding: const EdgeInsets.only(right: 32.0),
             child: GestureDetector(
               onTap: () {
-                Navigator.pushReplacement(
+                selectedIndexGlobal.value = 1;
+                Navigator.pushAndRemoveUntil(
                   context,
                   PageRouteBuilder(
-                    pageBuilder: (context, animation, secondaryAnimation) =>
-                        MyHomePage(),
-                    transitionDuration: Duration(milliseconds: 500),
-                    transitionsBuilder:
-                        (context, animation, secondaryAnimation, child) {
+                    pageBuilder: (context, animation, secondaryAnimation) => MyHomePage(),
+                    transitionDuration: Duration(milliseconds: 500),  
+                    transitionsBuilder: (context, animation, secondaryAnimation, child) {
                       var offsetAnimation = Tween<Offset>(
-                        begin: Offset(0.0, -1.0),
-                        end: Offset.zero,
+                        begin: Offset(0.0, -1.0),  
+                        end: Offset.zero,           
                       ).animate(CurvedAnimation(
                         parent: animation,
                         curve: Curves.easeOut,
@@ -343,6 +342,7 @@ class _SocialPageState extends State<SocialPage>
                       );
                     },
                   ),
+                  (_) => false,
                 );
               },
               child: Showcase(

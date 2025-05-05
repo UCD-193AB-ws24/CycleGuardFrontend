@@ -16,6 +16,9 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:google_places_flutter/google_places_flutter.dart';
 import 'package:location/location.dart' hide LocationAccuracy;
 
+import 'package:provider/provider.dart';
+import 'package:cycle_guard_app/main.dart';
+
 import '../auth/dim_util.dart';
 import '../auth/key_util.dart';
 import '../data/submit_ride_service.dart';
@@ -63,6 +66,7 @@ class mapState extends State<RoutesPage> {
   // Recalculate the route if far enough away: units are meters
   static final double RECALCULATE_ROUTE_THRESHOLD = 75;
   static final double DEFAULT_ZOOM = 16;
+  static final double METERS_TO_MILES = 0.000621371;
 
   bool _helmetConnected = false;
 
@@ -106,6 +110,12 @@ class mapState extends State<RoutesPage> {
 
   }
 
+  late HealthInfo healthInfo;
+
+  Future<void> initHealthInfo() async {
+    healthInfo = await HealthInfoAccessor.getHealthInfo();
+  }
+
   @override
   void initState() {
     super.initState();
@@ -119,6 +129,8 @@ class mapState extends State<RoutesPage> {
       });
     });
 
+    initHealthInfo();
+    SubmitRideService.tryAddAllRides();
   }
 
   void onMapCreated(GoogleMapController controller) {
@@ -156,12 +168,13 @@ class mapState extends State<RoutesPage> {
   }
 
   void startDistanceRecord() {
+    _notifyCurrentRideData.value = AccumRideData.blank();
     setState(() {
       showStartButton = false;
       showStopButton = true;
       recordingDistance = true;
       offCenter = true;
-    _helmetConnected = isConnected();
+      _helmetConnected = isConnected();
     });
     stopwatch.start();
     recordedLocations.clear();
@@ -174,8 +187,8 @@ class mapState extends State<RoutesPage> {
 
   List<double> _toLngs(List<LatLng> list) => list.map((e) => e.longitude).toList(growable: false);
 
-  Future<double> _calculateCalories(double miles, double minutes) async {
-    return await HealthInfoAccessor.getCaloriesBurned(miles, minutes);
+  double _calculateCalories(double miles, double minutes) {
+    return healthInfo.getCaloriesBurned(miles, minutes);
   }
 
   void toastMsg(String message, int time) {
@@ -190,7 +203,7 @@ class mapState extends State<RoutesPage> {
     );
   }
 
-  Future<void> stopDistanceRecord() async {
+  void stopDistanceRecord() {
     print(recordedLocations);
 
     setState(() {
@@ -200,13 +213,13 @@ class mapState extends State<RoutesPage> {
     });
 
 
-    final miles = totalDist * 0.000621371;
+    final miles = totalDist * METERS_TO_MILES;
     final minutes = rideDuration/60000;
     // Distance is in miles
     // Time is in milliseconds
     final rideInfo = RideInfo(
         miles,
-        await _calculateCalories(miles, minutes),
+        _notifyCurrentRideData.value.calories,
         minutes,
         _toLats(recordedLocations),
         _toLngs(recordedLocations)
@@ -232,14 +245,21 @@ class mapState extends State<RoutesPage> {
 
 
     if (prevLoc != center) {
-      rideDuration += stopwatch.elapsedMilliseconds;
-      // stopwatch.reset();
-      totalDist += Geolocator.distanceBetween(
+      int elapsedMs = stopwatch.elapsedMilliseconds;
+      double distanceMeters = Geolocator.distanceBetween(
         prevLoc!.latitude,
         prevLoc!.longitude,
         center!.latitude,
         center!.longitude,
       );
+
+      rideDuration += elapsedMs;
+      // stopwatch.reset();
+      totalDist += distanceMeters;
+
+      final newVal = _notifyCurrentRideData.value.addToCur(distanceMeters * METERS_TO_MILES, elapsedMs/60000, healthInfo);
+      _notifyCurrentRideData.value = newVal;
+
       offCenter = true;
     }
     if(dest != null) {
@@ -339,7 +359,10 @@ class mapState extends State<RoutesPage> {
             itemClick: (prediction) {
               textController.text = prediction.description!;
               recordedLocations.clear();
+              print("Destination selected");
               FocusScope.of(context).unfocus();
+              // FocusManager.instance.primaryFocus?.unfocus();
+              // FocusScope.of(context).requestFocus(FocusNode());
             },
           ),
         ],
@@ -361,8 +384,9 @@ class mapState extends State<RoutesPage> {
 
   @override
   Widget build(BuildContext context) {
+    Color selectedColor = Provider.of<MyAppState>(context, listen: false).selectedColor;
     final colorScheme = Theme.of(context).colorScheme;
-    final isDarkTheme = Theme.of(context).brightness == Brightness.dark;
+    //final isDarkTheme = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       body: Stack(
@@ -436,7 +460,7 @@ class mapState extends State<RoutesPage> {
                 elevation: 4,
               ),
             ),
-          if (_timestamp>-1)
+          if (!recordingDistance && _timestamp>-1)
             Positioned(
               top: DimUtil.safeHeight(context) * 3 / 16,
               width: DimUtil.safeWidth(context) * 9.5 / 10,
@@ -455,13 +479,104 @@ class mapState extends State<RoutesPage> {
                     "${_tripInfo!.calories} calories",
                   style: TextStyle(fontSize: 16, height: 1.5),
                 ),
-                backgroundColor: colorScheme.primary,
-                foregroundColor: isDarkTheme?Colors.white:Colors.black,
+                backgroundColor: selectedColor,
+                foregroundColor: Colors.white,
                 elevation: 4,
               ),
             ),
+          if (recordingDistance)
+            _curRideInfoWidget(colorScheme.primary),
           locationTextInput(),
         ],
+      ),
+    );
+  }
+
+  final ValueNotifier<AccumRideData> _notifyCurrentRideData = ValueNotifier<AccumRideData>(AccumRideData.blank());
+
+  Widget _curRideInfoWidget(Color bg) {
+    return ValueListenableBuilder(
+      valueListenable: _notifyCurrentRideData,
+      builder: (BuildContext context, AccumRideData rideData, Widget? child) {
+        return Stack(
+          children: [
+            Positioned(
+              top: DimUtil.safeHeight(context) * 3 / 16,
+              width: DimUtil.safeWidth(context) * 3 / 10,
+              height: DimUtil.safeHeight(context) * 1.1 / 16,
+              left: DimUtil.safeWidth(context) * .2 / 10,
+              child: _buildStatCard(
+                Icons.directions_bike,
+                'Distance',
+                rideData.distance,
+                'mi',
+                Colors.redAccent),
+            ),
+            Positioned(
+              top: DimUtil.safeHeight(context) * 4.2 / 16,
+              width: DimUtil.safeWidth(context) * 3 / 10,
+              height: DimUtil.safeHeight(context) * 1.1 / 16,
+              left: DimUtil.safeWidth(context) * .2 / 10,
+              child: _buildStatCard(
+                  Icons.speed,
+                  'Speed',
+                  rideData.speed,
+                  'mph',
+                  Colors.lightGreen),
+            ),
+            Positioned(
+              top: DimUtil.safeHeight(context) * 3 / 16,
+              width: DimUtil.safeWidth(context) * 3 / 10,
+              height: DimUtil.safeHeight(context) * 1.1 / 16,
+              right: DimUtil.safeWidth(context) * .2 / 10,
+              child: _buildStatCard(
+                  Icons.timer,
+                  'Time',
+                  rideData.time,
+                  'min',
+                  Colors.blueAccent),
+            ),
+            Positioned(
+              top: DimUtil.safeHeight(context) * 4.2 / 16,
+              width: DimUtil.safeWidth(context) * 3 / 10,
+              height: DimUtil.safeHeight(context) * 1.1 / 16,
+              right: DimUtil.safeWidth(context) * .2 / 10,
+              child: _buildStatCard(
+                  Icons.local_fire_department,
+                  'Calories',
+                  rideData.calories,
+                  'cal',
+                  Colors.orangeAccent),
+            ),
+          ],
+        );
+      });
+  }
+
+  Widget _buildStatCard(IconData icon, String label, double value, String unit, Color color) {
+    return Card(
+      color: color.withAlpha(192),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      elevation: 2,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 10.0),
+        child: Row(
+          children: [
+            Icon(icon, color: Colors.white),
+            SizedBox(width: 8),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Text(label,
+                //     style:
+                //     TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                Text("${value.toStringAsFixed(1)} $unit",
+                    style:
+                    TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -498,8 +613,7 @@ class mapState extends State<RoutesPage> {
       if (permissionGranted != PermissionStatus.granted) return;
     }
 
-    // locationController.changeSettings(accuracy: );
-    // locationController.
+    locationController.enableBackgroundMode(enable: true);
 
     googleLocationUpdates = locationController.onLocationChanged.listen((currentLocation) {
       if (currentLocation.latitude != null &&
@@ -690,6 +804,21 @@ class mapState extends State<RoutesPage> {
   }
 }
 
+class AccumRideData {
+  final double distance, time, calories, speed;
+  AccumRideData(this.distance, this.time, this.calories, this.speed);
+
+  factory AccumRideData.blank() {
+    return AccumRideData(0, 0, 0, 0);
+  }
+
+  /// AccumRideData is immutable. Instead, return a new object with the accumulated data.
+  AccumRideData addToCur(double distance, double time, HealthInfo healthInfo) {
+    final speed = distance/time;
+    final calories = healthInfo.getCaloriesBurned(distance, time);
+    return AccumRideData(this.distance+distance, this.time+time, this.calories+calories, speed);
+  }
+}
 
 class PostRideData {
   static final random = Random();
@@ -703,48 +832,90 @@ class PostRideData {
   }
 
   static Future<void> showPostRideDialog(BuildContext context, RideInfo rideInfo) async {
+    Color selectedColor = Provider.of<MyAppState>(context, listen: false).selectedColor;
     print(rideInfo);
 
     final mins = rideInfo.time.floor();
-    final secs = ((rideInfo.time-mins)*60).floor();
+    final secs = ((rideInfo.time - mins) * 60).floor();
     final miles = rideInfo.distance.toStringAsFixed(1);
     final cals = rideInfo.calories.toStringAsFixed(1);
 
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          contentPadding: EdgeInsets.symmetric(horizontal: 10,vertical: 10),
-          title: Text(_getRandomPostRideText(), style: TextStyle(color: Colors.black)),
-          content: Container(
-            height: 100,
-            width: 500,
-            padding: EdgeInsets.symmetric(horizontal: 4,vertical: 5),
-            child: ListView(
-              children: [
-                Text("You biked $miles miles", style: TextStyle(fontSize: 16, color: Colors.black)),
-                Text("You burned around $cals calories", style: TextStyle(fontSize: 16, color: Colors.black)),
-                Text("Time: $mins minutes and $secs seconds", style: TextStyle(fontSize: 16, color: Colors.black)),
-              ],
-            )
-          ),
-          actions: <Widget>[
-            const SizedBox(height: 20),
-            Center(
-              child: ElevatedButton(
-                onPressed: () async {
-                  Navigator.pop(context);
-                },
-                child: Text(
-                  "Nice!",
-                  style: GoogleFonts.poppins(
-                      fontSize: 18, fontWeight: FontWeight.bold),
-                ),
+        return Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          backgroundColor: Colors.white,
+          child: Container(
+            width: 320,
+            padding: EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              gradient: LinearGradient(
+                colors: [selectedColor, Theme.of(context).colorScheme.primary],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
             ),
-          ],
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  _getRandomPostRideText(),
+                  style: GoogleFonts.poppins(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                SizedBox(height: 20),
+                _buildInfoRow(Icons.directions_bike, "$miles miles biked"),
+                _buildInfoRow(Icons.local_fire_department, "$cals calories burned"),
+                _buildInfoRow(Icons.timer, "$mins min $secs sec"),
+                SizedBox(height: 25),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    padding: EdgeInsets.symmetric(horizontal: 30, vertical: 12),
+                    backgroundColor: selectedColor, 
+                    elevation: 4,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  onPressed: () => Navigator.pop(context),
+                  child: Text(
+                    "Nice!",
+                    style: GoogleFonts.poppins(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         );
       },
     );
   }
+
+  static Widget _buildInfoRow(IconData icon, String text) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6.0),
+      child: Row(
+        children: [
+          Icon(icon, color: Colors.white),
+          SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              text,
+              style: GoogleFonts.poppins(fontSize: 16, color: Colors.white),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
 }

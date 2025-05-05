@@ -119,7 +119,7 @@ class TestingPage extends StatelessWidget {
   }
 
   Future<int> _addRideInfo(double distance, double calories, double time) async {
-    final timestamp = await SubmitRideService.addRideRaw(distance, calories, time, [1, 2.5, 4, 5.5], [2, 3.5, 5, 6.5]);
+    final timestamp = await SubmitRideService.addRideRaw(distance, calories, time, [1, 2.5, 4, 5.5], [2, 3.5, 5, 6.5], 10, 5);
     print("Successfully added ride info! Timestamp: $timestamp");
     return timestamp;
   }
@@ -203,7 +203,7 @@ class TestingPage extends StatelessWidget {
     await PacksAccessor.setPackGoal(86400, PacksAccessor.GOAL_DISTANCE, 1);
     print("Setting new goal: ${await PacksAccessor.getPackData()}");
 
-    await SubmitRideService.addRideRaw(2, 20, 25, [123], [456]);
+    await SubmitRideService.addRideRaw(2, 20, 25, [123], [456], 10, 5);
     print("Completing new goal: ${await PacksAccessor.getPackData()}");
 
     await PacksAccessor.cancelPackGoal();

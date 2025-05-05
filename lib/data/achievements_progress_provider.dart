@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cycle_guard_app/data/achievements_accessor.dart';
 
-
 class AchievementsProgressProvider with ChangeNotifier {
-  List<bool> achievementsCompleted = [false, false, false, false, false, false, false, false, false, false, false, false];
+  List<bool> achievementsCompleted = List.filled(AchievementInfoAccessor.NUM_ACHIEVEMENTS, false);
 
   // Method to fetch user stats and update the state
   Future<void> fetchAchievementProgress() async {
@@ -36,5 +35,12 @@ class AchievementsProgressProvider with ChangeNotifier {
     {'title': 'Daily Rider', 'description': 'Ride every day for a week', 'icon': Icons.calendar_today, 'goalValue': 7},
     {'title': 'Month of Miles', 'description': 'Ride every day for a month', 'icon': Icons.calendar_today, 'goalValue': 30},
     {'title': 'Year-Round Rider', 'description': 'Ride every day for a year', 'icon': Icons.calendar_today, 'goalValue': 365},
+  ];
+
+  final List<Map<String, dynamic>> packsAchievements = [
+    {'title': 'New Joinee', 'description': 'Finish a pack goal of 50 miles', 'icon': Icons.bike_scooter_rounded, 'goalValue': 50},
+    {'title': 'Helpful Rival', 'description': 'Finish a pack goal of 100 miles', 'icon': Icons.bike_scooter_rounded, 'goalValue': 100},
+    {'title': 'Valuable Teammate', 'description': 'Finish a pack goal of 250 miles', 'icon': Icons.bike_scooter_rounded, 'goalValue': 250},
+    {'title': 'Packmaster', 'description': 'Finish a pack goal of 500 miles', 'icon': Icons.bike_scooter_rounded, 'goalValue': 500},
   ];
 }

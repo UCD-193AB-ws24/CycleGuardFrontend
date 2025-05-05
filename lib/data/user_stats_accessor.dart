@@ -19,6 +19,7 @@ class UserStats {
   final String username;
   final int accountCreationTime;
   final double totalDistance, totalTime;
+  final int bestPackGoalProgress;
   final int lastRideDay;
   final int rideStreak, bestStreak;
 
@@ -27,6 +28,7 @@ class UserStats {
     required this.accountCreationTime,
     required this.totalDistance,
     required this.totalTime,
+    required this.bestPackGoalProgress,
     required this.lastRideDay,
     required this.rideStreak,
     required this.bestStreak
@@ -39,6 +41,7 @@ class UserStats {
         "accountCreationTime": int accountCreationTime,
         "totalDistance": String totalDistance,
         "totalTime": String totalTime,
+        "bestPackGoalProgress": int bestPackGoalProgress,
         "lastRideDay": int lastRideDay,
         "rideStreak": int rideStreak,
         "bestStreak": int bestStreak
@@ -47,6 +50,7 @@ class UserStats {
         accountCreationTime: accountCreationTime,
         totalDistance: double.parse(totalDistance),
         totalTime: double.parse(totalTime),
+        bestPackGoalProgress: bestPackGoalProgress,
         lastRideDay: lastRideDay,
         rideStreak: rideStreak,
         bestStreak: bestStreak
@@ -57,6 +61,8 @@ class UserStats {
 
   @override
   String toString() {
-    return 'UserStats{username: $username, accountCreationTime: $accountCreationTime, totalDistance: $totalDistance, totalTime: $totalTime, lastRideDay: $lastRideDay, rideStreak: $rideStreak, bestStreak: $bestStreak}';
+    return 'UserStats{username: $username, accountCreationTime: $accountCreationTime, totalDistance: $totalDistance, '
+        'totalTime: $totalTime, bestPackGoalProgress: $bestPackGoalProgress, lastRideDay: $lastRideDay, '
+        'rideStreak: $rideStreak, bestStreak: $bestStreak}';
   }
 }

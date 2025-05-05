@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:cycle_guard_app/auth/requests_util.dart';
 class AchievementInfoAccessor {
+  static final int NUM_ACHIEVEMENTS = 16;
   AchievementInfoAccessor._();
 
   static Future<AchievementInfo> getAchievementInfo() async {
@@ -76,7 +77,7 @@ class AchievementInfo {
   }
 
   List<bool> getCompletedAchievements() {
-    List<bool> res = List<bool>.filled(achievementProgressMap.length, false, growable: false);
+    List<bool> res = List<bool>.filled(AchievementInfoAccessor.NUM_ACHIEVEMENTS, false, growable: false);
 
     for (var entry in achievementProgressMap.entries) {
       int idx = entry.key;

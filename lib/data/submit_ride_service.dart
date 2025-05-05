@@ -57,6 +57,8 @@ class SubmitRideService {
     final body = rideInfo.toJson();
     final timestamp = DateTime.now().millisecondsSinceEpoch;
 
+    print(rideInfo);
+
     await _addRideToDatabase(timestamp, rideInfo);
 
     final response = await RequestsUtil.postWithToken("/rides/addRide", body);
@@ -70,43 +72,47 @@ class SubmitRideService {
     }
   }
 
-  static Future<int> addRideRaw(double distance, double calories, double time, List<double> latitudes, List<double> longitudes) async {
-    return await addRide(RideInfo(distance, calories, time, latitudes, longitudes));
+  static Future<int> addRideRaw(double distance, double calories, double time, List<double> latitudes, List<double> longitudes,
+      double climb, double averageAltitude) async {
+    return await addRide(RideInfo(distance, calories, time, latitudes, longitudes, climb, averageAltitude));
   }
 }
 
 class RideInfo {
-  double distance;
-  double calories;
-  double time;
+  double distance, calories, time, climb, averageAltitude;
 
   List<double> latitudes, longitudes;
 
-  RideInfo(this.distance, this.calories, this.time, this.latitudes, this.longitudes);
+  RideInfo(this.distance, this.calories, this.time, this.latitudes, this.longitudes, this.climb, this.averageAltitude);
   Map<String, dynamic> toJson() => {
     'distance': "$distance",
     'calories': "$calories",
     'time': "$time",
+    'latitudes': latitudes,
     'longitudes': longitudes,
-    'latitudes': latitudes
+    'climb': "$climb",
+    'averageAltitude': "$averageAltitude"
   };
 
   factory RideInfo.fromJson(Map<String, dynamic> json) {
-
     return switch (json) {
       {
       "distance": String distance,
       "calories": String calories,
       "time": String time,
-      "longitudes": List<double> longitudes,
       "latitudes": List<double> latitudes,
+      "longitudes": List<double> longitudes,
+      "climb": String climb,
+      "averageAltitude": String averageAltitude,
       } =>
           RideInfo(
             double.parse(distance),
             double.parse(calories),
             double.parse(time),
-            longitudes,
             latitudes,
+            longitudes,
+            double.parse(climb),
+            double.parse(averageAltitude),
           ),
       _ => throw const FormatException("failed to load RideInfo from database"),
     };
@@ -114,6 +120,7 @@ class RideInfo {
 
   @override
   String toString() {
-    return 'RideInfo{distance: $distance, calories: $calories, time: $time, latitudes: $latitudes, longitudes: $longitudes}';
+    return 'RideInfo{distance: $distance, calories: $calories, time: $time, climb: $climb, '
+        'averageAltitude: $averageAltitude, latitudes: $latitudes, longitudes: $longitudes}';
   }
 }

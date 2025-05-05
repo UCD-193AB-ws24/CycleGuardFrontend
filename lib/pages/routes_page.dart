@@ -67,6 +67,7 @@ class mapState extends State<RoutesPage> {
   static final double RECALCULATE_ROUTE_THRESHOLD = 75;
   static final double DEFAULT_ZOOM = 16;
   static final double METERS_TO_MILES = 0.000621371;
+  static final double METERS_TO_FEET = 3.28084;
 
   bool _helmetConnected = false;
 
@@ -227,7 +228,7 @@ class mapState extends State<RoutesPage> {
     print(rideInfo.toJson());
 
     // For now, don't send anything to backend yet
-    SubmitRideService.addRide(rideInfo);
+    // SubmitRideService.addRide(rideInfo);
     
     centerCamera(center!);
     totalDist = 0;
@@ -239,7 +240,7 @@ class mapState extends State<RoutesPage> {
     PostRideData.showPostRideDialog(context, rideInfo);
   }
 
-  void calcDist() {
+  void calcDist({double altitude=0}) {
     Duration time = stopwatch.elapsed;
     stopwatch.stop();
 
@@ -257,7 +258,8 @@ class mapState extends State<RoutesPage> {
       // stopwatch.reset();
       totalDist += distanceMeters;
 
-      final newVal = _notifyCurrentRideData.value.addToCur(distanceMeters * METERS_TO_MILES, elapsedMs/60000, healthInfo);
+      final newVal = _notifyCurrentRideData.value.addToCur(
+          distanceMeters * METERS_TO_MILES, elapsedMs/60000, altitude, healthInfo);
       _notifyCurrentRideData.value = newVal;
 
       offCenter = true;
@@ -502,8 +504,8 @@ class mapState extends State<RoutesPage> {
           children: [
             Positioned(
               top: DimUtil.safeHeight(context) * 3 / 16,
-              width: DimUtil.safeWidth(context) * 3 / 10,
-              height: DimUtil.safeHeight(context) * 1.1 / 16,
+              width: DimUtil.safeWidth(context) * 3.2 / 10,
+              height: DimUtil.safeHeight(context) * 1.2 / 16,
               left: DimUtil.safeWidth(context) * .2 / 10,
               child: _buildStatCard(
                 Icons.directions_bike,
@@ -514,21 +516,21 @@ class mapState extends State<RoutesPage> {
             ),
             Positioned(
               top: DimUtil.safeHeight(context) * 4.2 / 16,
-              width: DimUtil.safeWidth(context) * 3 / 10,
-              height: DimUtil.safeHeight(context) * 1.1 / 16,
+              width: DimUtil.safeWidth(context) * 3.2 / 10,
+              height: DimUtil.safeHeight(context) * 1.2 / 16,
               left: DimUtil.safeWidth(context) * .2 / 10,
               child: _buildStatCard(
                   Icons.speed,
                   'Speed',
                   rideData.speed,
                   'mph',
-                  Colors.lightGreen),
+                  Colors.orangeAccent),
             ),
             Positioned(
               top: DimUtil.safeHeight(context) * 3 / 16,
-              width: DimUtil.safeWidth(context) * 3 / 10,
-              height: DimUtil.safeHeight(context) * 1.1 / 16,
-              right: DimUtil.safeWidth(context) * .2 / 10,
+              width: DimUtil.safeWidth(context) * 3.2 / 10,
+              height: DimUtil.safeHeight(context) * 1.2 / 16,
+              left: DimUtil.safeWidth(context) * 3.4 / 10,
               child: _buildStatCard(
                   Icons.timer,
                   'Time',
@@ -538,15 +540,39 @@ class mapState extends State<RoutesPage> {
             ),
             Positioned(
               top: DimUtil.safeHeight(context) * 4.2 / 16,
-              width: DimUtil.safeWidth(context) * 3 / 10,
-              height: DimUtil.safeHeight(context) * 1.1 / 16,
-              right: DimUtil.safeWidth(context) * .2 / 10,
+              width: DimUtil.safeWidth(context) * 3.2 / 10,
+              height: DimUtil.safeHeight(context) * 1.2 / 16,
+              left: DimUtil.safeWidth(context) * 3.4 / 10,
               child: _buildStatCard(
                   Icons.local_fire_department,
                   'Calories',
                   rideData.calories,
                   'cal',
-                  Colors.orangeAccent),
+                  Colors.lightBlueAccent),
+            ),
+            Positioned(
+              top: DimUtil.safeHeight(context) * 3 / 16,
+              width: DimUtil.safeWidth(context) * 3.2 / 10,
+              height: DimUtil.safeHeight(context) * 1.2 / 16,
+              right: DimUtil.safeWidth(context) * .2 / 10,
+              child: _buildStatCard(
+                  Icons.trending_up,
+                  'Altitude',
+                  rideData.altitude,
+                  'ft',
+                  Colors.deepPurpleAccent),
+            ),
+            Positioned(
+              top: DimUtil.safeHeight(context) * 4.2 / 16,
+              width: DimUtil.safeWidth(context) * 3.2 / 10,
+              height: DimUtil.safeHeight(context) * 1.2 / 16,
+              right: DimUtil.safeWidth(context) * .2 / 10,
+              child: _buildStatCard(
+                  Icons.arrow_upward,
+                  'Climb',
+                  rideData.climb,
+                  'ft',
+                  Colors.purpleAccent),
             ),
           ],
         );
@@ -559,17 +585,18 @@ class mapState extends State<RoutesPage> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       elevation: 2,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 10.0),
+        padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 0.0),
         child: Row(
           children: [
             Icon(icon, color: Colors.white),
             SizedBox(width: 8),
             Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // Text(label,
-                //     style:
-                //     TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                Text(label,
+                    style:
+                    TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
                 Text("${value.toStringAsFixed(1)} $unit",
                     style:
                     TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
@@ -616,6 +643,7 @@ class mapState extends State<RoutesPage> {
     locationController.enableBackgroundMode(enable: true);
 
     googleLocationUpdates = locationController.onLocationChanged.listen((currentLocation) {
+
       if (currentLocation.latitude != null &&
           currentLocation.longitude != null) {
 
@@ -624,7 +652,8 @@ class mapState extends State<RoutesPage> {
             if (recordingDistance) prevLoc = center;
             center = LatLng(currentLocation.latitude!, currentLocation.longitude!);
             if (recordingDistance) {
-              calcDist();
+              print("Altitude: ${currentLocation.altitude}");
+              calcDist(altitude: currentLocation.altitude! * METERS_TO_FEET);
               // if (dest == null || (dest?.latitude == 0.0 && dest?.longitude == 0.0)) {
 
                 recordedLocations.add(center!);
@@ -805,18 +834,19 @@ class mapState extends State<RoutesPage> {
 }
 
 class AccumRideData {
-  final double distance, time, calories, speed;
-  AccumRideData(this.distance, this.time, this.calories, this.speed);
+  final double distance, time, calories, speed, altitude, climb;
+  AccumRideData(this.distance, this.time, this.calories, this.speed, this.altitude, this.climb);
 
   factory AccumRideData.blank() {
-    return AccumRideData(0, 0, 0, 0);
+    return AccumRideData(0, 0, 0, 0, 0, 0);
   }
 
   /// AccumRideData is immutable. Instead, return a new object with the accumulated data.
-  AccumRideData addToCur(double distance, double time, HealthInfo healthInfo) {
+  AccumRideData addToCur(double distance, double time, double altitude, HealthInfo healthInfo) {
     final speed = distance/time;
     final calories = healthInfo.getCaloriesBurned(distance, time);
-    return AccumRideData(this.distance+distance, this.time+time, this.calories+calories, speed);
+    final climb = this.climb + max(0, altitude-this.altitude);
+    return AccumRideData(this.distance+distance, this.time+time, this.calories+calories, speed, altitude, climb);
   }
 }
 

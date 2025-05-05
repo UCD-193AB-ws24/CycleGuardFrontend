@@ -161,7 +161,7 @@ class _HomePageState extends State<HomePage>
         1000;
 
     final todayInfo = weekHistory.dayHistoryMap[todayUtcTimestamp] ??
-        const SingleTripInfo(distance: 0.0, calories: 0.0, time: 0.0);
+        const SingleTripInfo(distance: 0.0, calories: 0.0, time: 0.0, averageAltitude: 0, climb: 0);
 
     double todayDistance = todayInfo.distance;
     double todayCalories = todayInfo.calories;

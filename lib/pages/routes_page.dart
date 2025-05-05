@@ -495,7 +495,9 @@ class mapState extends State<RoutesPage> {
                   "Ride $_rideIdx on $_rideDate:\n"
                     "${_tripInfo!.distance} miles, "
                     "${_tripInfo!.time} minutes, "
-                    "${_tripInfo!.calories} calories",
+                    "${_tripInfo!.calories} calories\n"
+                    "${_tripInfo!.averageAltitude} ft. elevation, "
+                    "${_tripInfo!.climb} ft. climbed",
                   style: TextStyle(fontSize: 16, height: 1.5),
                 ),
                 backgroundColor: selectedColor,

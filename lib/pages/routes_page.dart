@@ -7,6 +7,7 @@ import 'package:cycle_guard_app/data/single_trip_history.dart';
 import 'package:cycle_guard_app/data/user_profile_accessor.dart';
 import 'package:cycle_guard_app/pages/ble.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -305,6 +306,10 @@ class mapState extends State<RoutesPage> {
   }
 
   Widget mainMap() => GoogleMap(
+    onTap: (argument) {
+      print("Map tap");
+      SystemChannels.textInput.invokeMethod("TextInput.hide");
+    },
     onMapCreated: onMapCreated,
     onCameraMoveStarted: () {
       setState(() {

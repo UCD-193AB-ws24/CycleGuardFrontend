@@ -9,6 +9,7 @@ import 'package:cycle_guard_app/data/global_leaderboards_accessor.dart';
 
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
+import '../auth/dim_util.dart';
 import '../main.dart';
 import 'package:showcaseview/showcaseview.dart';
 
@@ -177,7 +178,7 @@ class _SocialPageState extends State<SocialPage>
   void dispose() {
     nameController.dispose();
     bioController.dispose();
-    _searchController.dispose();   
+    _searchController.dispose();
     _tabController.dispose();
     super.dispose();
   }
@@ -188,11 +189,11 @@ class _SocialPageState extends State<SocialPage>
       // Fetch all users
       final UsersList allUsersList = await UserProfileAccessor.getAllUsers();
       final List<String> allUsers =
-          allUsersList.getUsernames(); // Get all usernames
+      allUsersList.getUsernames(); // Get all usernames
 
       // Fetch friend list separately
       final FriendsList friendsList =
-          await FriendsListAccessor.getFriendsList();
+      await FriendsListAccessor.getFriendsList();
       List<String> friends = friendsList.friends; // List of friends
 
       return {
@@ -231,11 +232,11 @@ class _SocialPageState extends State<SocialPage>
     try {
       // 2. Fetch the distance leaderboard
       final leaderboards =
-          await GlobalLeaderboardsAccessor.getDistanceLeaderboards();
+      await GlobalLeaderboardsAccessor.getDistanceLeaderboards();
 
       // 3. Find this friend’s entry
       final entry = leaderboards.entries.firstWhere(
-        (e) => e.username == username,
+            (e) => e.username == username,
         orElse: () => throw Exception('No ranking found for $username'),
       );
 
@@ -299,7 +300,7 @@ class _SocialPageState extends State<SocialPage>
             key: _tabsKey,
             title: 'Navigation Tabs',
             description:
-                'Use these tabs to switch between your profile, friends, and packs.',
+            'Use these tabs to switch between your profile, friends, and packs.',
             child: TabBar(
               controller: _tabController,
               unselectedLabelColor: isDarkMode ? Colors.white70 : null,
@@ -326,11 +327,11 @@ class _SocialPageState extends State<SocialPage>
                   context,
                   PageRouteBuilder(
                     pageBuilder: (context, animation, secondaryAnimation) => MyHomePage(),
-                    transitionDuration: Duration(milliseconds: 500),  
+                    transitionDuration: Duration(milliseconds: 500),
                     transitionsBuilder: (context, animation, secondaryAnimation, child) {
                       var offsetAnimation = Tween<Offset>(
-                        begin: Offset(0.0, -1.0),  
-                        end: Offset.zero,           
+                        begin: Offset(0.0, -1.0),
+                        end: Offset.zero,
                       ).animate(CurvedAnimation(
                         parent: animation,
                         curve: Curves.easeOut,
@@ -342,14 +343,14 @@ class _SocialPageState extends State<SocialPage>
                       );
                     },
                   ),
-                  (_) => false,
+                      (_) => false,
                 );
               },
               child: Showcase(
                 key: _finalMessageKey,
                 title: 'Great job!',
                 description:
-                    'You can restart the tutorial in settings, enjoy CycleGuard!',
+                'You can restart the tutorial in settings, enjoy CycleGuard!',
                 child: SvgPicture.asset(
                   'assets/cg_logomark.svg',
                   height: 30,
@@ -436,7 +437,7 @@ class _SocialPageState extends State<SocialPage>
                           PageRouteBuilder(
                             pageBuilder:
                                 (context, animation, secondaryAnimation) =>
-                                    SettingsPage(),
+                                SettingsPage(),
                             transitionDuration: Duration(milliseconds: 300),
                             transitionsBuilder: (context, animation,
                                 secondaryAnimation, child) {
@@ -464,8 +465,8 @@ class _SocialPageState extends State<SocialPage>
                             size: 40,
                             color: isDarkMode
                                 ? Theme.of(context)
-                                    .colorScheme
-                                    .secondaryFixedDim
+                                .colorScheme
+                                .secondaryFixedDim
                                 : Theme.of(context).colorScheme.secondary,
                           ),
                           SizedBox(height: 2),
@@ -475,8 +476,8 @@ class _SocialPageState extends State<SocialPage>
                               fontSize: 14,
                               color: isDarkMode
                                   ? Theme.of(context)
-                                      .colorScheme
-                                      .secondaryFixedDim
+                                  .colorScheme
+                                  .secondaryFixedDim
                                   : Theme.of(context).colorScheme.secondary,
                             ),
                           ),
@@ -490,7 +491,7 @@ class _SocialPageState extends State<SocialPage>
                 key: _profileKey,
                 title: 'Profile Management',
                 description:
-                    'Update your icon, profile, status, and health information.',
+                'Update your icon, profile, status, and health information.',
                 child: Column(
                   children: [
                     Column(
@@ -518,8 +519,8 @@ class _SocialPageState extends State<SocialPage>
                                 value: allIcons.contains(displayedIcon)
                                     ? displayedIcon
                                     : (allIcons.isNotEmpty
-                                        ? allIcons.first
-                                        : null),
+                                    ? allIcons.first
+                                    : null),
                                 items: allIcons.map((iconName) {
                                   return DropdownMenuItem<String>(
                                     value: iconName,
@@ -560,7 +561,7 @@ class _SocialPageState extends State<SocialPage>
                                     );
 
                                     UserProfileAccessor.updateOwnProfile(
-                                            updatedProfile)
+                                        updatedProfile)
                                         .catchError((error) {
                                       ScaffoldMessenger.of(context)
                                           .showSnackBar(
@@ -611,7 +612,7 @@ class _SocialPageState extends State<SocialPage>
                             try {
                               UserProfile updatedProfile = UserProfile(
                                 username:
-                                    "", // The backend handles this, but I'll find a way on the frontend too
+                                "", // The backend handles this, but I'll find a way on the frontend too
                                 displayName: nameController.text.trim(),
                                 bio: bioController.text.trim(),
                                 isPublic: isPublic,
@@ -625,13 +626,13 @@ class _SocialPageState extends State<SocialPage>
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                     content:
-                                        Text("Profile updated successfully!")),
+                                    Text("Profile updated successfully!")),
                               );
                             } catch (e) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                     content:
-                                        Text("Failed to update profile: $e")),
+                                    Text("Failed to update profile: $e")),
                               );
                             }
                           },
@@ -639,8 +640,8 @@ class _SocialPageState extends State<SocialPage>
                             backgroundColor: isDarkMode
                                 ? Theme.of(context).colorScheme.secondary
                                 : Theme.of(context)
-                                    .colorScheme
-                                    .onInverseSurface,
+                                .colorScheme
+                                .onInverseSurface,
                           ),
                           child: Text(
                             "Update Profile",
@@ -652,7 +653,7 @@ class _SocialPageState extends State<SocialPage>
                         ElevatedButton(
                           onPressed: () async {
                             final healthInfo =
-                                await HealthInfoAccessor.getHealthInfo();
+                            await HealthInfoAccessor.getHealthInfo();
                             final heightController = TextEditingController(
                                 text: healthInfo.heightInches.toString());
                             final weightController = TextEditingController(
@@ -669,7 +670,7 @@ class _SocialPageState extends State<SocialPage>
                                       : Colors.white,
                                   title: Column(
                                     crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                                    CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         "Set Health Information",
@@ -795,8 +796,8 @@ class _SocialPageState extends State<SocialPage>
                             backgroundColor: isDarkMode
                                 ? Theme.of(context).colorScheme.secondary
                                 : Theme.of(context)
-                                    .colorScheme
-                                    .onInverseSurface,
+                                .colorScheme
+                                .onInverseSurface,
                           ),
                           child: Text(
                             "Set Health Information",
@@ -817,7 +818,7 @@ class _SocialPageState extends State<SocialPage>
                     key: _dailyGoalsKey,
                     title: 'Daily Goals',
                     description:
-                        'Set daily goals can be seen on the home page.',
+                    'Set daily goals can be seen on the home page.',
                     child: UserDailyGoalsSection(),
                   ),
                   Divider(),
@@ -825,7 +826,7 @@ class _SocialPageState extends State<SocialPage>
                     key: _notificationsKey,
                     title: 'Notification Manager',
                     description:
-                        'Manage daily reminders here. Add notifications with a title, body, and time. Existing reminders will be shown here.',
+                    'Manage daily reminders here. Add notifications with a title, body, and time. Existing reminders will be shown here.',
                     child: NotificationScheduler(),
                   ),
                 ],
@@ -837,6 +838,34 @@ class _SocialPageState extends State<SocialPage>
     );
   }
 
+  Widget _buildStatCard(
+      IconData icon, String label, String value, Color color) {
+    return Card(
+      color: color.withAlpha(30),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      elevation: 2,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 10.0),
+        child: Row(
+          children: [
+            Icon(icon, color: color),
+            SizedBox(width: 8),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label,
+                    style:
+                    TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                Text(value,
+                    style:
+                    TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
   /// **2️⃣ Bikers Tab — show all bikers and filter by the search field**
   Widget _buildSearchTab() {
     bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
@@ -853,11 +882,11 @@ class _SocialPageState extends State<SocialPage>
               suffixIcon: _searchController.text.isEmpty
                   ? null
                   : IconButton(
-                      icon: Icon(Icons.clear),
-                      onPressed: () {
-                        _searchController.clear();
-                      },
-                    ),
+                icon: Icon(Icons.clear),
+                onPressed: () {
+                  _searchController.clear();
+                },
+              ),
             ),
           ),
         ),
@@ -895,15 +924,104 @@ class _SocialPageState extends State<SocialPage>
                   final user = filtered[idx];
                   final isFriend = friends.contains(user);
                   return Card(
+
+
                     margin: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                     color: isDarkMode
                         ? Theme.of(context).colorScheme.onSecondaryFixedVariant
                         : Colors.white,
                     child: ListTile(
                       leading: CircleAvatar(child: Text(user[0].toUpperCase())),
-                      title: Text(
-                        user,
-                        style: TextStyle(color: isDarkMode ? Colors.white70 : null),
+                      title: GestureDetector(
+                        onTap: () async {
+                          var userInfo = await UserProfileAccessor.getPublicProfile(user);
+                          var userDisplayName = userInfo.displayName.isNotEmpty ? userInfo.displayName : userInfo.username;
+                          var userBio = userInfo.bio.isNotEmpty ? userInfo.bio : "";
+                          var userIcon = userInfo.profileIcon;
+                          showDialog(
+                            context: context,
+                            builder: (context) {
+                              return AlertDialog(
+                                title: Text("$user's Profile"),
+                                content: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    SvgPicture.asset(
+                                      'assets/$userIcon.svg', // Replace with your SVG file path
+                                      height: 100,
+                                      width: 100,
+                                      colorFilter: ColorFilter.mode(
+                                        isDarkMode ? Colors.white70 : Colors.black,
+                                        BlendMode.srcIn,
+                                      ),
+                                    ),
+                                    SizedBox(height: 10),
+                                    Column(
+                                      children: [
+                                        Center(
+                                          child: Text(
+                                            'Average Ride this Week',
+                                            style: TextStyle(
+                                                fontSize: 18, fontWeight: FontWeight.bold),
+                                          ),
+                                        ),
+                                        SizedBox(height: DimUtil.safeHeight(context) * 1 / 40),
+                                        Row(
+                                          children: [
+                                            Flexible(
+                                              child: _buildStatCard(
+                                                  Icons.timer,
+                                                  'Time',
+                                                  '${weekHistory.averageTime.round()} min',
+                                                  Colors.blueAccent),
+                                            ),
+                                            SizedBox(width: 8),
+                                            Flexible(
+                                              child: _buildStatCard(
+                                                  Icons.directions_bike,
+                                                  'Distance',
+                                                  '${weekHistory.averageDistance.round()} mi',
+                                                  Colors.orangeAccent),
+                                            ),
+                                            SizedBox(width: 8),
+                                            Flexible(
+                                              child: _buildStatCard(
+                                                  Icons.local_fire_department,
+                                                  'Calories',
+                                                  '${weekHistory.averageCalories.round()} cal',
+                                                  Colors.redAccent),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                    Align(
+                                      alignment: Alignment.centerLeft,
+                                      child: Text(
+                                        "Name: $userDisplayName\n"
+                                            "Bio: $userBio\n",
+                                        textAlign: TextAlign.start,
+                                      ),
+                                    ),
+                                    if (isFriend)
+                                      Text("This user is your friend.",
+                                          style: TextStyle(color: Colors.green)),
+                                  ],
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(context),
+                                    child: Text("Close"),
+                                  ),
+                                ],
+                              );
+                            },
+                          );
+                        },
+                        child: Text(
+                          user,
+                          style: TextStyle(color: isDarkMode ? Colors.white70 : null),
+                        ),
                       ),
                       subtitle: isFriend
                           ? Text("Friend", style: TextStyle(color: Colors.green))
@@ -911,17 +1029,17 @@ class _SocialPageState extends State<SocialPage>
                       trailing: isFriend
                           ? null
                           : ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: isDarkMode
-                                    ? Theme.of(context).colorScheme.secondary
-                                    : Theme.of(context).colorScheme.onInverseSurface,
-                                foregroundColor: isDarkMode
-                                    ? Colors.white70
-                                    : Theme.of(context).colorScheme.primary,
-                              ),
-                              onPressed: () => _sendFriendRequest(user),
-                              child: Text("Add Friend"),
-                            ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: isDarkMode
+                              ? Theme.of(context).colorScheme.secondary
+                              : Theme.of(context).colorScheme.onInverseSurface,
+                          foregroundColor: isDarkMode
+                              ? Colors.white70
+                              : Theme.of(context).colorScheme.primary,
+                        ),
+                        onPressed: () => _sendFriendRequest(user),
+                        child: Text("Add Friend"),
+                      ),
                     ),
                   );
                 },
@@ -1006,11 +1124,11 @@ class UserDailyGoalsSection extends StatelessWidget {
       BuildContext context, UserDailyGoalProvider userGoals) {
     bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final distanceController =
-        TextEditingController(text: userGoals.dailyDistanceGoal.toString());
+    TextEditingController(text: userGoals.dailyDistanceGoal.toString());
     final timeController =
-        TextEditingController(text: userGoals.dailyTimeGoal.toString());
+    TextEditingController(text: userGoals.dailyTimeGoal.toString());
     final caloriesController =
-        TextEditingController(text: userGoals.dailyCaloriesGoal.toString());
+    TextEditingController(text: userGoals.dailyCaloriesGoal.toString());
 
     showDialog(
       context: context,
@@ -1028,7 +1146,7 @@ class UserDailyGoalsSection extends StatelessWidget {
                 controller: timeController,
                 keyboardType: TextInputType.numberWithOptions(decimal: true),
                 style:
-                    TextStyle(color: isDarkMode ? Colors.white : Colors.black),
+                TextStyle(color: isDarkMode ? Colors.white : Colors.black),
                 decoration: InputDecoration(
                   labelText: "Time (mins)",
                   labelStyle: TextStyle(
@@ -1039,7 +1157,7 @@ class UserDailyGoalsSection extends StatelessWidget {
                 controller: distanceController,
                 keyboardType: TextInputType.numberWithOptions(decimal: true),
                 style:
-                    TextStyle(color: isDarkMode ? Colors.white : Colors.black),
+                TextStyle(color: isDarkMode ? Colors.white : Colors.black),
                 decoration: InputDecoration(
                   labelText: "Distance (mi)",
                   labelStyle: TextStyle(
@@ -1050,7 +1168,7 @@ class UserDailyGoalsSection extends StatelessWidget {
                 controller: caloriesController,
                 keyboardType: TextInputType.numberWithOptions(decimal: true),
                 style:
-                    TextStyle(color: isDarkMode ? Colors.white : Colors.black),
+                TextStyle(color: isDarkMode ? Colors.white : Colors.black),
                 decoration: InputDecoration(
                   labelText: "Calories",
                   labelStyle: TextStyle(
@@ -1132,6 +1250,8 @@ class _RequestsTabState extends State<RequestsTab> {
       });
     }
   }
+
+
 
   /// **Accept a friend request and remove from UI**
   Future<void> _acceptFriendRequest(String username) async {

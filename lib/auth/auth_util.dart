@@ -1,7 +1,11 @@
 import 'dart:convert';
 import 'package:cycle_guard_app/auth/requests_util.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../main.dart';
 
 enum CreateAccountStatus {
   duplicateUsername,
@@ -18,8 +22,9 @@ class AuthUtil {
   static Future<bool?> loadToken() async {
     final prefs = await SharedPreferences.getInstance();
 
-    if (prefs.containsKey('authToken')) {
+    if (prefs.containsKey('authToken') && prefs.containsKey('username')) {
       _token = prefs.getString('authToken')!;
+      _username = prefs.getString('username')!;
       return true;
     }
     return false;
@@ -28,6 +33,7 @@ class AuthUtil {
   static Future<void> _setToken() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('authToken', _token);
+    await prefs.setString('username', _username);
   }
 
   static String _token = "";
@@ -42,7 +48,7 @@ class AuthUtil {
   }
 
   static bool isLoggedIn() {
-    return _token.isNotEmpty;
+    return _token.isNotEmpty && _username.isNotEmpty;
   }
 
   static Future<CreateAccountStatus> login(String username, String password) async {
@@ -106,8 +112,24 @@ class AuthUtil {
     return true;
   }
 
-  static Future<void> clearPersistentToken() async {
+  static Future<void> _clearPersistentToken() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('authToken');
+    await prefs.remove('username');
+  }
+
+  static Future<void> logout(BuildContext context) async {
+    await _clearPersistentToken();
+    _token="";
+    _username="";
+
+    selectedIndexGlobal.value=1;
+
+    if (context.mounted) {
+      Navigator.pushAndRemoveUntil(context,
+          MaterialPageRoute(builder: (_) => OnBoardStart()), (route) => false);
+    } else {
+      print("Failed to logout");
+    }
   }
 }

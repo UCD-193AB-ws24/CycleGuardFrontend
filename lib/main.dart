@@ -187,7 +187,7 @@ class MyAppState extends ChangeNotifier {
   final Map<String, Color> ownedThemes = {};
 
   final List<String> availableIcons = ['icon_default'];
-  final List<String> storeIcons = ['icon_1_F', 'icon_1_M', 'icon_2_F', 'icon_2_M'];
+  final List<String> storeIcons = ['icon_1_F', 'icon_1_M', 'icon_2_F', 'icon_2_M', 'bear', 'panda', 'pig', 'tiger'];
   final List<String> ownedIcons = [];
 
   Future<void> fetchOwnedThemes() async {

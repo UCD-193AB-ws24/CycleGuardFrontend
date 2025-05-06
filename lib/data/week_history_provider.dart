@@ -34,4 +34,29 @@ class WeekHistoryProvider with ChangeNotifier {
 
     notifyListeners(); 
   }
+
+  Future<void> fetchUserWeekHistory(String username) async {
+    final weekHistory = await WeekHistoryAccessor.getWeekHistory(username: username);
+
+    dayHistoryMap = weekHistory.dayHistoryMap;
+
+    double totalDistance = 0.0, totalCalories = 0.0, totalTime = 0.0;
+    int numberOfDays = dayHistoryMap.length;
+
+    if (numberOfDays > 0) {
+      dayHistoryMap.forEach((day, history) {
+        totalDistance += history.distance;
+        totalCalories += history.calories;
+        totalTime += history.time;
+        dayDistances.add(history.distance);
+        days.add(day);
+      });
+
+      averageDistance = totalDistance / numberOfDays;
+      averageCalories = totalCalories / numberOfDays;
+      averageTime = totalTime / numberOfDays;
+    }
+
+    notifyListeners();
+  }
 }

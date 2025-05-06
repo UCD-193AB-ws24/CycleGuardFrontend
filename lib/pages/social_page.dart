@@ -10,6 +10,8 @@ import 'package:cycle_guard_app/data/global_leaderboards_accessor.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import '../auth/dim_util.dart';
+import '../data/week_history_accessor.dart';
+import '../data/week_history_provider.dart';
 import '../main.dart';
 import 'package:showcaseview/showcaseview.dart';
 
@@ -938,16 +940,26 @@ class _SocialPageState extends State<SocialPage>
                           var userDisplayName = userInfo.displayName.isNotEmpty ? userInfo.displayName : userInfo.username;
                           var userBio = userInfo.bio.isNotEmpty ? userInfo.bio : "";
                           var userIcon = userInfo.profileIcon;
+                          Provider.of<WeekHistoryProvider>(context, listen: false)
+                              .fetchUserWeekHistory(user);
+                          final weekHistory = Provider.of<WeekHistoryProvider>(context, listen:false);
+
                           showDialog(
                             context: context,
                             builder: (context) {
                               return AlertDialog(
-                                title: Text("$user's Profile"),
+                                insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
+                                contentPadding: const EdgeInsets.all(16),
+                                title: Text(
+                                  "$user's Profile",
+                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+                                  textAlign: TextAlign.center,
+                                ),
                                 content: Column(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     SvgPicture.asset(
-                                      'assets/$userIcon.svg', // Replace with your SVG file path
+                                      'assets/$userIcon.svg',
                                       height: 100,
                                       width: 100,
                                       colorFilter: ColorFilter.mode(
@@ -955,63 +967,71 @@ class _SocialPageState extends State<SocialPage>
                                         BlendMode.srcIn,
                                       ),
                                     ),
-                                    SizedBox(height: 10),
-                                    Column(
+                                    const SizedBox(height: 16),
+                                    Text(
+                                      userDisplayName,
+                                      style: const TextStyle(fontSize: 20,fontWeight: FontWeight.bold),
+                                    ),
+                                    Text(
+                                      "$userBio\n",
+                                      style: const TextStyle(fontSize :20),
+                                    ),
+                                    const SizedBox(height: 16),
+                                    Text(
+                                      'Average Ride this Week',
+                                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                    const SizedBox(height: 16),
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                                       children: [
-                                        Center(
-                                          child: Text(
-                                            'Average Ride this Week',
-                                            style: TextStyle(
-                                                fontSize: 18, fontWeight: FontWeight.bold),
+                                        Flexible(
+                                          child: _buildStatCard(
+                                            Icons.timer,
+                                            'Time',
+                                            '${weekHistory.averageTime.round()} min',
+                                            Colors.blueAccent,
                                           ),
                                         ),
-                                        SizedBox(height: DimUtil.safeHeight(context) * 1 / 40),
-                                        Row(
-                                          children: [
-                                            Flexible(
-                                              child: _buildStatCard(
-                                                  Icons.timer,
-                                                  'Time',
-                                                  '${weekHistory.averageTime.round()} min',
-                                                  Colors.blueAccent),
-                                            ),
-                                            SizedBox(width: 8),
-                                            Flexible(
-                                              child: _buildStatCard(
-                                                  Icons.directions_bike,
-                                                  'Distance',
-                                                  '${weekHistory.averageDistance.round()} mi',
-                                                  Colors.orangeAccent),
-                                            ),
-                                            SizedBox(width: 8),
-                                            Flexible(
-                                              child: _buildStatCard(
-                                                  Icons.local_fire_department,
-                                                  'Calories',
-                                                  '${weekHistory.averageCalories.round()} cal',
-                                                  Colors.redAccent),
-                                            ),
-                                          ],
+                                        const SizedBox(width: 8),
+                                        Flexible(
+                                          child: _buildStatCard(
+                                            Icons.directions_bike,
+                                            'Distance',
+                                            '${weekHistory.averageDistance.round()} mi',
+                                            Colors.orangeAccent,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Flexible(
+                                          child: _buildStatCard(
+                                            Icons.local_fire_department,
+                                            'Calories',
+                                            '${weekHistory.averageCalories.round()} cal',
+                                            Colors.redAccent,
+                                          ),
                                         ),
                                       ],
                                     ),
-                                    Align(
-                                      alignment: Alignment.centerLeft,
-                                      child: Text(
-                                        "Name: $userDisplayName\n"
-                                            "Bio: $userBio\n",
-                                        textAlign: TextAlign.start,
-                                      ),
-                                    ),
+                                    const SizedBox(height: 16),
                                     if (isFriend)
-                                      Text("This user is your friend.",
-                                          style: TextStyle(color: Colors.green)),
+                                      const Padding(
+                                        padding: EdgeInsets.only(top: 8),
+                                        child: Text(
+                                          "This user is your friend.",
+                                          style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold),
+                                        ),
+                                      ),
                                   ],
                                 ),
                                 actions: [
                                   TextButton(
                                     onPressed: () => Navigator.pop(context),
-                                    child: Text("Close"),
+                                    child: const Text(
+                                      "Close",
+                                      style: TextStyle(fontSize: 16),
+                                    ),
                                   ),
                                 ],
                               );

@@ -948,7 +948,7 @@ class _SocialPageState extends State<SocialPage>
                             context: context,
                             builder: (context) {
                               return AlertDialog(
-                                insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
+                                insetPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 40),
                                 contentPadding: const EdgeInsets.all(16),
                                 title: Text(
                                   "$user's Profile",

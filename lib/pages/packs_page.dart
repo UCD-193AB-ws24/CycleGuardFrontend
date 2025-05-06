@@ -27,24 +27,30 @@ class _PacksPageState extends State<PacksPage> {
   }
 
   Future<void> _loadData() async {
-    setState(() {
-      _loading = true;
-    });
+    if (mounted) {
+      setState(() {
+        _loading = true;
+      });
+    }
 
     try {
       final pack = await PacksAccessor.getPackData();
       final invites = await PackInvitesAccessor.getInvites();
 
-      setState(() {
-        _myPack = pack;
-        _myInvites = invites;
-        _loading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _myPack = pack;
+          _myInvites = invites;
+          _loading = false;
+        });
+      }
     } catch (e) {
-      _showMessage('Failed to load data: $e');
-      setState(() {
-        _loading = false;
-      });
+      if (mounted) {
+        _showMessage('Failed to load data: $e');
+        setState(() {
+          _loading = false;
+        });
+      }
     }
   }
 
@@ -231,20 +237,25 @@ class _PacksPageState extends State<PacksPage> {
               final username = usernameController.text.trim();
               if (username.isNotEmpty) {
                 Navigator.of(context).pop();
+                 if (!mounted) return;
                 setState(() {
                   _sendingInvite = true;
                 });
 
                 try {
                   await PackInvitesAccessor.sendInvite(username);
+                   if (!mounted) return;
                   _showMessage('Invite sent to $username');
                   await _loadData();
                 } catch (e) {
+                   if (!mounted) return;
                   _showMessage('Failed to send invite: $e');
                 } finally {
-                  setState(() {
-                    _sendingInvite = false;
-                  });
+                  if (mounted) {
+                    setState(() {
+                      _sendingInvite = false;
+                    });
+                  }
                 }
               }
             },

@@ -58,10 +58,91 @@ class _PacksPageState extends State<PacksPage> {
 
   Future<void> _leavePack() async {
     final userStats = Provider.of<UserStatsProvider>(context, listen: false);
+
     if (userStats.username == _myPack?.owner) {
-      await PacksAccessor.leavePackAsOwner(PacksAccessor.NO_NEW_OWNER);
+      final members = _myPack!.memberList;
+
+      final selectableMembers = members
+          .where((m) => m != userStats.username)
+          .toList();
+
+      String newOwnerToAssign = PacksAccessor.NO_NEW_OWNER;
+
+      if (selectableMembers.isNotEmpty) {
+        String? selectedNewOwner;
+
+        // Show dropdown dialog
+        await showDialog(
+          context: context,
+          builder: (context) {
+            return StatefulBuilder(
+              builder: (context, setState) {
+                return AlertDialog(
+                  title: const Text("Select New Pack Leader"),
+                  content: DropdownButton<String>(
+                    isExpanded: true,
+                    hint: const Text("Select a member"),
+                    value: selectedNewOwner,
+                    items: selectableMembers.map((member) {
+                      return DropdownMenuItem(
+                        value: member,
+                        child: Text(member),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        selectedNewOwner = value;
+                      });
+                    },
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(), // Cancel
+                      child: const Text("Cancel"),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        if (selectedNewOwner == null) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text("Please select a new leader")),
+                          );
+                          return;
+                        }
+                        newOwnerToAssign = selectedNewOwner!;
+                        Navigator.of(context).pop(); // Close the dialog
+                      },
+                      child: const Text("Confirm"),
+                    ),
+                  ],
+                );
+              },
+            );
+          },
+        );
+
+        // If still NO_NEW_OWNER, that means dialog was cancelled or no selection was made
+        if (newOwnerToAssign == PacksAccessor.NO_NEW_OWNER && selectableMembers.isNotEmpty) {
+          return; // Abort leave process
+        }
+      }
+
+      try {
+        await PacksAccessor.leavePackAsOwner(newOwnerToAssign);
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Failed to leave pack: $e")),
+        );
+        return;
+      }
     } else {
-      await PacksAccessor.leavePack();
+      try {
+        await PacksAccessor.leavePack();
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Failed to leave pack: $e")),
+        );
+        return;
+      }
     }
 
     await _loadData();
@@ -270,8 +351,7 @@ class _PacksPageState extends State<PacksPage> {
               } catch (e) {
                 String errorMessage = 'An unexpected error occurred';
                 if (e is String) {
-                  errorMessage =
-                      e;
+                  errorMessage = e;
                 }
 
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -533,6 +613,113 @@ class _PacksPageState extends State<PacksPage> {
                         ],
                       ),
                     ),
+              SizedBox(height: 12),
+              // cancel goal
+              if (isOwner) ...[
+                if (goal.goalAmount > 0)
+                  Center(
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        elevation: 2,
+                      ),
+                      onPressed: () async {
+                        final shouldCancel = await showDialog<bool>(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            backgroundColor: isDarkMode
+                                ? Theme.of(context).colorScheme.onPrimaryFixed
+                                : null,
+                            title: Text(
+                              'Are you sure?',
+                              style: TextStyle(
+                                color: isDarkMode ? Colors.white : null,
+                              ),
+                            ),
+                            content: Text(
+                              "Canceling a goal will lose all goal progress forever.",
+                              style: TextStyle(
+                                color: isDarkMode ? Colors.white : null,
+                              ),
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () =>
+                                    Navigator.of(context).pop(false),
+                                child: Text(
+                                  'No',
+                                  style: TextStyle(
+                                    color: isDarkMode ? Colors.white70 : null,
+                                  ),
+                                ),
+                              ),
+                              TextButton(
+                                onPressed: () =>
+                                    Navigator.of(context).pop(true),
+                                child: Text(
+                                  'Yes',
+                                  style: TextStyle(
+                                    color: isDarkMode ? Colors.red[300] : null,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+
+                        if (shouldCancel == true) {
+                          try {
+                            final success =
+                                await PacksAccessor.cancelPackGoal();
+                            if (success) {
+                              await _loadData();
+                            }
+                          } catch (e) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                  content: Text('Failed to cancel goal: $e')),
+                            );
+                          }
+                        }
+                      },
+                      child: const Text('Cancel Goal'),
+                    ),
+                  )
+                else
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Set a new goal:',
+                        style: TextStyle(
+                          color: isDarkMode ? Colors.white : null,
+                        ),
+                      ),
+                      Wrap(
+                        spacing: 8,
+                        children: [50, 100, 250, 500].map((amount) {
+                          return ElevatedButton(
+                            onPressed: () async {
+                              try {
+                                await PacksAccessor.setPackGoal(
+                                  60 * 60 * 24 * 7,
+                                  PacksAccessor.GOAL_DISTANCE,
+                                  amount,
+                                );
+                                await _loadData();
+                              } catch (e) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                      content: Text('Failed to set goal: $e')),
+                                );
+                              }
+                            },
+                            child: Text('$amount mi'),
+                          );
+                        }).toList(),
+                      ),
+                    ],
+                  ),
+              ],
               const Divider(height: 28),
               Center(
                 child: Text(
@@ -621,6 +808,9 @@ class _PacksPageState extends State<PacksPage> {
                       ),
                     ),
                     ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        elevation: 2,
+                      ),
                       onPressed:
                           _sendingInvite ? null : _showInviteMemberDialog,
                       icon: _sendingInvite
@@ -674,107 +864,247 @@ class _PacksPageState extends State<PacksPage> {
                             ),
                           ))
                       .toList(),
-                const Divider(height: 24),
               ],
 
               if (isOwner) ...[
-                if (goal.goalAmount > 0)
-                  ElevatedButton(
+                // kick members
+                const SizedBox(height: 12),
+                Center(
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      elevation: 2,
+                    ),
                     onPressed: () async {
-                      final shouldCancel = await showDialog<bool>(
+                      String? selectedUser;
+                      final confirmedKickUser = await showDialog<String>(
                         context: context,
-                        builder: (context) => AlertDialog(
-                          backgroundColor: isDarkMode
-                              ? Theme.of(context).colorScheme.onPrimaryFixed
-                              : null,
-                          title: Text(
-                            'Are you sure?',
-                            style: TextStyle(
-                              color: isDarkMode ? Colors.white : null,
-                            ),
-                          ),
-                          content: Text(
-                            "Canceling a goal will lose all goal progress forever.",
-                            style: TextStyle(
-                              color: isDarkMode ? Colors.white : null,
-                            ),
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.of(context).pop(false),
-                              child: Text(
-                                'No',
-                                style: TextStyle(
-                                  color: isDarkMode ? Colors.white70 : null,
+                        builder: (context) {
+                          return StatefulBuilder(
+                            builder: (context, setState) {
+                              final kickableMembers = members
+                                  .where((m) => m != userStats.username)
+                                  .toList();
+
+                              return AlertDialog(
+                                title: const Text("Kick Pack Member"),
+                                content: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    DropdownButton<String>(
+                                      hint: const Text("Select a member"),
+                                      value: selectedUser,
+                                      items: kickableMembers.map((user) {
+                                        return DropdownMenuItem(
+                                          value: user,
+                                          child: Text(user),
+                                        );
+                                      }).toList(),
+                                      onChanged: (value) {
+                                        setState(() {
+                                          selectedUser = value;
+                                        });
+                                      },
+                                    ),
+                                  ],
                                 ),
-                              ),
-                            ),
-                            TextButton(
-                              onPressed: () => Navigator.of(context).pop(true),
-                              child: Text(
-                                'Yes',
-                                style: TextStyle(
-                                  color: isDarkMode ? Colors.red[300] : null,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () =>
+                                        Navigator.of(context).pop(null),
+                                    child: const Text("Close"),
+                                  ),
+                                  TextButton(
+                                    onPressed: () async {
+                                      if (selectedUser == null) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(content: Text("Please select a member")),
+                                        );
+                                        return;
+                                      }
+                                      final confirm = await showDialog<bool>(
+                                        context: context,
+                                        builder: (context) => AlertDialog(
+                                          title: const Text("Confirm Kick"),
+                                          content: Text(
+                                            "Are you sure you want to kick $selectedUser from the pack? Their progress will be lost.",
+                                          ),
+                                          actions: [
+                                            TextButton(
+                                              onPressed: () =>
+                                                  Navigator.of(context)
+                                                      .pop(false),
+                                              child: const Text("No"),
+                                            ),
+                                            TextButton(
+                                              onPressed: () =>
+                                                  Navigator.of(context)
+                                                      .pop(true),
+                                              child: const Text("Confirm"),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+
+                                      if (confirm == true) {
+                                        Navigator.of(context).pop(selectedUser);
+                                      }
+                                    },
+                                    child: const Text("Kick"),
+                                  ),
+                                ],
+                              );
+                            },
+                          );
+                        },
                       );
 
-                      if (shouldCancel == true) {
+                      if (confirmedKickUser != null) {
                         try {
-                          final success = await PacksAccessor.cancelPackGoal();
-                          if (success) {
-                            await _loadData();
-                          }
-                        } catch (e) {
+                          await PacksAccessor.kickUser(confirmedKickUser);
+                          if (!context.mounted) return;
+                          await _loadData();
+                          if (!context.mounted) return;
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                                content: Text('Failed to cancel goal: $e')),
+                                content:
+                                    Text("$confirmedKickUser was kicked.")),
                           );
+                        } catch (e) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                  content: Text(
+                                      "Failed to kick $confirmedKickUser: $e")),
+                            );
+                          }
                         }
                       }
                     },
-                    child: const Text('Cancel Goal'),
-                  )
-                else
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Set a new goal:',
-                        style: TextStyle(
-                          color: isDarkMode ? Colors.white : null,
-                        ),
-                      ),
-                      Wrap(
-                        spacing: 8,
-                        children: [50, 100, 250, 500].map((amount) {
-                          return ElevatedButton(
-                            onPressed: () async {
-                              try {
-                                await PacksAccessor.setPackGoal(
-                                  60 * 60 * 24 * 7,
-                                  PacksAccessor.GOAL_DISTANCE,
-                                  amount,
-                                );
-                                await _loadData();
-                              } catch (e) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                      content: Text('Failed to set goal: $e')),
-                                );
-                              }
-                            },
-                            child: Text('$amount mi'),
-                          );
-                        }).toList(),
-                      ),
-                    ],
+                    child: const Text("Kick Pack Members"),
                   ),
+                ),
+
+                // change pack owner
+                const SizedBox(height: 12),
+                Center(
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      elevation: 2,
+                    ),
+                    onPressed: () async {
+                      String? selectedNewOwner;
+
+                      final confirmedNewOwner = await showDialog<String>(
+                        context: context,
+                        builder: (context) {
+                          return StatefulBuilder(
+                            builder: (context, setState) {
+                              final selectableMembers = members
+                                  .where((m) => m != userStats.username)
+                                  .toList();
+
+                              return AlertDialog(
+                                title: const Text("Change Pack Leader"),
+                                content: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    DropdownButton<String>(
+                                      hint: const Text("Select new leader"),
+                                      value: selectedNewOwner,
+                                      items: selectableMembers.map((user) {
+                                        return DropdownMenuItem(
+                                          value: user,
+                                          child: Text(user),
+                                        );
+                                      }).toList(),
+                                      onChanged: (value) {
+                                        setState(() {
+                                          selectedNewOwner = value;
+                                        });
+                                      },
+                                    ),
+                                  ],
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () =>
+                                        Navigator.of(context).pop(null),
+                                    child: const Text("Close"),
+                                  ),
+                                  TextButton(
+                                    onPressed: () async {
+                                      if (selectedNewOwner == null) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(content: Text("Please select a member")),
+                                        );
+                                        return;
+                                      }
+                                      final confirm = await showDialog<bool>(
+                                        context: context,
+                                        builder: (context) => AlertDialog(
+                                          title: const Text(
+                                              "Confirm Leadership Change"),
+                                          content: Text(
+                                            "Are you sure you want to make $selectedNewOwner the new Pack Leader?",
+                                          ),
+                                          actions: [
+                                            TextButton(
+                                              onPressed: () =>
+                                                  Navigator.of(context)
+                                                      .pop(false),
+                                              child: const Text("No"),
+                                            ),
+                                            TextButton(
+                                              onPressed: () =>
+                                                  Navigator.of(context)
+                                                      .pop(true),
+                                              child: const Text("Confirm"),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+
+                                      if (confirm == true) {
+                                        Navigator.of(context)
+                                            .pop(selectedNewOwner);
+                                      }
+                                    },
+                                    child: const Text("Confirm"),
+                                  ),
+                                ],
+                              );
+                            },
+                          );
+                        },
+                      );
+
+                      if (confirmedNewOwner != null) {
+                        try {
+                          await PacksAccessor.changeOwner(confirmedNewOwner);
+                          if (!context.mounted) return;
+                          await _loadData();
+                          if (!context.mounted) return;
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                                content: Text(
+                                    "$confirmedNewOwner is now the Pack Leader.")),
+                          );
+                        } catch (e) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                  content: Text("Failed to change leader: $e")),
+                            );
+                          }
+                        }
+                      }
+                    },
+                    child: const Text("Change Pack Leader"),
+                  ),
+                ),
               ],
-              const SizedBox(height: 8),
+
+              const Divider(height: 24),
               ElevatedButton(
                 onPressed: () async {
                   final shouldLeave = await showDialog<bool>(

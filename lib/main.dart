@@ -474,8 +474,8 @@ class _MyHomePageState extends State<MyHomePage> {
                             color: Theme.of(context).colorScheme.onPrimary),
                         Icon(Icons.person_outline,
                             color: Theme.of(context).colorScheme.onPrimary),
-                        Icon(Icons.perm_device_info_rounded,
-                            color: Theme.of(context).colorScheme.onPrimary),
+                        // Icon(Icons.perm_device_info_rounded,
+                        //     color: Theme.of(context).colorScheme.onPrimary),
                       ],
                     ),
             );
@@ -493,8 +493,8 @@ class _MyHomePageState extends State<MyHomePage> {
         return HomePage();
       case 2:
         return SocialPage();
-      case 3:
-        return TestingPage();
+      // case 3:
+      //   return TestingPage();
       default:
         return Center(child: Text("Page not found"));
     }

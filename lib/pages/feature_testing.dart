@@ -219,7 +219,7 @@ class TestingPage extends StatelessWidget {
   }
 
   Future<void> _clearPersistentToken(BuildContext context) async {
-    await AuthUtil.clearPersistentToken();
+    await AuthUtil.logout(context);
     // Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => StartPage()));
   }
 

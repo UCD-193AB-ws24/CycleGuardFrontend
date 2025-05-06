@@ -16,7 +16,7 @@ class AchievementsProgressProvider with ChangeNotifier {
   final List<Map<String, dynamic>> uniqueAchievements = [
     {'title': 'First Ride', 'description': 'Complete your first ride', 'icon': Icons.directions_bike, 'goalValue': 1},
     {'title': 'Rocket Boost', 'description': 'Unlock the rocket boost', 'icon': Icons.rocket, 'goalValue': 1},
-    {'title': 'Achievement Hunter', 'description': 'Complete all achievements', 'icon': Icons.emoji_events, 'goalValue': 11},
+    {'title': 'Achievement Hunter', 'description': 'Complete all achievements', 'icon': Icons.emoji_events, 'goalValue': 15},
   ];
 
   final List<Map<String, dynamic>> distanceAchievements = [
@@ -38,9 +38,9 @@ class AchievementsProgressProvider with ChangeNotifier {
   ];
 
   final List<Map<String, dynamic>> packsAchievements = [
-    {'title': 'New Joinee', 'description': 'Finish a pack goal of 50 miles', 'icon': Icons.bike_scooter_rounded, 'goalValue': 50},
-    {'title': 'Helpful Rival', 'description': 'Finish a pack goal of 100 miles', 'icon': Icons.bike_scooter_rounded, 'goalValue': 100},
-    {'title': 'Valuable Teammate', 'description': 'Finish a pack goal of 250 miles', 'icon': Icons.bike_scooter_rounded, 'goalValue': 250},
-    {'title': 'Packmaster', 'description': 'Finish a pack goal of 500 miles', 'icon': Icons.bike_scooter_rounded, 'goalValue': 500},
+    {'title': 'New Joinee', 'description': 'Finish a pack goal of 50 miles', 'icon': Icons.bike_scooter_rounded, 'goalValue': 1},
+    {'title': 'Helpful Rival', 'description': 'Finish a pack goal of 100 miles', 'icon': Icons.bike_scooter_rounded, 'goalValue': 1},
+    {'title': 'Valuable Teammate', 'description': 'Finish a pack goal of 250 miles', 'icon': Icons.bike_scooter_rounded, 'goalValue': 1},
+    {'title': 'Packmaster', 'description': 'Finish a pack goal of 500 miles', 'icon': Icons.bike_scooter_rounded, 'goalValue': 1},
   ];
 }

@@ -1,3 +1,4 @@
+import 'package:cycle_guard_app/auth/auth_util.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../main.dart';
@@ -115,6 +116,16 @@ class _SettingsPageState extends State<SettingsPage> {
                   },
                   style: ElevatedButton.styleFrom(elevation: 10),
                   child: Text('Reset Default Settings'),
+                ),
+              ),
+              SizedBox(height: 20),
+              Center(
+                child: ElevatedButton(
+                  onPressed: () {
+                    AuthUtil.logout(context);
+                  },
+                  style: ElevatedButton.styleFrom(elevation: 10),
+                  child: Text('Logout'),
                 ),
               ),
               SizedBox(height: 20),

@@ -126,6 +126,14 @@ flutter:
     - assets/cg_type_logo.svg
     - assets/cg_launcher_icon.png
     - assets/cg_cta.svg
+    - assets/bear.svg
+    - assets/panda.svg
+    - assets/pig.svg
+    - assets/tiger.svg
+    - assets/bear.png
+    - assets/panda.png
+    - assets/pig.png
+    - assets/tiger.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

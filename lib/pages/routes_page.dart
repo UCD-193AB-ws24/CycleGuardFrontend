@@ -171,6 +171,7 @@ class mapState extends State<RoutesPage> {
 
   void startDistanceRecord() {
     _notifyCurrentRideData.value = AccumRideData.blank();
+    final appState = Provider.of<MyAppState>(context, listen: false);
     setState(() {
       showStartButton = false;
       showStopButton = true;
@@ -178,6 +179,7 @@ class mapState extends State<RoutesPage> {
       offCenter = true;
       _helmetConnected = isConnected();
     });
+    appState.startRouteRecording();
     stopwatch.start();
     recordedLocations.clear();
     recordedAltitudes.clear();
@@ -218,6 +220,7 @@ class mapState extends State<RoutesPage> {
 
   void stopDistanceRecord() {
     // print(recordedLocations);
+    final appState = Provider.of<MyAppState>(context, listen: false);
 
     setState(() {
       showStartButton = true;
@@ -225,6 +228,7 @@ class mapState extends State<RoutesPage> {
       recordingDistance = false;
     });
 
+     appState.stopRouteRecording();
 
     final miles = totalDist * METERS_TO_MILES;
     final minutes = rideDuration/60000;

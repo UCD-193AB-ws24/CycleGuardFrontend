@@ -24,6 +24,8 @@ class UserProfileAccessor {
     }
   }
 
+
+
   static Future<void> updateOwnProfile(UserProfile profile) async {
     final body = profile.toJson();
     final response = await RequestsUtil.postWithToken("/profile/updateProfile", body);

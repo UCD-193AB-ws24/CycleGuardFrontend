@@ -9,6 +9,7 @@ import 'package:cycle_guard_app/data/global_leaderboards_accessor.dart';
 
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
+import '../auth/dim_util.dart';
 import '../main.dart';
 import 'package:showcaseview/showcaseview.dart';
 
@@ -837,6 +838,34 @@ class _SocialPageState extends State<SocialPage>
     );
   }
 
+  Widget _buildStatCard(
+      IconData icon, String label, String value, Color color) {
+    return Card(
+      color: color.withAlpha(30),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      elevation: 2,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 10.0),
+        child: Row(
+          children: [
+            Icon(icon, color: color),
+            SizedBox(width: 8),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label,
+                    style:
+                    TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                Text(value,
+                    style:
+                    TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
   /// **2️⃣ Bikers Tab — show all bikers and filter by the search field**
   Widget _buildSearchTab() {
     bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
@@ -895,15 +924,104 @@ class _SocialPageState extends State<SocialPage>
                   final user = filtered[idx];
                   final isFriend = friends.contains(user);
                   return Card(
+
+
                     margin: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                     color: isDarkMode
                         ? Theme.of(context).colorScheme.onSecondaryFixedVariant
                         : Colors.white,
                     child: ListTile(
                       leading: CircleAvatar(child: Text(user[0].toUpperCase())),
-                      title: Text(
-                        user,
-                        style: TextStyle(color: isDarkMode ? Colors.white70 : null),
+                      title: GestureDetector(
+                        onTap: () async {
+                          var userInfo = await UserProfileAccessor.getPublicProfile(user);
+                          var userDisplayName = userInfo.displayName.isNotEmpty ? userInfo.displayName : userInfo.username;
+                          var userBio = userInfo.bio.isNotEmpty ? userInfo.bio : "";
+                          var userIcon = userInfo.profileIcon;
+                          showDialog(
+                            context: context,
+                            builder: (context) {
+                              return AlertDialog(
+                                title: Text("$user's Profile"),
+                                content: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    SvgPicture.asset(
+                                      'assets/$userIcon.svg', // Replace with your SVG file path
+                                      height: 100,
+                                      width: 100,
+                                      colorFilter: ColorFilter.mode(
+                                        isDarkMode ? Colors.white70 : Colors.black,
+                                        BlendMode.srcIn,
+                                      ),
+                                    ),
+                                    SizedBox(height: 10),
+                                    Column(
+                                      children: [
+                                        Center(
+                                          child: Text(
+                                            'Average Ride this Week',
+                                            style: TextStyle(
+                                                fontSize: 18, fontWeight: FontWeight.bold),
+                                          ),
+                                        ),
+                                        SizedBox(height: DimUtil.safeHeight(context) * 1 / 40),
+                                        Row(
+                                          children: [
+                                            Flexible(
+                                              child: _buildStatCard(
+                                                  Icons.timer,
+                                                  'Time',
+                                                  '${weekHistory.averageTime.round()} min',
+                                                  Colors.blueAccent),
+                                            ),
+                                            SizedBox(width: 8),
+                                            Flexible(
+                                              child: _buildStatCard(
+                                                  Icons.directions_bike,
+                                                  'Distance',
+                                                  '${weekHistory.averageDistance.round()} mi',
+                                                  Colors.orangeAccent),
+                                            ),
+                                            SizedBox(width: 8),
+                                            Flexible(
+                                              child: _buildStatCard(
+                                                  Icons.local_fire_department,
+                                                  'Calories',
+                                                  '${weekHistory.averageCalories.round()} cal',
+                                                  Colors.redAccent),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                    Align(
+                                      alignment: Alignment.centerLeft,
+                                      child: Text(
+                                          "Name: $userDisplayName\n"
+                                            "Bio: $userBio\n",
+                                        textAlign: TextAlign.start,
+                                      ),
+                                    ),
+                                    if (isFriend)
+                                      Text("This user is your friend.",
+                                          style: TextStyle(color: Colors.green)),
+                                  ],
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(context),
+                                    child: Text("Close"),
+                                  ),
+                                ],
+                              );
+                            },
+                          );
+                        },
+                        child: Text(
+                          user,
+                          style: TextStyle(color: isDarkMode ? Colors.white70 : null),
+                        ),
                       ),
                       subtitle: isFriend
                           ? Text("Friend", style: TextStyle(color: Colors.green))
@@ -1132,6 +1250,8 @@ class _RequestsTabState extends State<RequestsTab> {
       });
     }
   }
+
+
 
   /// **Accept a friend request and remove from UI**
   Future<void> _acceptFriendRequest(String username) async {

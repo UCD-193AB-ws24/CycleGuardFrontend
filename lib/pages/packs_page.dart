@@ -58,10 +58,91 @@ class _PacksPageState extends State<PacksPage> {
 
   Future<void> _leavePack() async {
     final userStats = Provider.of<UserStatsProvider>(context, listen: false);
+
     if (userStats.username == _myPack?.owner) {
-      await PacksAccessor.leavePackAsOwner(PacksAccessor.NO_NEW_OWNER);
+      final members = _myPack!.memberList;
+
+      final selectableMembers = members
+          .where((m) => m != userStats.username)
+          .toList();
+
+      String newOwnerToAssign = PacksAccessor.NO_NEW_OWNER;
+
+      if (selectableMembers.isNotEmpty) {
+        String? selectedNewOwner;
+
+        // Show dropdown dialog
+        await showDialog(
+          context: context,
+          builder: (context) {
+            return StatefulBuilder(
+              builder: (context, setState) {
+                return AlertDialog(
+                  title: const Text("Select New Pack Leader"),
+                  content: DropdownButton<String>(
+                    isExpanded: true,
+                    hint: const Text("Select a member"),
+                    value: selectedNewOwner,
+                    items: selectableMembers.map((member) {
+                      return DropdownMenuItem(
+                        value: member,
+                        child: Text(member),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        selectedNewOwner = value;
+                      });
+                    },
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(), // Cancel
+                      child: const Text("Cancel"),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        if (selectedNewOwner == null) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text("Please select a new leader")),
+                          );
+                          return;
+                        }
+                        newOwnerToAssign = selectedNewOwner!;
+                        Navigator.of(context).pop(); // Close the dialog
+                      },
+                      child: const Text("Confirm"),
+                    ),
+                  ],
+                );
+              },
+            );
+          },
+        );
+
+        // If still NO_NEW_OWNER, that means dialog was cancelled or no selection was made
+        if (newOwnerToAssign == PacksAccessor.NO_NEW_OWNER && selectableMembers.isNotEmpty) {
+          return; // Abort leave process
+        }
+      }
+
+      try {
+        await PacksAccessor.leavePackAsOwner(newOwnerToAssign);
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Failed to leave pack: $e")),
+        );
+        return;
+      }
     } else {
-      await PacksAccessor.leavePack();
+      try {
+        await PacksAccessor.leavePack();
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Failed to leave pack: $e")),
+        );
+        return;
+      }
     }
 
     await _loadData();

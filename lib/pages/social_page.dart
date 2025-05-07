@@ -25,6 +25,8 @@ class _SocialPageState extends State<SocialPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   late TextEditingController _searchController;
+  late final ScrollController _searchScrollController;
+
   late Future<Map<String, dynamic>> _usersAndFriendsFuture;
 
   int numOfTabs = 5;
@@ -58,6 +60,7 @@ class _SocialPageState extends State<SocialPage>
     nameController = TextEditingController();
     bioController = TextEditingController();
     _searchController = TextEditingController();
+    _searchScrollController = ScrollController();
     _usersAndFriendsFuture = _fetchUsersAndFriends();
     _searchController.addListener(() => setState(() {}));
     _loadProfile();
@@ -177,7 +180,8 @@ class _SocialPageState extends State<SocialPage>
   void dispose() {
     nameController.dispose();
     bioController.dispose();
-    _searchController.dispose();   
+    _searchController.dispose();
+    _searchScrollController.dispose();
     _tabController.dispose();
     super.dispose();
   }
@@ -395,9 +399,6 @@ class _SocialPageState extends State<SocialPage>
         }
 
         UserProfile profile = snapshot.data!;
-        //nameController.text = profile.displayName;
-        //bioController.text = profile.bio;
-
         final appState = Provider.of<MyAppState>(context);
 
         return Padding(
@@ -852,6 +853,7 @@ class _SocialPageState extends State<SocialPage>
                       icon: Icon(Icons.clear),
                       onPressed: () {
                         _searchController.clear();
+                        setState(() {}); // Refresh the filtered list
                       },
                     ),
             ),
@@ -859,7 +861,7 @@ class _SocialPageState extends State<SocialPage>
         ),
         Expanded(
           child: FutureBuilder<Map<String, dynamic>>(
-            future: _usersAndFriendsFuture, // only fetched once
+            future: _usersAndFriendsFuture,
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return Center(child: CircularProgressIndicator());
@@ -867,57 +869,56 @@ class _SocialPageState extends State<SocialPage>
               if (snapshot.hasError) {
                 return Center(child: Text("Error loading users"));
               }
-              //final users = snapshot.data!['users'] as List<String>;
-              //final friends = snapshot.data!['friends'] as List<String>;
-              // snapshot.data is Map<String, dynamic>, so its lists come back as List<dynamic>
-              final usersRaw   = snapshot.data!['users']   as List<dynamic>;
+
+              final usersRaw = snapshot.data!['users'] as List<dynamic>;
               final friendsRaw = snapshot.data!['friends'] as List<dynamic>;
-              final users   = usersRaw.map((e) => e as String).toList();
+              final users = usersRaw.map((e) => e as String).toList();
               final friends = friendsRaw.map((e) => e as String).toList();
 
-              // filter locally
               final query = _searchController.text.toLowerCase();
               final filtered = query.isEmpty
                   ? users
-                  : users.where((u) => u.toLowerCase().contains(query)).toList();
+                  : users
+                      .where((u) => u.toLowerCase().contains(query))
+                      .toList();
 
               if (filtered.isEmpty) {
                 return Center(child: Text("No bikers found."));
               }
 
-              return ListView.builder(
-                itemCount: filtered.length,
-                itemBuilder: (context, idx) {
-                  final user = filtered[idx];
-                  final isFriend = friends.contains(user);
-                  return Card(
-                    margin: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                    color: isDarkMode
-                        ? Theme.of(context).colorScheme.onSecondaryFixedVariant
-                        : Colors.white,
-                    child: ListTile(
-                      leading: CircleAvatar(child: Text(user[0].toUpperCase())),
-                      title: Text(
-                        user,
-                        style: TextStyle(color: isDarkMode ? Colors.white70 : null),
-                      ),
-                      trailing: isFriend
-                         ? Text("Friend", style: TextStyle(color: Colors.green))
-                          : ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: isDarkMode
-                                    ? Theme.of(context).colorScheme.secondary
-                                    : Theme.of(context).colorScheme.onInverseSurface,
-                                foregroundColor: isDarkMode
-                                    ? Colors.white70
-                                    : Theme.of(context).colorScheme.primary,
+              return Scrollbar(
+                controller: _searchScrollController,
+                thumbVisibility: true,
+                child: ListView.builder(
+                  controller: _searchScrollController,
+                  itemCount: filtered.length,
+                  scrollDirection: Axis.vertical,
+                  physics: BouncingScrollPhysics(),
+                  itemBuilder: (context, idx) {
+                    final user = filtered[idx];
+                    final isFriend = friends.contains(user);
+
+                    return Card(
+                      margin: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      child: ListTile(
+                        leading:
+                            CircleAvatar(child: Text(user[0].toUpperCase())),
+                        title: Text(
+                          user,
+                          style: TextStyle(
+                              color: isDarkMode ? Colors.white70 : null),
+                        ),
+                        trailing: isFriend
+                            ? Text("Friend",
+                                style: TextStyle(color: Colors.green))
+                            : ElevatedButton(
+                                onPressed: () => _sendFriendRequest(user),
+                                child: Text("Add Friend"),
                               ),
-                              onPressed: () => _sendFriendRequest(user),
-                              child: Text("Add Friend"),
-                            ),
-                    ),
-                  );
-                },
+                      ),
+                    );
+                  },
+                ),
               );
             },
           ),

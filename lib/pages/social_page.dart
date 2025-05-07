@@ -223,56 +223,106 @@ class _SocialPageState extends State<SocialPage>
     }
   }
 
-  /// Fetches and displays a friend’s position on the distance leaderboard.
-  Future<void> _showFriendRanking(BuildContext context, String username) async {
-    // 1. Show a loading spinner
+  // ignore: use_build_context_synchronously
+    Future<void> _showFriendRanking(BuildContext context, String username) async {
+    // Show loading spinner
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => Center(child: CircularProgressIndicator()),
+      builder: (_) => const Center(child: CircularProgressIndicator()),
     );
 
     try {
-      // 2. Fetch the distance leaderboard
-      final leaderboards =
-          await GlobalLeaderboardsAccessor.getDistanceLeaderboards();
+      final leaderboards = await GlobalLeaderboardsAccessor.getDistanceLeaderboards();
+      if (!mounted) return;
 
-      // 3. Find this friend’s entry
-      final entry = leaderboards.entries.firstWhere(
-        (e) => e.username == username,
-        orElse: () => throw Exception('No ranking found for $username'),
+      // Find the friend's entry by username
+      final entryIndex = leaderboards.entries.indexWhere(
+        (e) => e.username.trim().toLowerCase() == username.trim().toLowerCase(),
       );
 
-      // 4. Dismiss the loading dialog
-      Navigator.pop(context);
+      Navigator.pop(context); // Dismiss loading spinner
 
-      // 5. Show the results in an AlertDialog
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text('$username’s Ranking'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text('🏅 Rank: ${leaderboards.entries.indexOf(entry) + 1}'),
-              SizedBox(height: 8),
-              Text('🚴 Total Distance: ${entry.value.toStringAsFixed(2)} km'),
+      if (!mounted) return;
+
+      if (entryIndex != -1) {
+        final entry = leaderboards.entries[entryIndex];
+
+        // Show success dialog
+        showDialog(
+          context: context,
+          builder: (_) => AlertDialog(
+            backgroundColor: Theme.of(context).dialogBackgroundColor,
+            title: Text(
+              "$username’s Ranking",
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+                color: Theme.of(context).textTheme.bodyLarge?.color,
+              ),
+            ),
+            content: SingleChildScrollView(
+              child: ListBody(
+                children: [
+                  Text(
+                    '🏅 Rank: ${entryIndex + 1}',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Theme.of(context).textTheme.bodyLarge?.color,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '🚴 Total Distance: ${entry.value.toStringAsFixed(2)} km',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Theme.of(context).textTheme.bodyLarge?.color,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Close'),
+              ),
             ],
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text('Close'),
+        );
+      } else {
+        // Show fallback if user not found in leaderboard
+        showDialog(
+          context: context,
+          builder: (_) => AlertDialog(
+            title: Text(
+              '$username’s Ranking',
+              style: TextStyle(
+                color: Theme.of(context).textTheme.bodyLarge?.color,
+              ),
             ),
-          ],
-        ),
-      );
+            content: Text(
+              'No ranking found for this user.',
+              style: TextStyle(
+                color: Theme.of(context).textTheme.bodyLarge?.color,
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Close'),
+              ),
+            ],
+          ),
+        );
+      }
     } catch (e) {
-      // Ensure we dismiss the loading spinner
-      Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error fetching ranking: $e')),
-      );
+      if (mounted) {
+        Navigator.pop(context); // Dismiss spinner on error
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error fetching ranking: $e')),
+        );
+      }
     }
   }
 

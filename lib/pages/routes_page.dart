@@ -183,6 +183,7 @@ class mapState extends State<RoutesPage> {
     appState.startRouteRecording();
     stopwatch.start();
     recordedLocations.clear();
+    generatePolyLines(recordedLocations, RoutesPage.POLYLINE_USER);
     recordedAltitudes.clear();
     // if (!_helmetConnected) {
     //   recordedLocations.add(center!);
@@ -444,6 +445,17 @@ class mapState extends State<RoutesPage> {
             child: FloatingActionButton(
               onPressed: changeMapType,
               child: Icon(Icons.compass_calibration_sharp),
+              backgroundColor: Colors.white,
+              foregroundColor: Colors.black,
+              elevation: 4,
+            ),
+          ),
+          Positioned(
+            bottom: DimUtil.safeHeight(context) * 2 / 8,
+            right: DimUtil.safeWidth(context) * 1 / 20,
+            child: FloatingActionButton(
+              onPressed: () => _showRideInputPage(context),
+              child: Icon(Icons.bike_scooter),
               backgroundColor: Colors.white,
               foregroundColor: Colors.black,
               elevation: 4,
@@ -770,11 +782,17 @@ class mapState extends State<RoutesPage> {
     });
   }
 
+  static final double epsilon = .00001;
   void readHelmetData(BluetoothData data) {
     print("In callback function: $data");
     {
       final newCenter = LatLng(data.latitude, data.longitude);
       if (newCenter == center) return;
+    }
+
+    if (data.latitude.abs()<epsilon || data.longitude.abs()<epsilon) {
+      print("0, 0 found, returning");
+      return;
     }
 
     if (recordingDistance) prevLoc = center;
@@ -862,6 +880,67 @@ class mapState extends State<RoutesPage> {
 
     // print("Min distance calculation: $start, $end, $point, $res");
     return res;
+  }
+
+
+  Future<int> _addRideInfo(double distance, double calories, double time) async {
+    final timestamp = await SubmitRideService.addRideRaw(distance, calories, time, [], [], 0, 0);
+    print("Successfully added ride info! Timestamp: $timestamp");
+    return timestamp;
+  }
+
+  final distanceController = TextEditingController();
+  final caloriesController = TextEditingController();
+  final timeController = TextEditingController();
+
+  Widget _numberField(TextEditingController controller, String hint) => TextField(
+    decoration: InputDecoration(
+      filled: true,
+      fillColor: Colors.white,
+      hintText: hint,
+      border: OutlineInputBorder(),
+    ),
+    style: TextStyle(color: Colors.black),
+    controller: controller,
+    keyboardType: TextInputType.numberWithOptions(signed: false, decimal: false),
+    textInputAction: TextInputAction.done,
+  );
+
+  void _showRideInputPage(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text("Manually add ride", style: TextStyle(color: Colors.black87),),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _numberField(distanceController, "Distance (miles)"),
+              const SizedBox(height: 12),
+              _numberField(caloriesController, "Calories burned"),
+              const SizedBox(height: 12),
+              _numberField(timeController, "Time (minutes)"),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: () {
+                  final distance = double.tryParse(distanceController.text) ?? 0.0;
+                  final calories = double.tryParse(caloriesController.text) ?? 0.0;
+                  final time = double.tryParse(timeController.text) ?? 0.0;
+
+                  _addRideInfo(distance, calories, time);
+                  Navigator.pop(context);
+                },
+                child: Text("Submit Ride Info"),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text("Cancel"),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 }
 

@@ -18,7 +18,7 @@ import 'package:cycle_guard_app/data/user_profile_accessor.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-// import pages 
+// import pages
 import 'pages/start_page.dart';
 import 'pages/login_page.dart';
 import 'pages/home_page.dart';
@@ -35,7 +35,7 @@ final ValueNotifier selectedIndexGlobal = ValueNotifier(1);
 void main() async {
   // for local notifications
   WidgetsFlutterBinding.ensureInitialized();
-  // init notifications 
+  // init notifications
   LocalNotificationService().initNotification();
 
   await dotenv.load(fileName: ".env");
@@ -70,44 +70,40 @@ void main() async {
     DeviceOrientation.portraitDown,
   ]).then((_) {
     runApp(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (context) => UserStatsProvider()),
-        ChangeNotifierProvider(create: (context) => AchievementsProgressProvider()),
-        ChangeNotifierProvider(create: (context) => WeekHistoryProvider()),
-        ChangeNotifierProvider(create: (context) => TripHistoryProvider()), 
-        ChangeNotifierProvider(create: (context) => UserDailyGoalProvider()), 
-      ],
-      child: MyApp(),
-    ),
-  );
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider(create: (context) => UserStatsProvider()),
+          ChangeNotifierProvider(
+              create: (context) => AchievementsProgressProvider()),
+          ChangeNotifierProvider(create: (context) => WeekHistoryProvider()),
+          ChangeNotifierProvider(create: (context) => TripHistoryProvider()),
+          ChangeNotifierProvider(create: (context) => UserDailyGoalProvider()),
+        ],
+        child: MyApp(),
+      ),
+    );
   });
-
 }
 
-class OnBoardStart extends StatefulWidget{
-  const OnBoardStart({Key?key}) : super(key:key);
+class OnBoardStart extends StatefulWidget {
+  const OnBoardStart({Key? key}) : super(key: key);
   @override
   OnBoardStartState createState() => OnBoardStartState();
 }
 
-class OnBoardStartState extends State<OnBoardStart>{
+class OnBoardStartState extends State<OnBoardStart> {
   PageController pageController = PageController();
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Stack(
-        children: [
-          PageView(
-            controller: pageController,
-            children: [
-              StartPage(pageController),
-              LoginPage()
-            ],
-          ),
-        ],
-      )
-    );
+        body: Stack(
+      children: [
+        PageView(
+          controller: pageController,
+          children: [StartPage(pageController), LoginPage()],
+        ),
+      ],
+    ));
   }
 }
 
@@ -118,8 +114,15 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (context) => MyAppState(),
-      child: Consumer6<MyAppState, UserStatsProvider, AchievementsProgressProvider, WeekHistoryProvider, TripHistoryProvider, UserDailyGoalProvider>(
-        builder: (context, appState, userStats, achievementsProgress, weekHistory, tripHistory, userDailyGoal, child) {
+      child: Consumer6<
+          MyAppState,
+          UserStatsProvider,
+          AchievementsProgressProvider,
+          WeekHistoryProvider,
+          TripHistoryProvider,
+          UserDailyGoalProvider>(
+        builder: (context, appState, userStats, achievementsProgress,
+            weekHistory, tripHistory, userDailyGoal, child) {
           return ShowCaseWidget(
             enableAutoScroll: true,
             globalTooltipActions: [
@@ -141,11 +144,13 @@ class MyApp extends StatelessWidget {
               themeMode: appState.isDarkMode ? ThemeMode.dark : ThemeMode.light,
               theme: ThemeData(
                 useMaterial3: true,
-                colorScheme: ColorScheme.fromSeed(seedColor: appState.selectedColor),
+                colorScheme:
+                    ColorScheme.fromSeed(seedColor: appState.selectedColor),
               ),
               darkTheme: ThemeData.dark().copyWith(
                 brightness: Brightness.dark,
-                colorScheme: ColorScheme.fromSeed(seedColor: appState.selectedColor),
+                colorScheme:
+                    ColorScheme.fromSeed(seedColor: appState.selectedColor),
               ),
               home: OnBoardStart(),
             ),
@@ -157,6 +162,7 @@ class MyApp extends StatelessWidget {
 }
 
 class MyAppState extends ChangeNotifier {
+  final isRouteRecordingActive = ValueNotifier<bool>(false);
   Color selectedColor = Colors.orange;
   String selectedIcon = "icon_default";
   bool isDarkMode = false;
@@ -165,6 +171,16 @@ class MyAppState extends ChangeNotifier {
   bool _tutorialSkipped = false;
 
   bool get tutorialSkipped => _tutorialSkipped;
+
+  void startRouteRecording() {
+    isRouteRecordingActive.value = true;
+    notifyListeners(); // Optional if you're only using ValueNotifier
+  }
+  
+  void stopRouteRecording() {
+    isRouteRecordingActive.value = false;
+    notifyListeners(); // Optional if you're only using ValueNotifier
+  }
 
   final Map<String, Color> availableThemes = {
     'Yellow': Colors.yellow,
@@ -183,23 +199,32 @@ class MyAppState extends ChangeNotifier {
     'Indigo': Colors.indigo,
   };
 
-
   final Map<String, Color> ownedThemes = {};
 
   final List<String> availableIcons = ['icon_default'];
-  final List<String> storeIcons = ['icon_1_F', 'icon_1_M', 'icon_2_F', 'icon_2_M'];
+  final List<String> storeIcons = [
+    'icon_1_F',
+    'icon_1_M',
+    'icon_2_F',
+    'icon_2_M',
+    'bear',
+    'panda',
+    'pig',
+    'tiger'
+  ];
   final List<String> ownedIcons = [];
 
   Future<void> fetchOwnedThemes() async {
-    final ownedThemeNames = (await PurchaseInfoAccessor.getPurchaseInfo()).themesOwned;
+    final ownedThemeNames =
+        (await PurchaseInfoAccessor.getPurchaseInfo()).themesOwned;
 
     for (var themeName in ownedThemeNames) {
       if (storeThemes.containsKey(themeName)) {
-        ownedThemes[themeName] = storeThemes[themeName]!; 
+        ownedThemes[themeName] = storeThemes[themeName]!;
       }
     }
 
-    notifyListeners(); 
+    notifyListeners();
   }
 
   void skipTutorial() {
@@ -222,7 +247,8 @@ class MyAppState extends ChangeNotifier {
   }
 
   Future<void> fetchOwnedIcons() async {
-    final ownedIconNames = (await PurchaseInfoAccessor.getPurchaseInfo()).iconsOwned;
+    final ownedIconNames =
+        (await PurchaseInfoAccessor.getPurchaseInfo()).iconsOwned;
 
     for (var iconName in ownedIconNames) {
       if (storeIcons.contains(iconName) && !ownedIcons.contains(iconName)) {
@@ -236,16 +262,16 @@ class MyAppState extends ChangeNotifier {
   void toggleDarkMode(bool isEnabled) async {
     isDarkMode = isEnabled;
     String themeName = _getThemeNameFromColor(selectedColor);
-    
+
     UserSettings updatedSettings = UserSettings(
       darkModeEnabled: isDarkMode,
       currentTheme: themeName,
     );
-    
 
     try {
       await UserSettingsAccessor.updateUserSettings(updatedSettings);
-      print("updated user settings: ${await UserSettingsAccessor.getUserSettings()}");
+      print(
+          "updated user settings: ${await UserSettingsAccessor.getUserSettings()}");
       notifyListeners();
     } catch (e) {
       print("Error updating user settings: $e");
@@ -261,7 +287,8 @@ class MyAppState extends ChangeNotifier {
     );
     try {
       await UserSettingsAccessor.updateUserSettings(updatedSettings);
-      print("updated user settings: ${await UserSettingsAccessor.getUserSettings()}");
+      print(
+          "updated user settings: ${await UserSettingsAccessor.getUserSettings()}");
       notifyListeners();
     } catch (e) {
       print("Error updating user settings: $e");
@@ -404,41 +431,55 @@ class _MyHomePageState extends State<MyHomePage> {
     Color selectedColor = Provider.of<MyAppState>(context).selectedColor;
     return Theme.of(context).brightness == Brightness.dark
         ? Theme.of(context).colorScheme.onSecondaryFixedVariant
-        : selectedColor; 
+        : selectedColor;
   }
 
   Color getNavBarBackgroundColor(BuildContext context) {
     return Theme.of(context).brightness == Brightness.dark
         ? Colors.black12
-        : Theme.of(context).colorScheme.surface; 
+        : Theme.of(context).colorScheme.surface;
   }
 
+  
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder(
       valueListenable: selectedIndexGlobal,
       builder: (context, val, child) {
-        return Scaffold(
-          body: _getSelectedPage(selectedIndexGlobal.value),
-          bottomNavigationBar: CurvedNavigationBar(
-            backgroundColor: getNavBarBackgroundColor(context),
-            color: getNavBarColor(context),
-            animationDuration: Duration(milliseconds: 270),
-            index: selectedIndexGlobal.value,
-            onTap: (int index) {
-              setState(() {
-                selectedIndex = index;
-                selectedIndexGlobal.value = index;
-              });
-            },
-            items: [
-              Icon(Icons.pedal_bike, color: Theme.of(context).colorScheme.onPrimary),
-              Icon(Icons.home, color: Theme.of(context).colorScheme.onPrimary),
-              Icon(Icons.person_outline, color: Theme.of(context).colorScheme.onPrimary),
-              Icon(Icons.perm_device_info_rounded, color: Theme.of(context).colorScheme.onPrimary),
-            ]
-
-          ),
+        final appState = Provider.of<MyAppState>(context);
+        
+        return ValueListenableBuilder(
+          valueListenable: appState.isRouteRecordingActive,
+          builder: (context, isRecording, _) {
+            return Scaffold(
+              body: _getSelectedPage(selectedIndexGlobal.value),
+              // Only show the navigation bar when NOT recording
+              bottomNavigationBar: isRecording 
+                  ? null 
+                  : CurvedNavigationBar(
+                      backgroundColor: getNavBarBackgroundColor(context),
+                      color: getNavBarColor(context),
+                      animationDuration: Duration(milliseconds: 270),
+                      index: selectedIndexGlobal.value,
+                      onTap: (int index) {
+                        setState(() {
+                          selectedIndex = index;
+                          selectedIndexGlobal.value = index;
+                        });
+                      },
+                      items: [
+                        Icon(Icons.pedal_bike,
+                            color: Theme.of(context).colorScheme.onPrimary),
+                        Icon(Icons.home,
+                            color: Theme.of(context).colorScheme.onPrimary),
+                        Icon(Icons.person_outline,
+                            color: Theme.of(context).colorScheme.onPrimary),
+                        // Icon(Icons.perm_device_info_rounded,
+                        //     color: Theme.of(context).colorScheme.onPrimary),
+                      ],
+                    ),
+            );
+          }
         );
       },
     );
@@ -452,11 +493,10 @@ class _MyHomePageState extends State<MyHomePage> {
         return HomePage();
       case 2:
         return SocialPage();
-      case 3: 
-        return TestingPage();
+      // case 3:
+      //   return TestingPage();
       default:
-        return Center(
-          child: Text("Page not found"));
+        return Center(child: Text("Page not found"));
     }
   }
 }
@@ -464,9 +504,7 @@ class _MyHomePageState extends State<MyHomePage> {
 AppBar createAppBar(BuildContext context, String titleText) {
   bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
   return AppBar(
-    iconTheme: IconThemeData(
-        color: isDarkMode ? Colors.white70 : null
-    ),
+    iconTheme: IconThemeData(color: isDarkMode ? Colors.white70 : null),
     title: Text(
       titleText,
       style: TextStyle(
@@ -474,7 +512,9 @@ AppBar createAppBar(BuildContext context, String titleText) {
         color: isDarkMode ? Colors.white70 : Colors.black,
       ),
     ),
-    backgroundColor: isDarkMode ? Theme.of(context).colorScheme.onSecondaryFixedVariant : Theme.of(context).colorScheme.surfaceContainer,
+    backgroundColor: isDarkMode
+        ? Theme.of(context).colorScheme.onSecondaryFixedVariant
+        : Theme.of(context).colorScheme.surfaceContainer,
     actions: [
       Padding(
         padding: const EdgeInsets.only(right: 32.0),
@@ -484,12 +524,14 @@ AppBar createAppBar(BuildContext context, String titleText) {
             Navigator.pushAndRemoveUntil(
               context,
               PageRouteBuilder(
-                pageBuilder: (context, animation, secondaryAnimation) => MyHomePage(),
-                transitionDuration: Duration(milliseconds: 500),  
-                transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                pageBuilder: (context, animation, secondaryAnimation) =>
+                    MyHomePage(),
+                transitionDuration: Duration(milliseconds: 500),
+                transitionsBuilder:
+                    (context, animation, secondaryAnimation, child) {
                   var offsetAnimation = Tween<Offset>(
-                    begin: Offset(0.0, -1.0),  
-                    end: Offset.zero,           
+                    begin: Offset(0.0, -1.0),
+                    end: Offset.zero,
                   ).animate(CurvedAnimation(
                     parent: animation,
                     curve: Curves.easeOut,
@@ -508,10 +550,10 @@ AppBar createAppBar(BuildContext context, String titleText) {
             'assets/cg_logomark.svg',
             height: 30,
             width: 30,
-            colorFilter: ColorFilter.mode( 
-              Theme.of(context).brightness == Brightness.dark 
-                ? Colors.white70
-                : Colors.black,
+            colorFilter: ColorFilter.mode(
+              Theme.of(context).brightness == Brightness.dark
+                  ? Colors.white70
+                  : Colors.black,
               BlendMode.srcIn,
             ),
           ),

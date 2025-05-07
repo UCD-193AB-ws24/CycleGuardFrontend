@@ -512,7 +512,6 @@ class _SocialPageState extends State<SocialPage>
                                 ? _currentIconSelection
                                 : appState.selectedIcon;
                             return Align(
-                              // <-- Ensures DropdownButton aligns left
                               alignment: Alignment.centerLeft,
                               child: DropdownButton<String>(
                                 value: allIcons.contains(displayedIcon)
@@ -529,12 +528,9 @@ class _SocialPageState extends State<SocialPage>
                                           'assets/$iconName.svg',
                                           height: 30,
                                           width: 30,
-                                          colorFilter: ColorFilter.mode(
-                                            isDarkMode
-                                                ? Colors.white70
-                                                : Colors.black,
-                                            BlendMode.srcIn,
-                                          ),
+                                          colorFilter: (isDarkMode && !['pig', 'panda', 'tiger', 'bear'].contains(iconName))
+                                            ? const ColorFilter.mode(Colors.white70, BlendMode.srcIn)
+                                            : null,
                                         ),
                                         const SizedBox(width: 10),
                                         Text(iconName),

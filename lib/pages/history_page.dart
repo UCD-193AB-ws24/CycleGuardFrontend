@@ -628,6 +628,16 @@ class _HistoryPageState extends State<HistoryPage> {
                                                           .local_fire_department,
                                                       '${trip.calories} cal',
                                                       Colors.red),
+                                                  _buildDetailRow(
+                                                      Icons
+                                                          .trending_up,
+                                                      '${trip.averageAltitude} ft. elevation',
+                                                      Colors.tealAccent),
+                                                  _buildDetailRow(
+                                                      Icons
+                                                          .arrow_upward,
+                                                      '${trip.climb} ft. climbed',
+                                                      Colors.purpleAccent),
                                                 ],
                                               ),
                                               onTap: () {

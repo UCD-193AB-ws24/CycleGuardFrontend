@@ -6,8 +6,10 @@ import 'package:cycle_guard_app/data/single_trip_history.dart';
 class WeekHistoryAccessor {
   WeekHistoryAccessor._();
 
-  static Future<WeekHistory> getWeekHistory() async {
-    final response = await RequestsUtil.getWithToken("/history/getWeekHistory");
+  static Future<WeekHistory> getWeekHistory({String username=""}) async {
+    var endpoint = "/history/getWeekHistory";
+    if (username.isNotEmpty) endpoint += "/$username";
+    final response = await RequestsUtil.getWithToken(endpoint);
 
     if (response.statusCode == 200) {
       return WeekHistory.fromJson(jsonDecode(response.body) as Map<String, dynamic>);

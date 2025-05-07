@@ -1,25 +1,22 @@
 class SingleTripInfo {
-  final double distance, calories, time;
+  final double distance, calories, time, averageAltitude, climb;
 
-  const SingleTripInfo({required this.distance, required this.calories, required this.time});
+  const SingleTripInfo({required this.distance, required this.calories, required this.time,
+  required this.averageAltitude, required this.climb});
 
   factory SingleTripInfo.fromJson(Map<String, dynamic> json) {
-    return switch (json) {
-      {
-      "distance": String distance,
-      "calories": String calories,
-      "time": String time,
-      } => SingleTripInfo(
-        distance: double.parse(distance),
-        calories: double.parse(calories),
-        time: double.parse(time),
-      ),
-      _ => throw const FormatException("failed to load DayHistory"),
-    };
+    double distance=0, calories=0, time=0, averageAltitude=0, climb=0;
+    if (json.containsKey("distance")) distance = double.parse(json["distance"]);
+    if (json.containsKey("calories")) calories = double.parse(json["calories"]);
+    if (json.containsKey("time")) time = double.parse(json["time"]);
+    if (json.containsKey("averageAltitude")) averageAltitude = double.parse(json["averageAltitude"]);
+    if (json.containsKey("climb")) climb = double.parse(json["climb"]);
+    return SingleTripInfo(distance: distance, calories: calories, time: time, averageAltitude: averageAltitude, climb: climb);
   }
 
   @override
   String toString() {
-    return 'SingleTripInfo{distance: $distance, calories: $calories, time: $time}';
+    return 'SingleTripInfo{distance: $distance, calories: $calories, time: $time, averageAltitude: $averageAltitude, '
+        'climb: $climb}';
   }
 }

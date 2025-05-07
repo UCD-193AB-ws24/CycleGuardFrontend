@@ -161,7 +161,12 @@ class _HomePageState extends State<HomePage>
         1000;
 
     final todayInfo = weekHistory.dayHistoryMap[todayUtcTimestamp] ??
-        const SingleTripInfo(distance: 0.0, calories: 0.0, time: 0.0);
+        const SingleTripInfo(
+            distance: 0.0,
+            calories: 0.0,
+            time: 0.0,
+            averageAltitude: 0,
+            climb: 0);
 
     double todayDistance = todayInfo.distance;
     double todayCalories = todayInfo.calories;
@@ -223,11 +228,11 @@ class _HomePageState extends State<HomePage>
           Padding(
             padding: const EdgeInsets.only(right: 32.0),
             child: Showcase(
-                key: _welcomeMessageKey,
-                title: 'Welcome to CycleGuard!',
-                description:
-                    "Tap on the screen or 'next' to continue or tap 'skip' to end the tutorial early.",
-                child: SvgPicture.asset(
+              key: _welcomeMessageKey,
+              title: 'Welcome to CycleGuard!',
+              description:
+                  "Tap on the screen or 'next' to continue or tap 'skip' to end the tutorial early.",
+              child: SvgPicture.asset(
                 'assets/cg_logomark.svg',
                 height: 30,
                 width: 30,
@@ -964,7 +969,7 @@ class _HomePageState extends State<HomePage>
         Provider.of<AchievementsProgressProvider>(context);
     List<bool> achievementsProgressList =
         achievementsProgress.achievementsCompleted;
-    List<int> priorityOrder = [0, 3, 6, 9, 1, 4, 7, 10, 5, 8, 11, 2];
+    List<int> priorityOrder = [ 0, 6, 3, 9, 12, 1, 4, 7, 10, 13, 14, 15, 5, 8, 11, 2];
 
     var result = findFirstTwoFalse(achievementsProgressList, priorityOrder);
     var selectedAchievements =
@@ -988,6 +993,7 @@ class _HomePageState extends State<HomePage>
         children: [
           _buildAchievement(
             selectedAchievements[0]['title'],
+            selectedAchievements[0]['description'],
             selectedAchievements[0]['progress'].toInt(),
             selectedAchievements[0]['goalValue'],
             selectedAchievements[0]['icon'],
@@ -997,6 +1003,7 @@ class _HomePageState extends State<HomePage>
           SizedBox(height: DimUtil.safeHeight(context) * 1 / 40),
           _buildAchievement(
             selectedAchievements[1]['title'],
+            selectedAchievements[1]['description'],
             selectedAchievements[1]['progress'].toInt(),
             selectedAchievements[1]['goalValue'],
             selectedAchievements[1]['icon'],
@@ -1008,8 +1015,8 @@ class _HomePageState extends State<HomePage>
     );
   }
 
-  Widget _buildAchievement(String title, int currentValue, int goalValue,
-      IconData icon, BuildContext context, bool isDarkMode) {
+  Widget _buildAchievement(String title, String description, int currentValue,
+      int goalValue, IconData icon, BuildContext context, bool isDarkMode) {
     double progressPercentage = (currentValue / goalValue).clamp(0.0, 1.0);
     final colorScheme = Theme.of(context).colorScheme;
     Color selectedColor = Provider.of<MyAppState>(context).selectedColor;
@@ -1028,6 +1035,14 @@ class _HomePageState extends State<HomePage>
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                     color: isDarkMode ? Colors.white : selectedColor),
+              ),
+              Text(
+                description,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontStyle: FontStyle.italic,
+                  color: isDarkMode ? Colors.white : Colors.black87,
+                ),
               ),
               SizedBox(height: DimUtil.safeHeight(context) * 1 / 80),
               LinearProgressIndicator(
@@ -1058,14 +1073,15 @@ class _HomePageState extends State<HomePage>
       0: 0, 1: 0, 2: 0, // Group 1 (0-2)
       3: 1, 4: 1, 5: 1, // Group 2 (3-5)
       6: 2, 7: 2, 8: 2, // Group 3 (6-8)
-      9: 3, 10: 3, 11: 3 // Group 4 (9-11)
+      9: 3, 10: 3, 11: 3, // Group 4 (9-11)
+      12: 4, 13: 4, 14: 4, 15: 4 // Group 5 (12-15)
     };
 
     Set<int> selectedGroups = {};
     List<int> falseIndices = [];
 
     if (achievementsProgress.isEmpty) {
-      return (first: 0, second: 3);
+      return (first: 0, second: 6);
     }
 
     for (int index in priorityOrder) {
@@ -1112,10 +1128,13 @@ class _HomePageState extends State<HomePage>
     } else if (index < 9) {
       achievement = achievementsProgress.timeAchievements[index - 6]; // 6-8
       achievement['progress'] = userStats.totalTime / 60;
-    } else {
+    } else if (index < 12) {
       achievement =
           achievementsProgress.consistencyAchievements[index - 9]; // 9-11
       achievement['progress'] = userStats.rideStreak;
+    } else {
+      achievement = achievementsProgress.packsAchievements[index - 12]; // 12-15
+      achievement['progress'] = 0;
     }
 
     return achievement;

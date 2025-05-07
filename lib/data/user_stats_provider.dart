@@ -10,6 +10,7 @@ class UserStatsProvider with ChangeNotifier {
   int bestStreak = 0;
   int accountCreationTime = 0;
   int lastRideDay = 0;
+  int bestPackGoalProgress = 0;
 
   // Method to fetch user stats and update the state
   Future<void> fetchUserStats() async {
@@ -22,6 +23,7 @@ class UserStatsProvider with ChangeNotifier {
     bestStreak = userStats.bestStreak;
     lastRideDay = userStats.lastRideDay;
     username = userStats.username;
+    bestPackGoalProgress = userStats.bestPackGoalProgress;
     notifyListeners(); // Notify listeners that stats are updated
   }
 }

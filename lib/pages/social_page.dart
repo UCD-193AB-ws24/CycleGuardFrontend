@@ -224,7 +224,7 @@ class _SocialPageState extends State<SocialPage>
   }
 
   // ignore: use_build_context_synchronously
-    Future<void> _showFriendRanking(BuildContext context, String username) async {
+  Future<void> _showFriendRanking(BuildContext context, String username) async {
     // Show loading spinner
     showDialog(
       context: context,
@@ -236,30 +236,53 @@ class _SocialPageState extends State<SocialPage>
       final leaderboards = await GlobalLeaderboardsAccessor.getDistanceLeaderboards();
       if (!mounted) return;
 
-      // Find the friend's entry by username
       final entryIndex = leaderboards.entries.indexWhere(
         (e) => e.username.trim().toLowerCase() == username.trim().toLowerCase(),
       );
 
-      Navigator.pop(context); // Dismiss loading spinner
+      // Fetch profile data (for bio, pack, profileIcon)
+      final profile = await UserProfileAccessor.getPublicProfile(username);
+
+      Navigator.pop(context); // dismiss loading
 
       if (!mounted) return;
 
-      if (entryIndex != -1) {
+      if (entryIndex != -1 && profile != null) {
         final entry = leaderboards.entries[entryIndex];
+        final icon = profile.profileIcon;
+        final bio = profile.bio.trim().isEmpty ? "No bio available" : profile.bio;
+        final pack = profile.pack?.trim().isNotEmpty == true ? profile.pack : null;
 
-        // Show success dialog
+        // Check if profileIcon is emoji or asset
+        final isEmoji = RegExp(r'^[\u{1F300}-\u{1FAFF}]+$', unicode: true).hasMatch(icon);
+
         showDialog(
           context: context,
           builder: (_) => AlertDialog(
             backgroundColor: Theme.of(context).dialogBackgroundColor,
-            title: Text(
-              "$username’s Ranking",
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
-                color: Theme.of(context).textTheme.bodyLarge?.color,
-              ),
+            title: Row(
+              children: [
+                if (isEmoji)
+                  Text(icon, style: const TextStyle(fontSize: 28))
+                else if (icon.isNotEmpty)
+                  Image.asset(
+                    'assets/icons/$icon.png',
+                    width: 32,
+                    height: 32,
+                    errorBuilder: (_, __, ___) => const Icon(Icons.person),
+                  ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    "$username’s Ranking",
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                      color: Theme.of(context).textTheme.bodyLarge?.color,
+                    ),
+                  ),
+                ),
+              ],
             ),
             content: SingleChildScrollView(
               child: ListBody(
@@ -279,6 +302,24 @@ class _SocialPageState extends State<SocialPage>
                       color: Theme.of(context).textTheme.bodyLarge?.color,
                     ),
                   ),
+                  const SizedBox(height: 8),
+                  if (pack != null)
+                    Text(
+                      '📦 Pack: $pack',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Theme.of(context).textTheme.bodyLarge?.color,
+                      ),
+                    ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '📝 Bio: $bio',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontStyle: FontStyle.italic,
+                      color: Theme.of(context).textTheme.bodyLarge?.color,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -291,22 +332,11 @@ class _SocialPageState extends State<SocialPage>
           ),
         );
       } else {
-        // Show fallback if user not found in leaderboard
         showDialog(
           context: context,
           builder: (_) => AlertDialog(
-            title: Text(
-              '$username’s Ranking',
-              style: TextStyle(
-                color: Theme.of(context).textTheme.bodyLarge?.color,
-              ),
-            ),
-            content: Text(
-              'No ranking found for this user.',
-              style: TextStyle(
-                color: Theme.of(context).textTheme.bodyLarge?.color,
-              ),
-            ),
+            title: Text('$username’s Ranking'),
+            content: const Text('No ranking found for this user.'),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
@@ -318,7 +348,7 @@ class _SocialPageState extends State<SocialPage>
       }
     } catch (e) {
       if (mounted) {
-        Navigator.pop(context); // Dismiss spinner on error
+        Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error fetching ranking: $e')),
         );

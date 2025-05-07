@@ -853,7 +853,6 @@ class _SocialPageState extends State<SocialPage>
                       icon: Icon(Icons.clear),
                       onPressed: () {
                         _searchController.clear();
-                        setState(() {}); // Refresh the filtered list
                       },
                     ),
             ),
@@ -878,40 +877,46 @@ class _SocialPageState extends State<SocialPage>
               final query = _searchController.text.toLowerCase();
               final filtered = query.isEmpty
                   ? users
-                  : users
-                      .where((u) => u.toLowerCase().contains(query))
-                      .toList();
+                  : users.where((u) => u.toLowerCase().contains(query)).toList();
 
               if (filtered.isEmpty) {
                 return Center(child: Text("No bikers found."));
               }
 
+              final scrollController = ScrollController();
+
               return Scrollbar(
-                controller: _searchScrollController,
+                controller: scrollController,
                 thumbVisibility: true,
                 child: ListView.builder(
-                  controller: _searchScrollController,
-                  itemCount: filtered.length,
-                  scrollDirection: Axis.vertical,
+                  controller: scrollController,
                   physics: BouncingScrollPhysics(),
+                  itemCount: filtered.length,
                   itemBuilder: (context, idx) {
                     final user = filtered[idx];
                     final isFriend = friends.contains(user);
-
                     return Card(
                       margin: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      color: isDarkMode
+                          ? Theme.of(context).colorScheme.onSecondaryFixedVariant
+                          : Colors.white,
                       child: ListTile(
-                        leading:
-                            CircleAvatar(child: Text(user[0].toUpperCase())),
+                        leading: CircleAvatar(child: Text(user[0].toUpperCase())),
                         title: Text(
                           user,
-                          style: TextStyle(
-                              color: isDarkMode ? Colors.white70 : null),
+                          style: TextStyle(color: isDarkMode ? Colors.white70 : null),
                         ),
                         trailing: isFriend
-                            ? Text("Friend",
-                                style: TextStyle(color: Colors.green))
+                            ? Text("Friend", style: TextStyle(color: Colors.green))
                             : ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: isDarkMode
+                                      ? Theme.of(context).colorScheme.secondary
+                                      : Theme.of(context).colorScheme.onInverseSurface,
+                                  foregroundColor: isDarkMode
+                                      ? Colors.white70
+                                      : Theme.of(context).colorScheme.primary,
+                                ),
                                 onPressed: () => _sendFriendRequest(user),
                                 child: Text("Add Friend"),
                               ),

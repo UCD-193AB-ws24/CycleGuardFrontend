@@ -395,8 +395,8 @@ class _SocialPageState extends State<SocialPage>
         }
 
         UserProfile profile = snapshot.data!;
-        nameController.text = profile.displayName;
-        bioController.text = profile.bio;
+        //nameController.text = profile.displayName;
+        //bioController.text = profile.bio;
 
         final appState = Provider.of<MyAppState>(context);
 
@@ -593,7 +593,7 @@ class _SocialPageState extends State<SocialPage>
                                 });
                               },
                             ),
-                            Text("Public Profile"),
+                            Text("Make My Profile Public"),
                           ],
                         ),
                       ],

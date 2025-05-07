@@ -905,11 +905,8 @@ class _SocialPageState extends State<SocialPage>
                         user,
                         style: TextStyle(color: isDarkMode ? Colors.white70 : null),
                       ),
-                      subtitle: isFriend
-                          ? Text("Friend", style: TextStyle(color: Colors.green))
-                          : null,
                       trailing: isFriend
-                          ? null
+                         ? Text("Friend", style: TextStyle(color: Colors.green))
                           : ElevatedButton(
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: isDarkMode

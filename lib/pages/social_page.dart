@@ -933,14 +933,19 @@ class _SocialPageState extends State<SocialPage>
                       icon: Icon(Icons.clear),
                       onPressed: () {
                         _searchController.clear();
+                        setState(() {}); // Refresh search
                       },
                     ),
             ),
           ),
         ),
         Expanded(
-          child: FutureBuilder<Map<String, dynamic>>(
-            future: _usersAndFriendsFuture,
+          child: FutureBuilder<List<dynamic>>(
+            future: Future.wait([
+              UserProfileAccessor.fetchAllUsernames(),
+              FriendsListAccessor.getFriendsList(),
+              FriendRequestsListAccessor.getFriendRequestList(),
+            ]),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return Center(child: CircularProgressIndicator());
@@ -949,10 +954,13 @@ class _SocialPageState extends State<SocialPage>
                 return Center(child: Text("Error loading users"));
               }
 
-              final usersRaw = snapshot.data!['users'] as List<dynamic>;
-              final friendsRaw = snapshot.data!['friends'] as List<dynamic>;
-              final users = usersRaw.map((e) => e as String).toList();
-              final friends = friendsRaw.map((e) => e as String).toList();
+              final usersRaw = snapshot.data![0] as List<String>;
+              final friendsList = snapshot.data![1] as FriendsList;
+              final requestList = snapshot.data![2] as FriendRequestList;
+
+              final users = usersRaw;
+              final friends = friendsList.friends;
+              final pendingSent = requestList.pendingFriendRequests;
 
               final query = _searchController.text.toLowerCase();
               final filtered = query.isEmpty
@@ -963,18 +971,45 @@ class _SocialPageState extends State<SocialPage>
                 return Center(child: Text("No bikers found."));
               }
 
-              final scrollController = ScrollController();
-
               return Scrollbar(
-                controller: scrollController,
                 thumbVisibility: true,
                 child: ListView.builder(
-                  controller: scrollController,
-                  physics: BouncingScrollPhysics(),
                   itemCount: filtered.length,
                   itemBuilder: (context, idx) {
                     final user = filtered[idx];
                     final isFriend = friends.contains(user);
+                    final isPending = pendingSent.contains(user);
+
+                    Widget trailingWidget;
+                    if (isFriend) {
+                      trailingWidget = Text(
+                        "Friend",
+                        style: TextStyle(color: Colors.green),
+                      );
+                    } else if (isPending) {
+                      trailingWidget = Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: const [
+                          Icon(Icons.hourglass_top, color: Colors.orange, size: 16),
+                          SizedBox(width: 4),
+                          Text("Pending", style: TextStyle(color: Colors.orange)),
+                        ],
+                      );
+                    } else {
+                      trailingWidget = ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: isDarkMode
+                              ? Theme.of(context).colorScheme.secondary
+                              : Theme.of(context).colorScheme.onInverseSurface,
+                          foregroundColor: isDarkMode
+                              ? Colors.white70
+                              : Theme.of(context).colorScheme.primary,
+                        ),
+                        onPressed: () => _sendFriendRequest(user),
+                        child: const Text("Add Friend"),
+                      );
+                    }
+
                     return Card(
                       margin: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                       color: isDarkMode
@@ -986,20 +1021,7 @@ class _SocialPageState extends State<SocialPage>
                           user,
                           style: TextStyle(color: isDarkMode ? Colors.white70 : null),
                         ),
-                        trailing: isFriend
-                            ? Text("Friend", style: TextStyle(color: Colors.green))
-                            : ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: isDarkMode
-                                      ? Theme.of(context).colorScheme.secondary
-                                      : Theme.of(context).colorScheme.onInverseSurface,
-                                  foregroundColor: isDarkMode
-                                      ? Colors.white70
-                                      : Theme.of(context).colorScheme.primary,
-                                ),
-                                onPressed: () => _sendFriendRequest(user),
-                                child: Text("Add Friend"),
-                              ),
+                        trailing: trailingWidget,
                       ),
                     );
                   },

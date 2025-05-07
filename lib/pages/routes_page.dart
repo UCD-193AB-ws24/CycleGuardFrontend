@@ -788,6 +788,15 @@ class mapState extends State<RoutesPage> {
     {
       final newCenter = LatLng(data.latitude, data.longitude);
       if (newCenter == center) return;
+      if (center != null) {
+        final distPoints = Geolocator.distanceBetween(
+          center!.latitude,
+          center!.longitude,
+          data.latitude,
+          data.longitude,
+        );
+        if (distPoints > 50) return;
+      }
     }
 
     if (data.latitude.abs()<epsilon || data.longitude.abs()<epsilon) {

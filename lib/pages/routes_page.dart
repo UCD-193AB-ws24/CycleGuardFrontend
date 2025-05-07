@@ -786,26 +786,29 @@ class mapState extends State<RoutesPage> {
   void readHelmetData(BluetoothData data) {
     print("In callback function: $data");
     {
+      if (data.latitude.abs()<epsilon || data.longitude.abs()<epsilon) {
+        print("0, 0 found, returning");
+        return;
+      }
       final newCenter = LatLng(data.latitude, data.longitude);
       if (newCenter == center) return;
-      if (center != null) {
-        final distPoints = Geolocator.distanceBetween(
-          center!.latitude,
-          center!.longitude,
-          data.latitude,
-          data.longitude,
-        );
-        if (distPoints > 50) return;
-      }
     }
 
-    if (data.latitude.abs()<epsilon || data.longitude.abs()<epsilon) {
-      print("0, 0 found, returning");
-      return;
-    }
 
     if (recordingDistance) prevLoc = center;
-    center = LatLng(data.latitude, data.longitude);
+    final newCenter = LatLng(data.latitude, data.longitude);
+    if (center != null) {
+      final distPoints = Geolocator.distanceBetween(
+        center!.latitude,
+        center!.longitude,
+        data.latitude,
+        data.longitude,
+      );
+      
+      if (!recordingDistance || distPoints <= 50) {
+        center = newCenter;
+      } else return;
+    }
     if (recordingDistance) {
       calcDist();
       // if (dest == null || (dest?.latitude == 0.0 && dest?.longitude == 0.0)) {

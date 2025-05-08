@@ -966,7 +966,7 @@ class AccumRideData {
 
   /// AccumRideData is immutable. Instead, return a new object with the accumulated data.
   AccumRideData addToCur(double distance, double time, double altitude, HealthInfo healthInfo) {
-    final speed = distance/time;
+    final speed = 60 * distance/time;
     final calories = healthInfo.getCaloriesBurned(distance, time);
 
     var climb = this.climb + max(0, altitude-this.altitude);

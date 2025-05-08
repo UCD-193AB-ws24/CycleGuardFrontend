@@ -263,7 +263,7 @@ class _HistoryPageState extends State<HistoryPage> {
                                       : colorScheme.onPrimaryFixed),
                             ),
                             Text(
-                              '$totalCalories cal',
+                              '${totalCalories.toStringAsFixed(1)} cal',
                               style: TextStyle(
                                   fontSize: 16,
                                   color: isDarkMode

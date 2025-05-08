@@ -27,24 +27,30 @@ class _PacksPageState extends State<PacksPage> {
   }
 
   Future<void> _loadData() async {
-    setState(() {
-      _loading = true;
-    });
+    if (mounted) {
+      setState(() {
+        _loading = true;
+      });
+    }
 
     try {
       final pack = await PacksAccessor.getPackData();
       final invites = await PackInvitesAccessor.getInvites();
 
-      setState(() {
-        _myPack = pack;
-        _myInvites = invites;
-        _loading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _myPack = pack;
+          _myInvites = invites;
+          _loading = false;
+        });
+      }
     } catch (e) {
-      _showMessage('Failed to load data: $e');
-      setState(() {
-        _loading = false;
-      });
+      if (mounted) {
+        _showMessage('Failed to load data: $e');
+        setState(() {
+          _loading = false;
+        });
+      }
     }
   }
 
@@ -58,13 +64,13 @@ class _PacksPageState extends State<PacksPage> {
 
   Future<void> _leavePack() async {
     final userStats = Provider.of<UserStatsProvider>(context, listen: false);
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     if (userStats.username == _myPack?.owner) {
       final members = _myPack!.memberList;
 
-      final selectableMembers = members
-          .where((m) => m != userStats.username)
-          .toList();
+      final selectableMembers =
+          members.where((m) => m != userStats.username).toList();
 
       String newOwnerToAssign = PacksAccessor.NO_NEW_OWNER;
 
@@ -78,15 +84,36 @@ class _PacksPageState extends State<PacksPage> {
             return StatefulBuilder(
               builder: (context, setState) {
                 return AlertDialog(
-                  title: const Text("Select New Pack Leader"),
+                  backgroundColor: isDarkMode
+                      ? Theme.of(context).colorScheme.onPrimaryFixed
+                      : null,
+                  title: Text(
+                    "Select New Pack Leader",
+                    style: TextStyle(
+                      color: isDarkMode ? Colors.white : null,
+                    ),
+                  ),
                   content: DropdownButton<String>(
                     isExpanded: true,
-                    hint: const Text("Select a member"),
+                    dropdownColor: isDarkMode
+                        ? Theme.of(context).colorScheme.onPrimaryFixed
+                        : null,
+                    hint: Text(
+                      "Select a member",
+                      style: TextStyle(
+                        color: isDarkMode ? Colors.white70 : null,
+                      ),
+                    ),
                     value: selectedNewOwner,
                     items: selectableMembers.map((member) {
                       return DropdownMenuItem(
                         value: member,
-                        child: Text(member),
+                        child: Text(
+                          member,
+                          style: TextStyle(
+                            color: isDarkMode ? Colors.white : null,
+                          ),
+                        ),
                       );
                     }).toList(),
                     onChanged: (value) {
@@ -97,21 +124,32 @@ class _PacksPageState extends State<PacksPage> {
                   ),
                   actions: [
                     TextButton(
-                      onPressed: () => Navigator.of(context).pop(), // Cancel
-                      child: const Text("Cancel"),
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: Text(
+                        "Cancel",
+                        style: TextStyle(
+                          color: isDarkMode ? Colors.white70 : null,
+                        ),
+                      ),
                     ),
                     TextButton(
                       onPressed: () {
                         if (selectedNewOwner == null) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text("Please select a new leader")),
+                            const SnackBar(
+                                content: Text("Please select a new leader")),
                           );
                           return;
                         }
                         newOwnerToAssign = selectedNewOwner!;
-                        Navigator.of(context).pop(); // Close the dialog
+                        Navigator.of(context).pop();
                       },
-                      child: const Text("Confirm"),
+                      child: Text(
+                        "Confirm",
+                        style: TextStyle(
+                          color: isDarkMode ? Colors.red[300] : null,
+                        ),
+                      ),
                     ),
                   ],
                 );
@@ -121,7 +159,8 @@ class _PacksPageState extends State<PacksPage> {
         );
 
         // If still NO_NEW_OWNER, that means dialog was cancelled or no selection was made
-        if (newOwnerToAssign == PacksAccessor.NO_NEW_OWNER && selectableMembers.isNotEmpty) {
+        if (newOwnerToAssign == PacksAccessor.NO_NEW_OWNER &&
+            selectableMembers.isNotEmpty) {
           return; // Abort leave process
         }
       }
@@ -198,20 +237,25 @@ class _PacksPageState extends State<PacksPage> {
               final username = usernameController.text.trim();
               if (username.isNotEmpty) {
                 Navigator.of(context).pop();
+                 if (!mounted) return;
                 setState(() {
                   _sendingInvite = true;
                 });
 
                 try {
                   await PackInvitesAccessor.sendInvite(username);
+                   if (!mounted) return;
                   _showMessage('Invite sent to $username');
                   await _loadData();
                 } catch (e) {
+                   if (!mounted) return;
                   _showMessage('Failed to send invite: $e');
                 } finally {
-                  setState(() {
-                    _sendingInvite = false;
-                  });
+                  if (mounted) {
+                    setState(() {
+                      _sendingInvite = false;
+                    });
+                  }
                 }
               }
             },
@@ -867,13 +911,10 @@ class _PacksPageState extends State<PacksPage> {
               ],
 
               if (isOwner) ...[
-                // kick members
                 const SizedBox(height: 12),
                 Center(
                   child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      elevation: 2,
-                    ),
+                    style: ElevatedButton.styleFrom(elevation: 2),
                     onPressed: () async {
                       String? selectedUser;
                       final confirmedKickUser = await showDialog<String>(
@@ -886,17 +927,46 @@ class _PacksPageState extends State<PacksPage> {
                                   .toList();
 
                               return AlertDialog(
-                                title: const Text("Kick Pack Member"),
+                                backgroundColor: isDarkMode
+                                    ? Theme.of(context)
+                                        .colorScheme
+                                        .onPrimaryFixed
+                                    : null,
+                                title: Text(
+                                  "Kick Pack Member",
+                                  style: TextStyle(
+                                    color: isDarkMode ? Colors.white : null,
+                                  ),
+                                ),
                                 content: Column(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     DropdownButton<String>(
-                                      hint: const Text("Select a member"),
+                                      hint: Text(
+                                        "Select a member",
+                                        style: TextStyle(
+                                          color: isDarkMode
+                                              ? Colors.white70
+                                              : null,
+                                        ),
+                                      ),
+                                      dropdownColor: isDarkMode
+                                          ? Theme.of(context)
+                                              .colorScheme
+                                              .onPrimaryFixed
+                                          : null,
                                       value: selectedUser,
                                       items: kickableMembers.map((user) {
                                         return DropdownMenuItem(
                                           value: user,
-                                          child: Text(user),
+                                          child: Text(
+                                            user,
+                                            style: TextStyle(
+                                              color: isDarkMode
+                                                  ? Colors.white
+                                                  : null,
+                                            ),
+                                          ),
                                         );
                                       }).toList(),
                                       onChanged: (value) {
@@ -911,35 +981,76 @@ class _PacksPageState extends State<PacksPage> {
                                   TextButton(
                                     onPressed: () =>
                                         Navigator.of(context).pop(null),
-                                    child: const Text("Close"),
+                                    child: Text(
+                                      "Close",
+                                      style: TextStyle(
+                                        color:
+                                            isDarkMode ? Colors.white70 : null,
+                                      ),
+                                    ),
                                   ),
                                   TextButton(
                                     onPressed: () async {
                                       if (selectedUser == null) {
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          const SnackBar(content: Text("Please select a member")),
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
+                                          const SnackBar(
+                                            content:
+                                                Text("Please select a member"),
+                                          ),
                                         );
                                         return;
                                       }
                                       final confirm = await showDialog<bool>(
                                         context: context,
                                         builder: (context) => AlertDialog(
-                                          title: const Text("Confirm Kick"),
+                                          backgroundColor: isDarkMode
+                                              ? Theme.of(context)
+                                                  .colorScheme
+                                                  .onPrimaryFixed
+                                              : null,
+                                          title: Text(
+                                            "Confirm Kick",
+                                            style: TextStyle(
+                                              color: isDarkMode
+                                                  ? Colors.white
+                                                  : null,
+                                            ),
+                                          ),
                                           content: Text(
                                             "Are you sure you want to kick $selectedUser from the pack? Their progress will be lost.",
+                                            style: TextStyle(
+                                              color: isDarkMode
+                                                  ? Colors.white
+                                                  : null,
+                                            ),
                                           ),
                                           actions: [
                                             TextButton(
                                               onPressed: () =>
                                                   Navigator.of(context)
                                                       .pop(false),
-                                              child: const Text("No"),
+                                              child: Text(
+                                                "No",
+                                                style: TextStyle(
+                                                  color: isDarkMode
+                                                      ? Colors.white70
+                                                      : null,
+                                                ),
+                                              ),
                                             ),
                                             TextButton(
                                               onPressed: () =>
                                                   Navigator.of(context)
                                                       .pop(true),
-                                              child: const Text("Confirm"),
+                                              child: Text(
+                                                "Confirm",
+                                                style: TextStyle(
+                                                  color: isDarkMode
+                                                      ? Colors.red[300]
+                                                      : null,
+                                                ),
+                                              ),
                                             ),
                                           ],
                                         ),
@@ -949,7 +1060,13 @@ class _PacksPageState extends State<PacksPage> {
                                         Navigator.of(context).pop(selectedUser);
                                       }
                                     },
-                                    child: const Text("Kick"),
+                                    child: Text(
+                                      "Kick",
+                                      style: TextStyle(
+                                        color:
+                                            isDarkMode ? Colors.red[300] : null,
+                                      ),
+                                    ),
                                   ),
                                 ],
                               );
@@ -983,17 +1100,12 @@ class _PacksPageState extends State<PacksPage> {
                     child: const Text("Kick Pack Members"),
                   ),
                 ),
-
-                // change pack owner
                 const SizedBox(height: 12),
                 Center(
                   child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      elevation: 2,
-                    ),
+                    style: ElevatedButton.styleFrom(elevation: 2),
                     onPressed: () async {
                       String? selectedNewOwner;
-
                       final confirmedNewOwner = await showDialog<String>(
                         context: context,
                         builder: (context) {
@@ -1004,17 +1116,46 @@ class _PacksPageState extends State<PacksPage> {
                                   .toList();
 
                               return AlertDialog(
-                                title: const Text("Change Pack Leader"),
+                                backgroundColor: isDarkMode
+                                    ? Theme.of(context)
+                                        .colorScheme
+                                        .onPrimaryFixed
+                                    : null,
+                                title: Text(
+                                  "Change Pack Leader",
+                                  style: TextStyle(
+                                    color: isDarkMode ? Colors.white : null,
+                                  ),
+                                ),
                                 content: Column(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     DropdownButton<String>(
-                                      hint: const Text("Select new leader"),
+                                      hint: Text(
+                                        "Select new leader",
+                                        style: TextStyle(
+                                          color: isDarkMode
+                                              ? Colors.white70
+                                              : null,
+                                        ),
+                                      ),
+                                      dropdownColor: isDarkMode
+                                          ? Theme.of(context)
+                                              .colorScheme
+                                              .onPrimaryFixed
+                                          : null,
                                       value: selectedNewOwner,
                                       items: selectableMembers.map((user) {
                                         return DropdownMenuItem(
                                           value: user,
-                                          child: Text(user),
+                                          child: Text(
+                                            user,
+                                            style: TextStyle(
+                                              color: isDarkMode
+                                                  ? Colors.white
+                                                  : null,
+                                            ),
+                                          ),
                                         );
                                       }).toList(),
                                       onChanged: (value) {
@@ -1029,36 +1170,75 @@ class _PacksPageState extends State<PacksPage> {
                                   TextButton(
                                     onPressed: () =>
                                         Navigator.of(context).pop(null),
-                                    child: const Text("Close"),
+                                    child: Text(
+                                      "Close",
+                                      style: TextStyle(
+                                        color:
+                                            isDarkMode ? Colors.white70 : null,
+                                      ),
+                                    ),
                                   ),
                                   TextButton(
                                     onPressed: () async {
                                       if (selectedNewOwner == null) {
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          const SnackBar(content: Text("Please select a member")),
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
+                                          const SnackBar(
+                                              content: Text(
+                                                  "Please select a member")),
                                         );
                                         return;
                                       }
                                       final confirm = await showDialog<bool>(
                                         context: context,
                                         builder: (context) => AlertDialog(
-                                          title: const Text(
-                                              "Confirm Leadership Change"),
+                                          backgroundColor: isDarkMode
+                                              ? Theme.of(context)
+                                                  .colorScheme
+                                                  .onPrimaryFixed
+                                              : null,
+                                          title: Text(
+                                            "Confirm Leadership Change",
+                                            style: TextStyle(
+                                              color: isDarkMode
+                                                  ? Colors.white
+                                                  : null,
+                                            ),
+                                          ),
                                           content: Text(
                                             "Are you sure you want to make $selectedNewOwner the new Pack Leader?",
+                                            style: TextStyle(
+                                              color: isDarkMode
+                                                  ? Colors.white
+                                                  : null,
+                                            ),
                                           ),
                                           actions: [
                                             TextButton(
                                               onPressed: () =>
                                                   Navigator.of(context)
                                                       .pop(false),
-                                              child: const Text("No"),
+                                              child: Text(
+                                                "No",
+                                                style: TextStyle(
+                                                  color: isDarkMode
+                                                      ? Colors.white70
+                                                      : null,
+                                                ),
+                                              ),
                                             ),
                                             TextButton(
                                               onPressed: () =>
                                                   Navigator.of(context)
                                                       .pop(true),
-                                              child: const Text("Confirm"),
+                                              child: Text(
+                                                "Confirm",
+                                                style: TextStyle(
+                                                  color: isDarkMode
+                                                      ? Colors.red[300]
+                                                      : null,
+                                                ),
+                                              ),
                                             ),
                                           ],
                                         ),
@@ -1069,7 +1249,13 @@ class _PacksPageState extends State<PacksPage> {
                                             .pop(selectedNewOwner);
                                       }
                                     },
-                                    child: const Text("Confirm"),
+                                    child: Text(
+                                      "Confirm",
+                                      style: TextStyle(
+                                        color:
+                                            isDarkMode ? Colors.red[300] : null,
+                                      ),
+                                    ),
                                   ),
                                 ],
                               );

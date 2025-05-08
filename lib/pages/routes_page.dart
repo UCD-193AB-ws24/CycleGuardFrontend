@@ -7,6 +7,7 @@ import 'package:cycle_guard_app/data/single_trip_history.dart';
 import 'package:cycle_guard_app/data/user_profile_accessor.dart';
 import 'package:cycle_guard_app/pages/ble.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -171,6 +172,7 @@ class mapState extends State<RoutesPage> {
 
   void startDistanceRecord() {
     _notifyCurrentRideData.value = AccumRideData.blank();
+    final appState = Provider.of<MyAppState>(context, listen: false);
     setState(() {
       showStartButton = false;
       showStopButton = true;
@@ -178,8 +180,10 @@ class mapState extends State<RoutesPage> {
       offCenter = true;
       _helmetConnected = isConnected();
     });
+    appState.startRouteRecording();
     stopwatch.start();
     recordedLocations.clear();
+    generatePolyLines(recordedLocations, RoutesPage.POLYLINE_USER);
     recordedAltitudes.clear();
     // if (!_helmetConnected) {
     //   recordedLocations.add(center!);
@@ -218,6 +222,7 @@ class mapState extends State<RoutesPage> {
 
   void stopDistanceRecord() {
     // print(recordedLocations);
+    final appState = Provider.of<MyAppState>(context, listen: false);
 
     setState(() {
       showStartButton = true;
@@ -225,6 +230,7 @@ class mapState extends State<RoutesPage> {
       recordingDistance = false;
     });
 
+     appState.stopRouteRecording();
 
     final miles = totalDist * METERS_TO_MILES;
     final minutes = rideDuration/60000;
@@ -301,6 +307,10 @@ class mapState extends State<RoutesPage> {
   }
 
   Widget mainMap() => GoogleMap(
+    onTap: (argument) {
+      print("Map tap");
+      SystemChannels.textInput.invokeMethod("TextInput.hide");
+    },
     onMapCreated: onMapCreated,
     onCameraMoveStarted: () {
       setState(() {
@@ -435,6 +445,17 @@ class mapState extends State<RoutesPage> {
             child: FloatingActionButton(
               onPressed: changeMapType,
               child: Icon(Icons.compass_calibration_sharp),
+              backgroundColor: Colors.white,
+              foregroundColor: Colors.black,
+              elevation: 4,
+            ),
+          ),
+          Positioned(
+            bottom: DimUtil.safeHeight(context) * 2 / 8,
+            right: DimUtil.safeWidth(context) * 1 / 20,
+            child: FloatingActionButton(
+              onPressed: () => _showRideInputPage(context),
+              child: Icon(Icons.bike_scooter),
               backgroundColor: Colors.white,
               foregroundColor: Colors.black,
               elevation: 4,
@@ -761,15 +782,33 @@ class mapState extends State<RoutesPage> {
     });
   }
 
+  static final double epsilon = .00001;
   void readHelmetData(BluetoothData data) {
     print("In callback function: $data");
     {
+      if (data.latitude.abs()<epsilon || data.longitude.abs()<epsilon) {
+        print("0, 0 found, returning");
+        return;
+      }
       final newCenter = LatLng(data.latitude, data.longitude);
       if (newCenter == center) return;
     }
 
+
     if (recordingDistance) prevLoc = center;
-    center = LatLng(data.latitude, data.longitude);
+    final newCenter = LatLng(data.latitude, data.longitude);
+    if (center != null) {
+      final distPoints = Geolocator.distanceBetween(
+        center!.latitude,
+        center!.longitude,
+        data.latitude,
+        data.longitude,
+      );
+      
+      if (!recordingDistance || distPoints <= 50) {
+        center = newCenter;
+      } else return;
+    }
     if (recordingDistance) {
       calcDist();
       // if (dest == null || (dest?.latitude == 0.0 && dest?.longitude == 0.0)) {
@@ -853,6 +892,67 @@ class mapState extends State<RoutesPage> {
 
     // print("Min distance calculation: $start, $end, $point, $res");
     return res;
+  }
+
+
+  Future<int> _addRideInfo(double distance, double calories, double time) async {
+    final timestamp = await SubmitRideService.addRideRaw(distance, calories, time, [], [], 0, 0);
+    print("Successfully added ride info! Timestamp: $timestamp");
+    return timestamp;
+  }
+
+  final distanceController = TextEditingController();
+  final caloriesController = TextEditingController();
+  final timeController = TextEditingController();
+
+  Widget _numberField(TextEditingController controller, String hint) => TextField(
+    decoration: InputDecoration(
+      filled: true,
+      fillColor: Colors.white,
+      hintText: hint,
+      border: OutlineInputBorder(),
+    ),
+    style: TextStyle(color: Colors.black),
+    controller: controller,
+    keyboardType: TextInputType.numberWithOptions(signed: false, decimal: false),
+    textInputAction: TextInputAction.done,
+  );
+
+  void _showRideInputPage(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text("Manually add ride", style: TextStyle(color: Colors.black87),),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _numberField(distanceController, "Distance (miles)"),
+              const SizedBox(height: 12),
+              _numberField(caloriesController, "Calories burned"),
+              const SizedBox(height: 12),
+              _numberField(timeController, "Time (minutes)"),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: () {
+                  final distance = double.tryParse(distanceController.text) ?? 0.0;
+                  final calories = double.tryParse(caloriesController.text) ?? 0.0;
+                  final time = double.tryParse(timeController.text) ?? 0.0;
+
+                  _addRideInfo(distance, calories, time);
+                  Navigator.pop(context);
+                },
+                child: Text("Submit Ride Info"),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text("Cancel"),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 }
 

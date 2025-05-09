@@ -463,6 +463,72 @@ class _SocialPageState extends State<SocialPage>
     );
   }
 
+  void _showIconSelectionModal(BuildContext context, MyAppState appState, UserProfile profile) {
+    bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final allIcons = {...appState.availableIcons, ...appState.ownedIcons}.toList();
+
+    showModalBottomSheet(
+      context: context,
+      builder: (_) => Container(
+        padding: const EdgeInsets.all(16),
+        height: 300,
+        child: GridView.builder(
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 4,
+            mainAxisSpacing: 10,
+            crossAxisSpacing: 10,
+          ),
+          itemCount: allIcons.length,
+          itemBuilder: (context, index) {
+            final iconName = allIcons[index];
+            return GestureDetector(
+              onTap: () async {
+                setState(() {
+                  _currentIconSelection = iconName;
+                  _hasLocalProfileChanges = true;
+                  appState.selectedIcon = iconName;
+                });
+
+                final updatedProfile = UserProfile(
+                  username: profile.username,
+                  displayName: profile.displayName,
+                  bio: profile.bio,
+                  isPublic: isPublic,
+                  isNewAccount: false,
+                  profileIcon: iconName,
+                );
+
+                try {
+                  await UserProfileAccessor.updateOwnProfile(updatedProfile);
+                } catch (error) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text("Failed to update profile icon: $error")),
+                  );
+                }
+
+                Navigator.pop(context); // Close the modal
+              },
+              child: Column(
+                children: [
+                  SvgPicture.asset(
+                    'assets/$iconName.svg',
+                    height: 50,
+                    width: 50,
+                    colorFilter: (isDarkMode && !['pig', 'panda', 'tiger', 'bear', 'cow'].contains(iconName))
+                      ? const ColorFilter.mode(Colors.white70, BlendMode.srcIn)
+                      : null,
+                  ),
+                  SizedBox(height: 4),
+                  Text(iconName, style: TextStyle(fontSize: 12)),
+                ],
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
   /// **1️⃣ Profile Tab - View & Edit Profile**
   Widget _buildProfileTab() {
     bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
@@ -493,18 +559,21 @@ class _SocialPageState extends State<SocialPage>
                     String displayIcon = _hasLocalProfileChanges
                         ? _currentIconSelection
                         : appState.selectedIcon;
-                    return Container(
-                      width: 125,
-                      height: 125,
-                      padding: EdgeInsets.all(15),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: isDarkMode
-                            ? Theme.of(context).colorScheme.secondary
-                            : Theme.of(context).colorScheme.primaryContainer,
-                      ),
-                      child: SvgPicture.asset(
-                        'assets/$displayIcon.svg',
+                    return GestureDetector(
+                      onTap: () => _showIconSelectionModal(context, appState, profile),
+                      child: Container(
+                        width: 125,
+                        height: 125,
+                        padding: EdgeInsets.all(15),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: isDarkMode
+                              ? Theme.of(context).colorScheme.secondary
+                              : Theme.of(context).colorScheme.primaryContainer,
+                        ),
+                        child: SvgPicture.asset(
+                          'assets/$displayIcon.svg',
+                        ),
                       ),
                     );
                   }),
@@ -574,86 +643,6 @@ class _SocialPageState extends State<SocialPage>
                     'Update your icon, profile, status, and health information.',
                 child: Column(
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(height: 20),
-                        const Text("Select Profile Icon",
-                            style: TextStyle(fontSize: 16)),
-                        const SizedBox(height: 8),
-                        Consumer<MyAppState>(
-                          builder: (context, appState, child) {
-                            final allIcons = [
-                              ...{
-                                ...appState.availableIcons,
-                                ...appState.ownedIcons
-                              }
-                            ];
-                            String displayedIcon = _hasLocalProfileChanges
-                                ? _currentIconSelection
-                                : appState.selectedIcon;
-                            return Align(
-                              alignment: Alignment.centerLeft,
-                              child: DropdownButton<String>(
-                                value: allIcons.contains(displayedIcon)
-                                    ? displayedIcon
-                                    : (allIcons.isNotEmpty
-                                        ? allIcons.first
-                                        : null),
-                                items: allIcons.map((iconName) {
-                                  return DropdownMenuItem<String>(
-                                    value: iconName,
-                                    child: Row(
-                                      children: [
-                                        SvgPicture.asset(
-                                          'assets/$iconName.svg',
-                                          height: 30,
-                                          width: 30,
-                                          colorFilter: (isDarkMode && !['pig', 'panda', 'tiger', 'bear', 'cow'].contains(iconName))
-                                            ? const ColorFilter.mode(Colors.white70, BlendMode.srcIn)
-                                            : null,
-                                        ),
-                                        const SizedBox(width: 10),
-                                        Text(iconName),
-                                      ],
-                                    ),
-                                  );
-                                }).toList(),
-                                onChanged: (String? newIcon) {
-                                  if (newIcon != null) {
-                                    setState(() {
-                                      appState.selectedIcon = newIcon;
-                                      _currentIconSelection = newIcon;
-                                      _hasLocalProfileChanges = true;
-                                    });
-
-                                    UserProfile updatedProfile = UserProfile(
-                                      username: profile.username,
-                                      displayName: profile.displayName,
-                                      bio: profile.bio,
-                                      isPublic: isPublic,
-                                      isNewAccount: false,
-                                      profileIcon: newIcon,
-                                    );
-
-                                    UserProfileAccessor.updateOwnProfile(
-                                            updatedProfile)
-                                        .catchError((error) {
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        SnackBar(
-                                            content: Text(
-                                                "Failed to update profile icon: $error")),
-                                      );
-                                    });
-                                  }
-                                },
-                              ),
-                            );
-                          },
-                        ),
-                      ],
-                    ),
                     Column(
                       children: [
                         TextField(

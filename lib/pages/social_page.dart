@@ -609,7 +609,7 @@ class _SocialPageState extends State<SocialPage>
                                           'assets/$iconName.svg',
                                           height: 30,
                                           width: 30,
-                                          colorFilter: (isDarkMode && !['pig', 'panda', 'tiger', 'bear'].contains(iconName))
+                                          colorFilter: (isDarkMode && !['pig', 'panda', 'tiger', 'bear', 'cow'].contains(iconName))
                                             ? const ColorFilter.mode(Colors.white70, BlendMode.srcIn)
                                             : null,
                                         ),

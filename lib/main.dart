@@ -210,6 +210,7 @@ class MyAppState extends ChangeNotifier {
     'bear',
     'panda',
     'pig',
+    'cow',
     'tiger'
   ];
   final List<String> ownedIcons = [];

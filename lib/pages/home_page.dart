@@ -561,8 +561,7 @@ class _HomePageState extends State<HomePage>
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
-                            _buildCircularStat(
-                              context,
+                            _AnimatedCircularStat(
                               title: formatTime(todayTime),
                               icon: Icons.access_time,
                               percent: userGoals.dailyTimeGoal == 0
@@ -570,8 +569,7 @@ class _HomePageState extends State<HomePage>
                                   : todayTime / userGoals.dailyTimeGoal,
                               color: Colors.blueAccent,
                             ),
-                            _buildCircularStat(
-                              context,
+                            _AnimatedCircularStat(
                               title: '$todayDistance mi',
                               icon: Icons.directions_bike,
                               percent: userGoals.dailyDistanceGoal == 0
@@ -579,8 +577,7 @@ class _HomePageState extends State<HomePage>
                                   : todayDistance / userGoals.dailyDistanceGoal,
                               color: Colors.orangeAccent,
                             ),
-                            _buildCircularStat(
-                              context,
+                            _AnimatedCircularStat(
                               title: '$todayCalories cal',
                               icon: Icons.local_fire_department,
                               percent: userGoals.dailyCaloriesGoal == 0
@@ -882,40 +879,6 @@ class _HomePageState extends State<HomePage>
     );
   }
 
-  Widget _buildCircularStat(
-    BuildContext context, {
-    required String title,
-    required IconData icon,
-    required double percent,
-    required Color color,
-  }) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        CircularPercentIndicator(
-          radius: 60.0,
-          lineWidth: 8.0,
-          percent: percent.clamp(0.0, 1.0),
-          center: Icon(
-            icon,
-            size: 64,
-            color: color,
-          ),
-          progressColor: color,
-          backgroundColor: Colors.grey.shade300,
-          circularStrokeCap: CircularStrokeCap.round,
-          animation: true,
-          animationDuration: 500,
-        ),
-        const SizedBox(height: 8),
-        Text(
-          title,
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-        ),
-      ],
-    );
-  }
-
   Widget _buildDailyChallenge(
       BuildContext context, bool isDailyChallengeComplete) {
     return Container(
@@ -1146,5 +1109,140 @@ class _HomePageState extends State<HomePage>
       getAchievementByIndex(firstIndex),
       getAchievementByIndex(secondIndex)
     ];
+  }
+}
+
+class _AnimatedCircularStat extends StatefulWidget {
+  final String title;
+  final IconData icon;
+  final double percent;
+  final Color color;
+
+  const _AnimatedCircularStat({
+    required this.title,
+    required this.icon,
+    required this.percent,
+    required this.color,
+    Key? key,
+  }) : super(key: key);
+
+  @override
+  State<_AnimatedCircularStat> createState() => _AnimatedCircularStatState();
+}
+
+class _AnimatedCircularStatState extends State<_AnimatedCircularStat>
+    with TickerProviderStateMixin {
+  late AnimationController _iconController;
+  late Animation<double> _iconSizeAnimation;
+  late AnimationController _percentController;
+
+  double _targetPercent = 0.0;
+  double _animatedPercent = 0.0;
+
+  @override
+  void initState() {
+    super.initState();
+     debugPrint('AnimatedCircularStat initState called');
+
+    _iconController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+
+    _iconSizeAnimation = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 64, end: 72), weight: 50),
+      TweenSequenceItem(tween: Tween(begin: 72, end: 64), weight: 50),
+    ]).animate(CurvedAnimation(parent: _iconController, curve: Curves.easeOut));
+
+    _percentController = AnimationController(
+      duration: const Duration(milliseconds: 500),
+      vsync: this,
+    );
+
+    _percentController.addListener(() {
+      setState(() {
+        _animatedPercent = _percentController.value * _targetPercent;
+      });
+    });
+
+    // Trigger animation on first build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _iconController.forward(from: 0);
+      _animatePercent(widget.percent);
+    });
+  }
+
+  void _animatePercent(double percent) {
+    _targetPercent = percent.clamp(0.0, 1.0);
+    _percentController.forward(from: 0);
+  }
+
+  @override
+  void didUpdateWidget(covariant _AnimatedCircularStat oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.percent != widget.percent) {
+      _animatePercent(widget.percent);
+    }
+  }
+
+  /*void _handleTap() {
+    _iconController.forward(from: 0);
+    _animatePercent(widget.percent);
+  }*/
+
+  void _handleTap() {
+    _iconController.forward(from: 0);
+
+    if (widget.percent > 0) {
+      _animatePercent(widget.percent);
+    } else {
+      // Optionally: show a message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('No activity recorded yet today!')),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _iconController.dispose();
+    _percentController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: _handleTap,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          CircularPercentIndicator(
+            radius: 60.0,
+            lineWidth: 8.0,
+            percent: _animatedPercent,
+            center: AnimatedBuilder(
+              animation: _iconController,
+              builder: (context, child) {
+                return Icon(
+                  widget.icon,
+                  size: _iconSizeAnimation.value,
+                  color: widget.color,
+                );
+              },
+            ),
+            progressColor: widget.color,
+            backgroundColor: Colors.grey.shade300,
+            circularStrokeCap: CircularStrokeCap.round,
+            animation: false,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            widget.title,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+          ),
+        ],
+      ),
+    );
   }
 }

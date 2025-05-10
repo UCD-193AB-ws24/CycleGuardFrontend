@@ -130,10 +130,8 @@ class LoginFormState extends State<LoginPage> {
         print("[Login] Failed to schedule notifications: $e");
       }*/
 
-      setState(() {
-        Navigator.pushReplacement(
-            context, MaterialPageRoute(builder: (context) => MyHomePage()));
-      });
+      Navigator.pushReplacement(
+          context, MaterialPageRoute(builder: (context) => MyHomePage()));
     } else {
       Fluttertoast.cancel();
       Fluttertoast.showToast(
@@ -149,10 +147,8 @@ class LoginFormState extends State<LoginPage> {
 
   void _createAccount() {
     print("Creating account...");
-    setState(() {
-      Navigator.pushReplacement(context,
-          MaterialPageRoute(builder: (context) => CreateAccountPage()));
-    });
+    Navigator.pushReplacement(context,
+        MaterialPageRoute(builder: (context) => CreateAccountPage()));
   }
 
   @override

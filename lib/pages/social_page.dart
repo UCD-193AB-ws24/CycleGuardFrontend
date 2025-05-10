@@ -1099,7 +1099,7 @@ class UserDailyGoalsSection extends StatelessWidget {
                 "Daily Goals",
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
-                  fontSize: 20,
+                  fontSize: 28,
                 ),
               ),
             ),
@@ -1109,41 +1109,33 @@ class UserDailyGoalsSection extends StatelessWidget {
               children: [
                 Column(
                   children: [
-                    Text("Time",
-                    style: TextStyle(
-                      fontSize: 16,
-                    )),
-                    SizedBox(height: 4),
+                    Icon(Icons.access_time, size: 56, color: Colors.blue), 
+                    SizedBox(height: 8),
                     Text("${userGoals.dailyTimeGoal} min"),
                   ],
                 ),
                 Column(
                   children: [
-                    Text("Distance",
-                    style: TextStyle(
-                      fontSize: 16,
-                    )),
-                    SizedBox(height: 4),
+                    Icon(Icons.directions_bike, size: 56, color: Colors.amber), 
+                    SizedBox(height: 8),
                     Text("${userGoals.dailyDistanceGoal} mi"),
                   ],
                 ),
                 Column(
                   children: [
-                    Text("Calories",
-                    style: TextStyle(
-                      fontSize: 16,
-                    )),
-                    SizedBox(height: 4),
+                    Icon(Icons.local_fire_department, size: 56, color: Colors.red), 
+                    SizedBox(height: 8),
                     Text("${userGoals.dailyCaloriesGoal} cal"),
                   ],
                 ),
               ],
             ),
-            SizedBox(height: 4), 
+            SizedBox(height: 8), 
             OutlinedButton(
               onPressed: () => _showChangeGoalsDialog(context, userGoals),
               child: Text("Change Goals"),
             ),
+            SizedBox(height: 8), 
           ]
         );
       },

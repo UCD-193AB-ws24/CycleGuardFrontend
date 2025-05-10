@@ -92,6 +92,12 @@ class mapState extends State<RoutesPage> {
 
     generatedPolylines = polylines;
     generatePolyLines(polylines, RoutesPage.POLYLINE_GENERATED);
+
+    if (polylines.isNotEmpty) {
+      center = polylines[0];
+      recenterMap();
+      recenterMap();
+    }
   }
 
   Future<void> setCustomIcon() async {

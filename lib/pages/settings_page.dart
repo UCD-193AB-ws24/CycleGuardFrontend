@@ -119,16 +119,6 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
               ),
               SizedBox(height: 20),
-              Center(
-                child: ElevatedButton(
-                  onPressed: () {
-                    AuthUtil.logout(context);
-                  },
-                  style: ElevatedButton.styleFrom(elevation: 10),
-                  child: Text('Logout'),
-                ),
-              ),
-              SizedBox(height: 20),
               Consumer<MyAppState>( 
                 builder: (context, appState, child) {
                   DateTime creationDate = DateTime.fromMillisecondsSinceEpoch(userStats.accountCreationTime * 1000);

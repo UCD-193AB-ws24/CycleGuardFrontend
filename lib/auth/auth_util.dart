@@ -3,6 +3,7 @@ import 'package:cycle_guard_app/auth/requests_util.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:restart_app/restart_app.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../main.dart';
@@ -116,20 +117,28 @@ class AuthUtil {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('authToken');
     await prefs.remove('username');
+    await prefs.clear();
   }
 
   static Future<void> logout(BuildContext context) async {
+    final prefs = await SharedPreferences.getInstance();
+    print("Logging out...");
+    print("Token found: ${prefs.getString('authToken')}");
+    // await prefs.remove('username');
     await _clearPersistentToken();
+    print("Token found: ${prefs.getString('authToken')}");
     _token="";
     _username="";
 
-    selectedIndexGlobal.value=1;
+    // selectedIndexGlobal.value=1;
 
-    if (context.mounted) {
-      Navigator.pushAndRemoveUntil(context,
-          MaterialPageRoute(builder: (_) => OnBoardStart()), (route) => false);
-    } else {
-      print("Failed to logout");
-    }
+    Restart.restartApp(notificationBody: "Logging out...");
+
+    // if (context.mounted) {
+    //   Navigator.pushAndRemoveUntil(context,
+    //       MaterialPageRoute(builder: (_) => OnBoardStart()), (route) => false);
+    // } else {
+    //   print("Failed to logout");
+    // }
   }
 }

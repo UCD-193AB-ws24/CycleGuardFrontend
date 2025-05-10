@@ -9,6 +9,7 @@ import 'package:cycle_guard_app/data/global_leaderboards_accessor.dart';
 
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
+import '../auth/auth_util.dart';
 import '../main.dart';
 import 'package:showcaseview/showcaseview.dart';
 
@@ -893,6 +894,29 @@ class _SocialPageState extends State<SocialPage>
                     description:
                         'Manage daily reminders here. Add notifications with a title, body, and time. Existing reminders will be shown here.',
                     child: NotificationScheduler(),
+                  ),
+
+                  Divider(),
+                  SizedBox(height: 10),
+                  Center(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        AuthUtil.logout(context);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: isDarkMode
+                            ? Theme.of(context).colorScheme.secondary
+                            : Theme.of(context)
+                            .colorScheme
+                            .onInverseSurface,
+                      ),
+                      child: Text(
+                        "Logout",
+                        style: TextStyle(
+                          color: isDarkMode ? Colors.white70 : null,
+                        ),
+                      ),
+                    ),
                   ),
                 ],
               ),

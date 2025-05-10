@@ -1091,26 +1091,60 @@ class UserDailyGoalsSection extends StatelessWidget {
     return Consumer<UserDailyGoalProvider>(
       builder: (context, userGoals, child) {
         return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Divider(height: 40),
-            Text(
-              "Daily Goals",
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
+            Center(
+              child: Text(
+                "Daily Goals",
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 20,
+                ),
               ),
             ),
-            Text(" • Time: ${userGoals.dailyTimeGoal} min"),
-            Text(" • Distance: ${userGoals.dailyDistanceGoal} mi"),
-            Text(" • Calories: ${userGoals.dailyCaloriesGoal} cal"),
             SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                Column(
+                  children: [
+                    Text("Time",
+                    style: TextStyle(
+                      fontSize: 16,
+                    )),
+                    SizedBox(height: 4),
+                    Text("${userGoals.dailyTimeGoal} min"),
+                  ],
+                ),
+                Column(
+                  children: [
+                    Text("Distance",
+                    style: TextStyle(
+                      fontSize: 16,
+                    )),
+                    SizedBox(height: 4),
+                    Text("${userGoals.dailyDistanceGoal} mi"),
+                  ],
+                ),
+                Column(
+                  children: [
+                    Text("Calories",
+                    style: TextStyle(
+                      fontSize: 16,
+                    )),
+                    SizedBox(height: 4),
+                    Text("${userGoals.dailyCaloriesGoal} cal"),
+                  ],
+                ),
+              ],
+            ),
+            SizedBox(height: 4), 
             OutlinedButton(
               onPressed: () => _showChangeGoalsDialog(context, userGoals),
               child: Text("Change Goals"),
             ),
-            SizedBox(height: 20),
-          ],
+          ]
         );
       },
     );

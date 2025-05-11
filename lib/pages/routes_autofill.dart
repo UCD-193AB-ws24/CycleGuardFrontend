@@ -65,8 +65,9 @@ class _RoutesAutofillState extends State<RoutesAutofill> {
         return TextFormField(
           controller: textEditingController,
           decoration: InputDecoration(
+            icon: Icon(Icons.search),
             filled: true,
-            fillColor: Colors.black54,
+            fillColor: Colors.black45,
           ),
           focusNode: focusNode,
         );

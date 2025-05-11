@@ -898,7 +898,7 @@ class mapState extends State<RoutesPage> {
     ),
     style: TextStyle(color: Colors.black),
     controller: controller,
-    keyboardType: TextInputType.numberWithOptions(signed: false, decimal: false),
+    keyboardType: TextInputType.numberWithOptions(signed: false, decimal: true),
     textInputAction: TextInputAction.done,
   );
 

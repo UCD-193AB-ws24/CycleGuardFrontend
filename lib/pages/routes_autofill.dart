@@ -63,10 +63,12 @@ class _RoutesAutofillState extends State<RoutesAutofill> {
     return Autocomplete<String>(
       fieldViewBuilder: (BuildContext context, TextEditingController textEditingController, FocusNode focusNode, VoidCallback onFieldSubmitted) {
         return TextFormField(
+          controller: textEditingController,
           decoration: InputDecoration(
             filled: true,
             fillColor: Colors.black54,
           ),
+          focusNode: focusNode,
         );
       },
       optionsBuilder: (TextEditingValue textEditingValue) async {

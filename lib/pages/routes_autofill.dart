@@ -61,6 +61,14 @@ class _RoutesAutofillState extends State<RoutesAutofill> {
   @override
   Widget build(BuildContext context) {
     return Autocomplete<String>(
+      fieldViewBuilder: (BuildContext context, TextEditingController textEditingController, FocusNode focusNode, VoidCallback onFieldSubmitted) {
+        return TextFormField(
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: Colors.black54,
+          ),
+        );
+      },
       optionsBuilder: (TextEditingValue textEditingValue) async {
         final Iterable<String>? options = await _debouncedSearch(textEditingValue.text);
         if (options == null) {

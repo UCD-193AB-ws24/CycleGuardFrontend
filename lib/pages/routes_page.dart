@@ -314,6 +314,20 @@ class mapState extends State<RoutesPage> {
     // print(totalDist);
   }
 
+
+
+  String? destString;
+  void setRoutesAutofillCallback(BuildContext context) {
+    setCallback((input) {
+      // print("Selected autofill value: $input");
+      destString = input;
+      getGooglePolylinePoints().then((coordinates) {
+        generatePolyLines(coordinates, RoutesPage.POLYLINE_GENERATED);
+        dest = coordinates[coordinates.length-1];
+      });
+    });
+  }
+
   Widget mainMap() => GoogleMap(
     onTap: (argument) {
       print("Map tap");
@@ -380,6 +394,8 @@ class mapState extends State<RoutesPage> {
     Color selectedColor = Provider.of<MyAppState>(context, listen: false).selectedColor;
     final colorScheme = Theme.of(context).colorScheme;
     //final isDarkTheme = Theme.of(context).brightness == Brightness.dark;
+
+    setRoutesAutofillCallback(context);
 
     return Scaffold(
       body: Stack(
@@ -716,7 +732,7 @@ class mapState extends State<RoutesPage> {
   Future<List<LatLng>> getGooglePolylinePoints() async {
     // PolylinePoints polylinePoints = PolylinePoints();
 
-    if(dest!=null) {
+    if(destString!=null) {
       // PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
       //   googleApiKey: apiService.getGoogleApiKey(),
       //   request: PolylineRequest(
@@ -726,7 +742,7 @@ class mapState extends State<RoutesPage> {
       //   ),
       // );
 
-      final result = await NavigationAccessor.getRoute(center!, dest!);
+      final result = await NavigationAccessor.getRoute(center!, destString!);
 
       final res = result.polyline;
       generatedPolylines = res;

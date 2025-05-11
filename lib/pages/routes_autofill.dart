@@ -3,6 +3,19 @@ import 'dart:async';
 import 'package:cycle_guard_app/data/navigation_accessor.dart';
 import 'package:flutter/material.dart';
 
+// Thanks, Flutter guides!
+// https://api.flutter.dev/flutter/material/Autocomplete-class.html
+
+// Duration to wait before doing autofill.
+// Higher duration = slower results
+// Lower duration = more expensive
+final debounceDuration = Duration(milliseconds: 250);
+
+Function(String) _callback = (str) {};
+void setCallback(Function(String) callback) {
+  _callback = callback;
+}
+
 class RoutesAutofill extends StatefulWidget {
   const RoutesAutofill();
 
@@ -12,22 +25,23 @@ class RoutesAutofill extends StatefulWidget {
 
 
 class _RoutesAutofillState extends State<RoutesAutofill> {
+
   // The query currently being searched for. If null, there is no pending
   // request.
   String? _currentQuery;
 
   // The most recent options received from the API.
-  late Iterable<AutofillLocation> _lastOptions = <AutofillLocation>[];
+  late Iterable<String> _lastOptions = <String>[];
 
-  late final _Debounceable<Iterable<AutofillLocation>?, String> _debouncedSearch;
+  late final _Debounceable<Iterable<String>?, String> _debouncedSearch;
 
   // Calls the "remote" API to search with the given query. Returns null when
   // the call has been made obsolete.
-  Future<Iterable<AutofillLocation>?> _search(String query) async {
+  Future<Iterable<String>?> _search(String query) async {
     _currentQuery = query;
 
     // In a real application, there should be some error handling here.
-    final Iterable<AutofillLocation> options = await _FakeAPI.search(_currentQuery!);
+    final Iterable<String> options = await _NavigationAPI.search(_currentQuery!);
 
     // If another search happened after this one, throw away these options.
     if (_currentQuery != query) {
@@ -41,44 +55,31 @@ class _RoutesAutofillState extends State<RoutesAutofill> {
   @override
   void initState() {
     super.initState();
-    _debouncedSearch = _debounce<Iterable<AutofillLocation>?, String>(_search);
+    _debouncedSearch = _debounce<Iterable<String>?, String>(_search);
   }
 
   @override
   Widget build(BuildContext context) {
-    return Autocomplete<AutofillLocation>(
-      // boxDecoration: BoxDecoration(
-      //   color: Colors.white,
-      //   borderRadius: BorderRadius.circular(12),
-      //   boxShadow: [
-      //     BoxShadow(
-      //       color: Colors.black.withOpacity(0.1),
-      //       blurRadius: 8.0,
-      //       spreadRadius: 2.0,
-      //       offset: Offset(0, 4),
-      //     ),
-      //   ],
-      // ),
-      displayStringForOption: (result) => result.name,
+    return Autocomplete<String>(
       optionsBuilder: (TextEditingValue textEditingValue) async {
-        final Iterable<AutofillLocation>? options = await _debouncedSearch(textEditingValue.text);
+        final Iterable<String>? options = await _debouncedSearch(textEditingValue.text);
         if (options == null) {
           return _lastOptions;
         }
         _lastOptions = options;
         return options;
       },
-      onSelected: (AutofillLocation selection) {
-        debugPrint('You just selected $selection');
+      onSelected: (String selection) {
+        _callback(selection);
       },
     );
   }
+
 }
 
-// Mimics a remote API.
-class _FakeAPI {
+class _NavigationAPI {
   // Searches the options, but injects a fake "network" delay.
-  static Future<List<AutofillLocation>> search(String query) async {
+  static Future<List<String>> search(String query) async {
     if (query == '') {
       return const [];
     }
@@ -110,7 +111,6 @@ _Debounceable<S, T> _debounce<S, T>(_Debounceable<S?, T> function) {
   };
 }
 
-final debounceDuration = Duration(milliseconds: 500);
 // A wrapper around Timer used for debouncing.
 class _DebounceTimer {
   _DebounceTimer() {

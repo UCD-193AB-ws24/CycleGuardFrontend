@@ -1,16 +1,16 @@
 import 'dart:convert';
 
-import 'package:cycle_guard_app/auth/requests_util.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import '../auth/requests_util.dart';
+
 class NavigationAccessor {
   NavigationAccessor._();
 
-  static Future<BikeRoute> getRoute(LatLng origin, LatLng destination) async {
+  static Future<BikeRoute> getRoute(LatLng origin, String destination) async {
     final body = {
       "startLat": origin.latitude,
       "startLng": origin.longitude,
-      "endLat": destination.latitude,
-      "endLng": destination.longitude,
+      "destination": destination
     };
 
     final response = await RequestsUtil.postWithToken("/navigation/getRoute", body);
@@ -72,12 +72,13 @@ class BikeRoute {
 }
 
 class AutofillResult {
-  final List<AutofillLocation> results;
+  final List<String> results;
 
   const AutofillResult({required this.results});
 
-  static List<AutofillLocation> _parseResults(List<dynamic> list) {
-    return list.map((e) => AutofillLocation.fromJson(e)).toList(growable: false);
+  static List<String> _parseResults(List<dynamic> list) {
+    return List<String>.from(list);
+    // return list.map((e) => AutofillLocation.fromJson(e)).toList(growable: false);
   }
 
   factory AutofillResult.fromJson(Map<String, dynamic> jsonInit) {
@@ -95,31 +96,5 @@ class AutofillResult {
   @override
   String toString() {
     return 'AutofillResult{results: $results}';
-  }
-}
-
-class AutofillLocation {
-  final String name;
-  final LatLng latlng;
-
-  const AutofillLocation({required this.name, required this.latlng});
-
-  factory AutofillLocation.fromJson(Map<String, dynamic> jsonInit) {
-    return switch (jsonInit) {
-      {
-      "name": String name,
-      "latitude": double latitude,
-      "longitude": double longitude
-      } => AutofillLocation(
-        name: name,
-          latlng: LatLng(latitude, longitude)
-      ),
-      _ => throw const FormatException("failed to load AutofillLocation"),
-    };
-  }
-
-  @override
-  String toString() {
-    return 'AutofillLocation{name: $name, latlng: $latlng}';
   }
 }

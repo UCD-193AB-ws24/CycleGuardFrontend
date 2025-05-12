@@ -17,6 +17,8 @@ import 'package:geolocator/geolocator.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:google_places_flutter/google_places_flutter.dart';
+import 'package:cycle_guard_app/data/user_daily_goal_provider.dart';
+import 'package:cycle_guard_app/data/week_history_provider.dart';
 import 'package:location/location.dart' hide LocationAccuracy;
 
 import 'package:provider/provider.dart';
@@ -86,6 +88,14 @@ class mapState extends State<RoutesPage> {
   List<double> recordedAltitudes = [];
   double? heading;
 
+  double distanceGoal = 0.0;
+  double caloriesGoal = 0.0;
+  double timeGoal = 0.0;
+  
+  double targetDistance = 0.0;
+  double targetCalories = 0.0;
+  double targetTime = 0.0;
+
   Future<void> drawTimestampData(int timestamp) async {
     final coords = await CoordinatesAccessor.getCoordinates(timestamp);
     final latitudes = coords.latitudes, longitudes = coords.longitudes;
@@ -140,6 +150,16 @@ class mapState extends State<RoutesPage> {
       });
     });
 
+    Future.microtask(() {
+      Provider.of<UserDailyGoalProvider>(context, listen: false).fetchDailyGoals();
+      Provider.of<WeekHistoryProvider>(context, listen: false).fetchWeekHistory();
+    });
+
+    final userGoals = Provider.of<UserDailyGoalProvider>(context, listen: false);
+    distanceGoal = userGoals.dailyDistanceGoal;
+    timeGoal = userGoals.dailyTimeGoal;
+    caloriesGoal = userGoals.dailyCaloriesGoal;
+
     initHealthInfo();
     SubmitRideService.tryAddAllRides();
   }
@@ -179,6 +199,31 @@ class mapState extends State<RoutesPage> {
   }
 
   void startDistanceRecord() {
+    final weekHistory = Provider.of<WeekHistoryProvider>(context, listen: false);
+    final todayUtcTimestamp = DateTime.utc(
+          DateTime.now().year,
+          DateTime.now().month,
+          DateTime.now().day,
+          0,
+          0,
+          0,
+          0,
+          0,
+        ).millisecondsSinceEpoch ~/
+        1000;
+
+    final todayInfo = weekHistory.dayHistoryMap[todayUtcTimestamp] ??
+      const SingleTripInfo(
+          distance: 0.0,
+          calories: 0.0,
+          time: 0.0,
+          averageAltitude: 0,
+          climb: 0);
+
+    targetDistance = distanceGoal - todayInfo.distance;
+    targetTime = timeGoal - todayInfo.time;
+    targetCalories = caloriesGoal - todayInfo.calories;
+
     _notifyCurrentRideData.value = AccumRideData.blank();
     final appState = Provider.of<MyAppState>(context, listen: false);
     setState(() {
@@ -519,6 +564,17 @@ class mapState extends State<RoutesPage> {
   final ValueNotifier<AccumRideData> _notifyCurrentRideData = ValueNotifier<AccumRideData>(AccumRideData.blank());
 
   Widget _curRideInfoWidget(Color bg) {
+    print("-------- DISTANCE -------");
+    print(distanceGoal);
+    print(targetDistance);
+    print("------- TIME --------");
+    print(timeGoal);
+    print(targetTime);
+    print("------- CALORIES --------");
+    print(caloriesGoal);
+    print(targetCalories);
+    print("---------------");
+
     return ValueListenableBuilder(
       valueListenable: _notifyCurrentRideData,
       builder: (BuildContext context, AccumRideData rideData, Widget? child) {
@@ -533,6 +589,8 @@ class mapState extends State<RoutesPage> {
                 Icons.directions_bike,
                 'Distance',
                 rideData.distance,
+                targetDistance,
+                distanceGoal,
                 'mi',
                 Colors.orangeAccent),
             ),
@@ -545,6 +603,8 @@ class mapState extends State<RoutesPage> {
                   Icons.speed,
                   'Speed',
                   rideData.speed,
+                  0.0,
+                  0.0,
                   'mph',
                   Colors.lightBlueAccent),
             ),
@@ -557,6 +617,8 @@ class mapState extends State<RoutesPage> {
                   Icons.timer,
                   'Time',
                   rideData.time,
+                  targetTime,
+                  timeGoal,
                   'min',
                   Colors.blueAccent),
             ),
@@ -569,6 +631,8 @@ class mapState extends State<RoutesPage> {
                 Icons.trending_up,
                   'Altitude',
                   rideData.altitude,
+                  0.0,
+                  0.0,
                   'ft',
                   Colors.deepPurpleAccent),
             ),
@@ -581,6 +645,8 @@ class mapState extends State<RoutesPage> {
                   Icons.local_fire_department,
                   'Calories',
                   rideData.calories,
+                  targetCalories,
+                  caloriesGoal,
                   'cal',
                   Colors.redAccent),
             ),
@@ -593,6 +659,8 @@ class mapState extends State<RoutesPage> {
                   Icons.arrow_upward,
                   'Climb',
                   rideData.climb,
+                  0.0,
+                  0.0,
                   'ft',
                   Colors.purpleAccent),
             ),
@@ -601,10 +669,15 @@ class mapState extends State<RoutesPage> {
       });
   }
 
-  Widget _buildStatCard(IconData icon, String label, double value, String unit, Color color) {
+  Widget _buildStatCard(IconData icon, String label, double value, double remaining, double goal, String unit, Color color) {
     return Card(
       color: color.withAlpha(192),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(12),
+      side: value >= remaining && goal > 0
+          ? BorderSide(color: Colors.amber, width: 2)
+          : BorderSide.none,
+    ),
       elevation: 2,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 0.0),

@@ -130,15 +130,13 @@ class AuthUtil {
     _token="";
     _username="";
 
-    selectedIndexGlobal.value=1;
+    // selectedIndexGlobal.value=1;
 
     // print("Calling main...");
     main();
     // print("Called main...");
 
     // Restart.restartApp(notificationBody: "Logging out...");
-
-
 
     if (context.mounted) {
       Navigator.pushAndRemoveUntil(context,

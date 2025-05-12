@@ -1097,26 +1097,65 @@ class UserDailyGoalsSection extends StatelessWidget {
     return Consumer<UserDailyGoalProvider>(
       builder: (context, userGoals, child) {
         return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Divider(height: 40),
-            Text(
-              "Daily Goals",
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
+            Center(
+              child: Text(
+                "Daily Goals",
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 24,
+                ),
               ),
             ),
-            Text(" • Time: ${userGoals.dailyTimeGoal} min"),
-            Text(" • Distance: ${userGoals.dailyDistanceGoal} mi"),
-            Text(" • Calories: ${userGoals.dailyCaloriesGoal} cal"),
             SizedBox(height: 8),
-            OutlinedButton(
-              onPressed: () => _showChangeGoalsDialog(context, userGoals),
-              child: Text("Change Goals"),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                Column(
+                  children: [
+                    Icon(Icons.access_time, size: 56, color: Colors.blue), 
+                    SizedBox(height: 8),
+                    Text("${userGoals.dailyTimeGoal} min"),
+                  ],
+                ),
+                Column(
+                  children: [
+                    Icon(Icons.directions_bike, size: 56, color: Colors.amber), 
+                    SizedBox(height: 8),
+                    Text("${userGoals.dailyDistanceGoal} mi"),
+                  ],
+                ),
+                Column(
+                  children: [
+                    Icon(Icons.local_fire_department, size: 56, color: Colors.red), 
+                    SizedBox(height: 8),
+                    Text("${userGoals.dailyCaloriesGoal} cal"),
+                  ],
+                ),
+              ],
             ),
-            SizedBox(height: 20),
-          ],
+            SizedBox(height: 8), 
+            ElevatedButton(
+              onPressed: () => _showChangeGoalsDialog(context, userGoals),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).brightness == Brightness.dark
+                    ? Theme.of(context).colorScheme.secondary
+                    : Theme.of(context)
+                        .colorScheme
+                        .onInverseSurface,
+              ),
+              child: Text(
+                "Change Goals", 
+                style: TextStyle(
+                  color: Theme.of(context).brightness == Brightness.dark ? Colors.white70 : null,
+                ),
+              ),
+              
+            ),
+            SizedBox(height: 8), 
+          ]
         );
       },
     );

@@ -198,133 +198,7 @@ class _HistoryPageState extends State<HistoryPage> {
       appBar: createAppBar(context, 'Ride History'),
       body: Column(
         children: [
-          Padding(
-            padding:
-                const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-            child: Card(
-              elevation: 4,
-              color: isDarkMode
-                  ? colorScheme.onSecondaryFixedVariant
-                  : colorScheme.surfaceContainerLow,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Center(
-                      child: Text(
-                        'All Time Ride Summary',
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 20,
-                            color: isDarkMode
-                                ? colorScheme.surfaceContainerLow
-                                : Colors.black),
-                      ),
-                    ),
-                    SizedBox(height: DimUtil.safeHeight(context) * 1 / 80),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Distance:',
-                              style: TextStyle(
-                                  fontSize: 16,
-                                  color: isDarkMode
-                                      ? colorScheme.surfaceContainerLow
-                                      : colorScheme.onPrimaryFixed),
-                            ),
-                            Text(
-                              '${userStatsProvider.totalDistance} mi',
-                              style: TextStyle(
-                                  fontSize: 16,
-                                  color: isDarkMode
-                                      ? colorScheme.surfaceContainerLow
-                                      : colorScheme.onPrimaryFixed),
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: DimUtil.safeHeight(context) * 1 / 80),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Calories:',
-                              style: TextStyle(
-                                  fontSize: 16,
-                                  color: isDarkMode
-                                      ? colorScheme.surfaceContainerLow
-                                      : colorScheme.onPrimaryFixed),
-                            ),
-                            Text(
-                              '${totalCalories.toStringAsFixed(1)} cal',
-                              style: TextStyle(
-                                  fontSize: 16,
-                                  color: isDarkMode
-                                      ? colorScheme.surfaceContainerLow
-                                      : Theme.of(context)
-                                          .colorScheme
-                                          .onPrimaryFixed),
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: DimUtil.safeHeight(context) * 1 / 80),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Time:',
-                              style: TextStyle(
-                                  fontSize: 16,
-                                  color: isDarkMode
-                                      ? colorScheme.surfaceContainerLow
-                                      : colorScheme.onPrimaryFixed),
-                            ),
-                            Text(
-                              formatTime(userStatsProvider.totalTime),
-                              style: TextStyle(
-                                  fontSize: 16,
-                                  color: isDarkMode
-                                      ? colorScheme.surfaceContainerLow
-                                      : colorScheme.onPrimaryFixed),
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: DimUtil.safeHeight(context) * 1 / 80),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Rides:',
-                              style: TextStyle(
-                                  fontSize: 16,
-                                  color: isDarkMode
-                                      ? colorScheme.surfaceContainerLow
-                                      : colorScheme.onPrimaryFixed),
-                            ),
-                            Text(
-                              '$totalTrips',
-                              style: TextStyle(
-                                  fontSize: 16,
-                                  color: isDarkMode
-                                      ? colorScheme.surfaceContainerLow
-                                      : colorScheme.onPrimaryFixed),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
+          RideSummaryCard(),
           ElevatedButton(
             onPressed: () async {
               await tripHistoryProvider.fetchTripHistory();
@@ -662,6 +536,159 @@ class _HistoryPageState extends State<HistoryPage> {
                     ),
                   ),
                 ),
+        ],
+      ),
+    );
+  }
+}
+
+class RideSummaryCard extends StatefulWidget {
+  @override
+  _RideSummaryCardState createState() => _RideSummaryCardState();
+}
+
+class _RideSummaryCardState extends State<RideSummaryCard> {
+  bool _isExpanded = true;
+
+  String formatTime(double timeInMinutes) {
+    int minutes = timeInMinutes.floor();
+    int seconds = ((timeInMinutes - minutes) * 60).round();
+
+    if (seconds == 0) {
+      return '$minutes min';
+    } else {
+      return '$minutes min $seconds sec';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final colorScheme = Theme.of(context).colorScheme;
+    final userStatsProvider = Provider.of<UserStatsProvider>(context);
+    final tripHistoryProvider = Provider.of<TripHistoryProvider>(context);
+    final tripHistory = tripHistoryProvider.tripHistory;
+    double totalCalories = tripHistory.values.fold(0.0, (sum, trip) => sum + trip.calories);
+    int totalTrips = tripHistory.values.fold(0, (sum, trip) => sum + 1);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+      child: Card(
+        elevation: 4,
+        color: isDarkMode
+            ? colorScheme.onSecondaryFixedVariant
+            : colorScheme.surfaceContainerLow,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: InkWell(
+          onTap: () {
+            setState(() {
+              _isExpanded = !_isExpanded;
+            });
+          },
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Center(
+                        child: Text(
+                          'All Time Ride Summary',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 20,
+                            color: isDarkMode
+                                ? colorScheme.surfaceContainerLow
+                                : Colors.black,
+                          ),
+                        ),
+                      ),
+                    ),
+                    Icon(
+                      _isExpanded
+                          ? Icons.keyboard_arrow_up
+                          : Icons.keyboard_arrow_down,
+                      color: isDarkMode
+                          ? colorScheme.surfaceContainerLow
+                          : Colors.black,
+                    ),
+                  ],
+                ),
+                AnimatedCrossFade(
+                  firstChild: SizedBox.shrink(),
+                  secondChild: Column(
+                    children: [
+                      SizedBox(height: DimUtil.safeHeight(context) * 1 / 80),
+                      _buildStatRow(
+                        context,
+                        isDarkMode,
+                        'Distance:',
+                        '${userStatsProvider.totalDistance} mi',
+                      ),
+                      _buildStatRow(
+                        context,
+                        isDarkMode,
+                        'Calories:',
+                        '${totalCalories.toStringAsFixed(1)} cal',
+                      ),
+                      _buildStatRow(
+                        context,
+                        isDarkMode,
+                        'Time:',
+                        formatTime(userStatsProvider.totalTime),
+                      ),
+                      _buildStatRow(
+                        context,
+                        isDarkMode,
+                        'Rides:',
+                        '$totalTrips',
+                      ),
+                    ],
+                  ),
+                  crossFadeState: _isExpanded
+                      ? CrossFadeState.showSecond
+                      : CrossFadeState.showFirst,
+                  duration: Duration(milliseconds: 200),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatRow(
+      BuildContext context, bool isDarkMode, String label, String value) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Padding(
+      padding: EdgeInsets.only(
+          top: DimUtil.safeHeight(context) * 1 / 80), // consistent spacing
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 16,
+              color: isDarkMode
+                  ? colorScheme.surfaceContainerLow
+                  : colorScheme.onPrimaryFixed,
+            ),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 16,
+              color: isDarkMode
+                  ? colorScheme.surfaceContainerLow
+                  : colorScheme.onPrimaryFixed,
+            ),
+          ),
         ],
       ),
     );

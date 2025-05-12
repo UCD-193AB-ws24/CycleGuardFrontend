@@ -9,7 +9,7 @@ import 'package:cycle_guard_app/data/global_leaderboards_accessor.dart';
 
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
-import '../auth/dim_util.dart';
+import '../auth/auth_util.dart';
 import '../main.dart';
 import 'package:showcaseview/showcaseview.dart';
 
@@ -26,6 +26,8 @@ class _SocialPageState extends State<SocialPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   late TextEditingController _searchController;
+  late final ScrollController _searchScrollController;
+
   late Future<Map<String, dynamic>> _usersAndFriendsFuture;
 
   int numOfTabs = 5;
@@ -51,6 +53,8 @@ class _SocialPageState extends State<SocialPage>
   @override
   void initState() {
     super.initState();
+
+    print("Social: initState()");
     _tabController = TabController(length: numOfTabs, vsync: this);
     _profileFuture = UserProfileAccessor.getOwnProfile();
     Future.microtask(() =>
@@ -59,7 +63,8 @@ class _SocialPageState extends State<SocialPage>
     nameController = TextEditingController();
     bioController = TextEditingController();
     _searchController = TextEditingController();
-    _usersAndFriendsFuture = _fetchUsersAndFriends();
+    _searchScrollController = ScrollController();
+    // _usersAndFriendsFuture = _fetchUsersAndFriends();
     _searchController.addListener(() => setState(() {}));
     _loadProfile();
 
@@ -178,10 +183,13 @@ class _SocialPageState extends State<SocialPage>
   void dispose() {
     nameController.dispose();
     bioController.dispose();
-    _searchController.dispose();   
+    _searchController.dispose();
+    _searchScrollController.dispose();
     _tabController.dispose();
     super.dispose();
   }
+
+  List<String> allUsers = [], friends = [];
 
   /// **Fetch all users & friend list separately**
   Future<Map<String, dynamic>> _fetchUsersAndFriends() async {
@@ -220,56 +228,136 @@ class _SocialPageState extends State<SocialPage>
     }
   }
 
-  /// Fetches and displays a friend’s position on the distance leaderboard.
+  // ignore: use_build_context_synchronously
   Future<void> _showFriendRanking(BuildContext context, String username) async {
-    // 1. Show a loading spinner
+    // Show loading spinner
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => Center(child: CircularProgressIndicator()),
+      builder: (_) => const Center(child: CircularProgressIndicator()),
     );
 
     try {
-      // 2. Fetch the distance leaderboard
-      final leaderboards =
-          await GlobalLeaderboardsAccessor.getDistanceLeaderboards();
+      final leaderboards = await GlobalLeaderboardsAccessor.getDistanceLeaderboards();
+      if (!mounted) return;
 
-      // 3. Find this friend’s entry
-      final entry = leaderboards.entries.firstWhere(
-        (e) => e.username == username,
-        orElse: () => throw Exception('No ranking found for $username'),
+      final entryIndex = leaderboards.entries.indexWhere(
+        (e) => e.username.trim().toLowerCase() == username.trim().toLowerCase(),
       );
 
-      // 4. Dismiss the loading dialog
-      Navigator.pop(context);
+      // Fetch profile data (for bio, pack, profileIcon)
+      final profile = await UserProfileAccessor.getPublicProfile(username);
 
-      // 5. Show the results in an AlertDialog
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text('$username’s Ranking'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text('🏅 Rank: ${leaderboards.entries.indexOf(entry) + 1}'),
-              SizedBox(height: 8),
-              Text('🚴 Total Distance: ${entry.value.toStringAsFixed(2)} km'),
+      Navigator.pop(context); // dismiss loading
+
+      if (!mounted) return;
+
+      if (entryIndex != -1 && profile != null) {
+        final entry = leaderboards.entries[entryIndex];
+        final icon = profile.profileIcon;
+        final bio = profile.bio.trim().isEmpty ? "No bio available" : profile.bio;
+        final pack = profile.pack?.trim().isNotEmpty == true ? profile.pack : null;
+
+        // Check if profileIcon is emoji or asset
+        final isEmoji = RegExp(r'^[\u{1F300}-\u{1FAFF}]+$', unicode: true).hasMatch(icon);
+
+        showDialog(
+          context: context,
+          builder: (_) => AlertDialog(
+            backgroundColor: Theme.of(context).dialogBackgroundColor,
+            title: Row(
+              children: [
+                if (isEmoji)
+                  Text(icon, style: const TextStyle(fontSize: 28))
+                else if (icon.isNotEmpty)
+                  Image.asset(
+                    'assets/icons/$icon.png',
+                    width: 32,
+                    height: 32,
+                    errorBuilder: (_, __, ___) => const Icon(Icons.person),
+                  ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    "$username’s Ranking",
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                      color: Theme.of(context).textTheme.bodyLarge?.color,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            content: SingleChildScrollView(
+              child: ListBody(
+                children: [
+                  Text(
+                    '🏅 Rank: ${entryIndex + 1}',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Theme.of(context).textTheme.bodyLarge?.color,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '🚴 Total Distance: ${entry.value.toStringAsFixed(2)} km',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Theme.of(context).textTheme.bodyLarge?.color,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  if (pack != null)
+                    Text(
+                      '📦 Pack: $pack',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Theme.of(context).textTheme.bodyLarge?.color,
+                      ),
+                    ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '📝 Bio: $bio',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontStyle: FontStyle.italic,
+                      color: Theme.of(context).textTheme.bodyLarge?.color,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Close'),
+              ),
             ],
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text('Close'),
-            ),
-          ],
-        ),
-      );
+        );
+      } else {
+        showDialog(
+          context: context,
+          builder: (_) => AlertDialog(
+            title: Text('$username’s Ranking'),
+            content: const Text('No ranking found for this user.'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Close'),
+              ),
+            ],
+          ),
+        );
+      }
     } catch (e) {
-      // Ensure we dismiss the loading spinner
-      Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error fetching ranking: $e')),
-      );
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error fetching ranking: $e')),
+        );
+      }
     }
   }
 
@@ -380,6 +468,72 @@ class _SocialPageState extends State<SocialPage>
     );
   }
 
+  void _showIconSelectionModal(BuildContext context, MyAppState appState, UserProfile profile) {
+    bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final allIcons = {...appState.availableIcons, ...appState.ownedIcons}.toList();
+
+    showModalBottomSheet(
+      context: context,
+      builder: (_) => Container(
+        padding: const EdgeInsets.all(16),
+        height: 300,
+        child: GridView.builder(
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 4,
+            mainAxisSpacing: 10,
+            crossAxisSpacing: 10,
+          ),
+          itemCount: allIcons.length,
+          itemBuilder: (context, index) {
+            final iconName = allIcons[index];
+            return GestureDetector(
+              onTap: () async {
+                setState(() {
+                  _currentIconSelection = iconName;
+                  _hasLocalProfileChanges = true;
+                  appState.selectedIcon = iconName;
+                });
+
+                final updatedProfile = UserProfile(
+                  username: profile.username,
+                  displayName: profile.displayName,
+                  bio: profile.bio,
+                  isPublic: isPublic,
+                  isNewAccount: false,
+                  profileIcon: iconName,
+                );
+
+                try {
+                  await UserProfileAccessor.updateOwnProfile(updatedProfile);
+                } catch (error) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text("Failed to update profile icon: $error")),
+                  );
+                }
+
+                Navigator.pop(context); // Close the modal
+              },
+              child: Column(
+                children: [
+                  SvgPicture.asset(
+                    'assets/$iconName.svg',
+                    height: 50,
+                    width: 50,
+                    colorFilter: (isDarkMode && !['pig', 'panda', 'tiger', 'bear', 'cow'].contains(iconName))
+                      ? const ColorFilter.mode(Colors.white70, BlendMode.srcIn)
+                      : null,
+                  ),
+                  SizedBox(height: 4),
+                  Text(iconName, style: TextStyle(fontSize: 12)),
+                ],
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
   /// **1️⃣ Profile Tab - View & Edit Profile**
   Widget _buildProfileTab() {
     bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
@@ -396,9 +550,6 @@ class _SocialPageState extends State<SocialPage>
         }
 
         UserProfile profile = snapshot.data!;
-        nameController.text = profile.displayName;
-        bioController.text = profile.bio;
-
         final appState = Provider.of<MyAppState>(context);
 
         return Padding(
@@ -413,18 +564,21 @@ class _SocialPageState extends State<SocialPage>
                     String displayIcon = _hasLocalProfileChanges
                         ? _currentIconSelection
                         : appState.selectedIcon;
-                    return Container(
-                      width: 125,
-                      height: 125,
-                      padding: EdgeInsets.all(15),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: isDarkMode
-                            ? Theme.of(context).colorScheme.secondary
-                            : Theme.of(context).colorScheme.primaryContainer,
-                      ),
-                      child: SvgPicture.asset(
-                        'assets/$displayIcon.svg',
+                    return GestureDetector(
+                      onTap: () => _showIconSelectionModal(context, appState, profile),
+                      child: Container(
+                        width: 125,
+                        height: 125,
+                        padding: EdgeInsets.all(15),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: isDarkMode
+                              ? Theme.of(context).colorScheme.secondary
+                              : Theme.of(context).colorScheme.primaryContainer,
+                        ),
+                        child: SvgPicture.asset(
+                          'assets/$displayIcon.svg',
+                        ),
                       ),
                     );
                   }),
@@ -495,90 +649,6 @@ class _SocialPageState extends State<SocialPage>
                 child: Column(
                   children: [
                     Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(height: 20),
-                        const Text("Select Profile Icon",
-                            style: TextStyle(fontSize: 16)),
-                        const SizedBox(height: 8),
-                        Consumer<MyAppState>(
-                          builder: (context, appState, child) {
-                            final allIcons = [
-                              ...{
-                                ...appState.availableIcons,
-                                ...appState.ownedIcons
-                              }
-                            ];
-                            String displayedIcon = _hasLocalProfileChanges
-                                ? _currentIconSelection
-                                : appState.selectedIcon;
-                            return Align(
-                              // <-- Ensures DropdownButton aligns left
-                              alignment: Alignment.centerLeft,
-                              child: DropdownButton<String>(
-                                value: allIcons.contains(displayedIcon)
-                                    ? displayedIcon
-                                    : (allIcons.isNotEmpty
-                                        ? allIcons.first
-                                        : null),
-                                items: allIcons.map((iconName) {
-                                  return DropdownMenuItem<String>(
-                                    value: iconName,
-                                    child: Row(
-                                      children: [
-                                        SvgPicture.asset(
-                                          'assets/$iconName.svg',
-                                          height: 30,
-                                          width: 30,
-                                          colorFilter: ColorFilter.mode(
-                                            isDarkMode
-                                                ? Colors.white70
-                                                : Colors.black,
-                                            BlendMode.srcIn,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 10),
-                                        Text(iconName),
-                                      ],
-                                    ),
-                                  );
-                                }).toList(),
-                                onChanged: (String? newIcon) {
-                                  if (newIcon != null) {
-                                    setState(() {
-                                      appState.selectedIcon = newIcon;
-                                      _currentIconSelection = newIcon;
-                                      _hasLocalProfileChanges = true;
-                                    });
-
-                                    UserProfile updatedProfile = UserProfile(
-                                      username: profile.username,
-                                      displayName: profile.displayName,
-                                      bio: profile.bio,
-                                      isPublic: isPublic,
-                                      isNewAccount: false,
-                                      profileIcon: newIcon,
-                                    );
-
-                                    UserProfileAccessor.updateOwnProfile(
-                                            updatedProfile)
-                                        .catchError((error) {
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        SnackBar(
-                                            content: Text(
-                                                "Failed to update profile icon: $error")),
-                                      );
-                                    });
-                                  }
-                                },
-                              ),
-                            );
-                          },
-                        ),
-                      ],
-                    ),
-                    Column(
                       children: [
                         TextField(
                           controller: nameController,
@@ -598,7 +668,7 @@ class _SocialPageState extends State<SocialPage>
                                 });
                               },
                             ),
-                            Text("Public Profile"),
+                            Text("Make My Profile Public"),
                           ],
                         ),
                       ],
@@ -829,6 +899,29 @@ class _SocialPageState extends State<SocialPage>
                         'Manage daily reminders here. Add notifications with a title, body, and time. Existing reminders will be shown here.',
                     child: NotificationScheduler(),
                   ),
+
+                  Divider(),
+                  SizedBox(height: 10),
+                  Center(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        AuthUtil.logout(context);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: isDarkMode
+                            ? Theme.of(context).colorScheme.secondary
+                            : Theme.of(context)
+                            .colorScheme
+                            .onInverseSurface,
+                      ),
+                      child: Text(
+                        "Logout",
+                        style: TextStyle(
+                          color: isDarkMode ? Colors.white70 : null,
+                        ),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ],
@@ -838,34 +931,12 @@ class _SocialPageState extends State<SocialPage>
     );
   }
 
-  Widget _buildStatCard(
-      IconData icon, String label, String value, Color color) {
-    return Card(
-      color: color.withAlpha(30),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 10.0),
-        child: Row(
-          children: [
-            Icon(icon, color: color),
-            SizedBox(width: 8),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(label,
-                    style:
-                    TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                Text(value,
-                    style:
-                    TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  Future<List> _searchTabFuture = Future.wait([
+    UserProfileAccessor.fetchAllUsernames(),
+    FriendsListAccessor.getFriendsList(),
+    FriendRequestsListAccessor.getFriendRequestList(),
+  ]);
+
   /// **2️⃣ Bikers Tab — show all bikers and filter by the search field**
   Widget _buildSearchTab() {
     bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
@@ -885,14 +956,15 @@ class _SocialPageState extends State<SocialPage>
                       icon: Icon(Icons.clear),
                       onPressed: () {
                         _searchController.clear();
+                        setState(() {}); // Refresh search
                       },
                     ),
             ),
           ),
         ),
         Expanded(
-          child: FutureBuilder<Map<String, dynamic>>(
-            future: _usersAndFriendsFuture, // only fetched once
+          child: FutureBuilder<List<dynamic>>(
+            future: _searchTabFuture,
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return Center(child: CircularProgressIndicator());
@@ -900,15 +972,15 @@ class _SocialPageState extends State<SocialPage>
               if (snapshot.hasError) {
                 return Center(child: Text("Error loading users"));
               }
-              //final users = snapshot.data!['users'] as List<String>;
-              //final friends = snapshot.data!['friends'] as List<String>;
-              // snapshot.data is Map<String, dynamic>, so its lists come back as List<dynamic>
-              final usersRaw   = snapshot.data!['users']   as List<dynamic>;
-              final friendsRaw = snapshot.data!['friends'] as List<dynamic>;
-              final users   = usersRaw.map((e) => e as String).toList();
-              final friends = friendsRaw.map((e) => e as String).toList();
 
-              // filter locally
+              final usersRaw = snapshot.data![0] as List<String>;
+              final friendsList = snapshot.data![1] as FriendsList;
+              final requestList = snapshot.data![2] as FriendRequestList;
+
+              final users = usersRaw;
+              final friends = friendsList.friends;
+              final pendingSent = requestList.pendingFriendRequests;
+
               final query = _searchController.text.toLowerCase();
               final filtered = query.isEmpty
                   ? users
@@ -918,131 +990,61 @@ class _SocialPageState extends State<SocialPage>
                 return Center(child: Text("No bikers found."));
               }
 
-              return ListView.builder(
-                itemCount: filtered.length,
-                itemBuilder: (context, idx) {
-                  final user = filtered[idx];
-                  final isFriend = friends.contains(user);
-                  return Card(
+              return Scrollbar(
+                thumbVisibility: true,
+                child: ListView.builder(
+                  itemCount: filtered.length,
+                  itemBuilder: (context, idx) {
+                    final user = filtered[idx];
+                    final isFriend = friends.contains(user);
+                    final isPending = pendingSent.contains(user);
 
+                    Widget trailingWidget;
+                    if (isFriend) {
+                      trailingWidget = Text(
+                        "Friend",
+                        style: TextStyle(color: Colors.green),
+                      );
+                    } else if (isPending) {
+                      trailingWidget = Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: const [
+                          Icon(Icons.hourglass_top, color: Colors.orange, size: 16),
+                          SizedBox(width: 4),
+                          Text("Pending", style: TextStyle(color: Colors.orange)),
+                        ],
+                      );
+                    } else {
+                      trailingWidget = ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: isDarkMode
+                              ? Theme.of(context).colorScheme.secondary
+                              : Theme.of(context).colorScheme.onInverseSurface,
+                          foregroundColor: isDarkMode
+                              ? Colors.white70
+                              : Theme.of(context).colorScheme.primary,
+                        ),
+                        onPressed: () => _sendFriendRequest(user),
+                        child: const Text("Add Friend"),
+                      );
+                    }
 
-                    margin: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                    color: isDarkMode
-                        ? Theme.of(context).colorScheme.onSecondaryFixedVariant
-                        : Colors.white,
-                    child: ListTile(
-                      leading: CircleAvatar(child: Text(user[0].toUpperCase())),
-                      title: GestureDetector(
-                        onTap: () async {
-                          var userInfo = await UserProfileAccessor.getPublicProfile(user);
-                          var userDisplayName = userInfo.displayName.isNotEmpty ? userInfo.displayName : userInfo.username;
-                          var userBio = userInfo.bio.isNotEmpty ? userInfo.bio : "";
-                          var userIcon = userInfo.profileIcon;
-                          showDialog(
-                            context: context,
-                            builder: (context) {
-                              return AlertDialog(
-                                title: Text("$user's Profile"),
-                                content: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    SvgPicture.asset(
-                                      'assets/$userIcon.svg', // Replace with your SVG file path
-                                      height: 100,
-                                      width: 100,
-                                      colorFilter: ColorFilter.mode(
-                                        isDarkMode ? Colors.white70 : Colors.black,
-                                        BlendMode.srcIn,
-                                      ),
-                                    ),
-                                    SizedBox(height: 10),
-                                    Column(
-                                      children: [
-                                        Center(
-                                          child: Text(
-                                            'Average Ride this Week',
-                                            style: TextStyle(
-                                                fontSize: 18, fontWeight: FontWeight.bold),
-                                          ),
-                                        ),
-                                        SizedBox(height: DimUtil.safeHeight(context) * 1 / 40),
-                                        Row(
-                                          children: [
-                                            Flexible(
-                                              child: _buildStatCard(
-                                                  Icons.timer,
-                                                  'Time',
-                                                  '${weekHistory.averageTime.round()} min',
-                                                  Colors.blueAccent),
-                                            ),
-                                            SizedBox(width: 8),
-                                            Flexible(
-                                              child: _buildStatCard(
-                                                  Icons.directions_bike,
-                                                  'Distance',
-                                                  '${weekHistory.averageDistance.round()} mi',
-                                                  Colors.orangeAccent),
-                                            ),
-                                            SizedBox(width: 8),
-                                            Flexible(
-                                              child: _buildStatCard(
-                                                  Icons.local_fire_department,
-                                                  'Calories',
-                                                  '${weekHistory.averageCalories.round()} cal',
-                                                  Colors.redAccent),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                    Align(
-                                      alignment: Alignment.centerLeft,
-                                      child: Text(
-                                          "Name: $userDisplayName\n"
-                                            "Bio: $userBio\n",
-                                        textAlign: TextAlign.start,
-                                      ),
-                                    ),
-                                    if (isFriend)
-                                      Text("This user is your friend.",
-                                          style: TextStyle(color: Colors.green)),
-                                  ],
-                                ),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () => Navigator.pop(context),
-                                    child: Text("Close"),
-                                  ),
-                                ],
-                              );
-                            },
-                          );
-                        },
-                        child: Text(
+                    return Card(
+                      margin: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      color: isDarkMode
+                          ? Theme.of(context).colorScheme.onSecondaryFixedVariant
+                          : Colors.white,
+                      child: ListTile(
+                        leading: CircleAvatar(child: Text(user[0].toUpperCase())),
+                        title: Text(
                           user,
                           style: TextStyle(color: isDarkMode ? Colors.white70 : null),
                         ),
+                        trailing: trailingWidget,
                       ),
-                      subtitle: isFriend
-                          ? Text("Friend", style: TextStyle(color: Colors.green))
-                          : null,
-                      trailing: isFriend
-                          ? null
-                          : ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: isDarkMode
-                                    ? Theme.of(context).colorScheme.secondary
-                                    : Theme.of(context).colorScheme.onInverseSurface,
-                                foregroundColor: isDarkMode
-                                    ? Colors.white70
-                                    : Theme.of(context).colorScheme.primary,
-                              ),
-                              onPressed: () => _sendFriendRequest(user),
-                              child: Text("Add Friend"),
-                            ),
-                    ),
-                  );
-                },
+                    );
+                  },
+                ),
               );
             },
           ),
@@ -1095,26 +1097,65 @@ class UserDailyGoalsSection extends StatelessWidget {
     return Consumer<UserDailyGoalProvider>(
       builder: (context, userGoals, child) {
         return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Divider(height: 40),
-            Text(
-              "Daily Goals",
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
+            Center(
+              child: Text(
+                "Daily Goals",
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 24,
+                ),
               ),
             ),
-            Text(" • Time: ${userGoals.dailyTimeGoal} min"),
-            Text(" • Distance: ${userGoals.dailyDistanceGoal} mi"),
-            Text(" • Calories: ${userGoals.dailyCaloriesGoal} cal"),
             SizedBox(height: 8),
-            OutlinedButton(
-              onPressed: () => _showChangeGoalsDialog(context, userGoals),
-              child: Text("Change Goals"),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                Column(
+                  children: [
+                    Icon(Icons.access_time, size: 56, color: Colors.blue), 
+                    SizedBox(height: 8),
+                    Text("${userGoals.dailyTimeGoal} min"),
+                  ],
+                ),
+                Column(
+                  children: [
+                    Icon(Icons.directions_bike, size: 56, color: Colors.amber), 
+                    SizedBox(height: 8),
+                    Text("${userGoals.dailyDistanceGoal} mi"),
+                  ],
+                ),
+                Column(
+                  children: [
+                    Icon(Icons.local_fire_department, size: 56, color: Colors.red), 
+                    SizedBox(height: 8),
+                    Text("${userGoals.dailyCaloriesGoal} cal"),
+                  ],
+                ),
+              ],
             ),
-            SizedBox(height: 20),
-          ],
+            SizedBox(height: 8), 
+            ElevatedButton(
+              onPressed: () => _showChangeGoalsDialog(context, userGoals),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).brightness == Brightness.dark
+                    ? Theme.of(context).colorScheme.secondary
+                    : Theme.of(context)
+                        .colorScheme
+                        .onInverseSurface,
+              ),
+              child: Text(
+                "Change Goals", 
+                style: TextStyle(
+                  color: Theme.of(context).brightness == Brightness.dark ? Colors.white70 : null,
+                ),
+              ),
+              
+            ),
+            SizedBox(height: 8), 
+          ]
         );
       },
     );
@@ -1250,8 +1291,6 @@ class _RequestsTabState extends State<RequestsTab> {
       });
     }
   }
-
-
 
   /// **Accept a friend request and remove from UI**
   Future<void> _acceptFriendRequest(String username) async {

@@ -24,6 +24,10 @@ class PackInvitesAccessor {
     };
 
     final response = await RequestsUtil.postWithToken("/packs/sendInvite", body);
+    if (response.statusCode == 404) {
+      throw "User not found";
+    }
+
     if (response.statusCode != 200) {
       throw "Error in sendInvite: response code ${response.statusCode}";
     }

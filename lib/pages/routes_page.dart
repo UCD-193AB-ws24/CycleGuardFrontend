@@ -3,10 +3,13 @@ import 'dart:math';
 
 import 'package:cycle_guard_app/data/coordinates_accessor.dart';
 import 'package:cycle_guard_app/data/health_info_accessor.dart';
+import 'package:cycle_guard_app/data/navigation_accessor.dart';
 import 'package:cycle_guard_app/data/single_trip_history.dart';
 import 'package:cycle_guard_app/data/user_profile_accessor.dart';
 import 'package:cycle_guard_app/pages/ble.dart';
+import 'package:cycle_guard_app/pages/routes_autofill.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -91,6 +94,12 @@ class mapState extends State<RoutesPage> {
 
     generatedPolylines = polylines;
     generatePolyLines(polylines, RoutesPage.POLYLINE_GENERATED);
+
+    if (polylines.isNotEmpty) {
+      center = polylines[0];
+      recenterMap();
+      recenterMap();
+    }
   }
 
   Future<void> setCustomIcon() async {
@@ -171,6 +180,7 @@ class mapState extends State<RoutesPage> {
 
   void startDistanceRecord() {
     _notifyCurrentRideData.value = AccumRideData.blank();
+    final appState = Provider.of<MyAppState>(context, listen: false);
     setState(() {
       showStartButton = false;
       showStopButton = true;
@@ -178,8 +188,10 @@ class mapState extends State<RoutesPage> {
       offCenter = true;
       _helmetConnected = isConnected();
     });
+    appState.startRouteRecording();
     stopwatch.start();
     recordedLocations.clear();
+    generatePolyLines(recordedLocations, RoutesPage.POLYLINE_USER);
     recordedAltitudes.clear();
     // if (!_helmetConnected) {
     //   recordedLocations.add(center!);
@@ -218,6 +230,7 @@ class mapState extends State<RoutesPage> {
 
   void stopDistanceRecord() {
     // print(recordedLocations);
+    final appState = Provider.of<MyAppState>(context, listen: false);
 
     setState(() {
       showStartButton = true;
@@ -225,6 +238,7 @@ class mapState extends State<RoutesPage> {
       recordingDistance = false;
     });
 
+     appState.stopRouteRecording();
 
     final miles = totalDist * METERS_TO_MILES;
     final minutes = rideDuration/60000;
@@ -300,7 +314,25 @@ class mapState extends State<RoutesPage> {
     // print(totalDist);
   }
 
+
+
+  String? destString;
+  void setRoutesAutofillCallback(BuildContext context) {
+    setCallback((input) {
+      // print("Selected autofill value: $input");
+      destString = input;
+      getGooglePolylinePoints().then((coordinates) {
+        generatePolyLines(coordinates, RoutesPage.POLYLINE_GENERATED);
+        dest = coordinates[coordinates.length-1];
+      });
+    });
+  }
+
   Widget mainMap() => GoogleMap(
+    onTap: (argument) {
+      print("Map tap");
+      SystemChannels.textInput.invokeMethod("TextInput.hide");
+    },
     onMapCreated: onMapCreated,
     onCameraMoveStarted: () {
       setState(() {
@@ -339,49 +371,7 @@ class mapState extends State<RoutesPage> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          GooglePlaceAutoCompleteTextField(
-            boxDecoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 8.0,
-                  spreadRadius: 2.0,
-                  offset: Offset(0, 4),
-                ),
-              ],
-            ),
-            textEditingController: textController,
-            googleAPIKey: apiService.getGoogleApiKey(),
-            isLatLngRequired: true,
-            getPlaceDetailWithLatLng: (prediction) {
-              dest = LatLng(
-                double.parse(prediction.lat!),
-                double.parse(prediction.lng!),
-              );
-              LatLngBounds bounds = getBounds();
-              mapController.animateCamera(
-                CameraUpdate.newLatLngBounds(bounds, 50),
-              );
-              dstFound = true;
-              showStartButton = true;
-              getGooglePolylinePoints().then((coordinates) {
-                generatePolyLines(coordinates, RoutesPage.POLYLINE_GENERATED);
-                // print(coordinates);
-                // print(coordinates.length);
-              });
-            },
-            itemClick: (prediction) {
-              textController.text = prediction.description!;
-              recordedLocations.clear();
-              recordedAltitudes.clear();
-              print("Destination selected");
-              FocusScope.of(context).unfocus();
-              // FocusManager.instance.primaryFocus?.unfocus();
-              // FocusScope.of(context).requestFocus(FocusNode());
-            },
-          ),
+          RoutesAutofill(),
         ],
       ),
     ),
@@ -404,6 +394,8 @@ class mapState extends State<RoutesPage> {
     Color selectedColor = Provider.of<MyAppState>(context, listen: false).selectedColor;
     final colorScheme = Theme.of(context).colorScheme;
     //final isDarkTheme = Theme.of(context).brightness == Brightness.dark;
+
+    setRoutesAutofillCallback(context);
 
     return Scaffold(
       body: Stack(
@@ -435,6 +427,17 @@ class mapState extends State<RoutesPage> {
             child: FloatingActionButton(
               onPressed: changeMapType,
               child: Icon(Icons.compass_calibration_sharp),
+              backgroundColor: Colors.white,
+              foregroundColor: Colors.black,
+              elevation: 4,
+            ),
+          ),
+          Positioned(
+            bottom: DimUtil.safeHeight(context) * 2 / 8,
+            right: DimUtil.safeWidth(context) * 1 / 20,
+            child: FloatingActionButton(
+              onPressed: () => _showRideInputPage(context),
+              child: Icon(Icons.bike_scooter),
               backgroundColor: Colors.white,
               foregroundColor: Colors.black,
               elevation: 4,
@@ -727,19 +730,21 @@ class mapState extends State<RoutesPage> {
   }
 
   Future<List<LatLng>> getGooglePolylinePoints() async {
-    PolylinePoints polylinePoints = PolylinePoints();
+    // PolylinePoints polylinePoints = PolylinePoints();
 
-    if(dest!=null) {
-      PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
-        googleApiKey: apiService.getGoogleApiKey(),
-        request: PolylineRequest(
-          origin: PointLatLng(center!.latitude, center!.longitude),
-          destination: PointLatLng(dest!.latitude, dest!.longitude),
-          mode: TravelMode.bicycling,
-        ),
-      );
+    if(destString!=null) {
+      // PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
+      //   googleApiKey: apiService.getGoogleApiKey(),
+      //   request: PolylineRequest(
+      //     origin: PointLatLng(center!.latitude, center!.longitude),
+      //     destination: PointLatLng(dest!.latitude, dest!.longitude),
+      //     mode: TravelMode.bicycling,
+      //   ),
+      // );
 
-      final res = result.points.map((point) => LatLng(point.latitude, point.longitude)).toList();
+      final result = await NavigationAccessor.getRoute(center!, destString!);
+
+      final res = result.polyline;
       generatedPolylines = res;
       return res;
     }
@@ -761,15 +766,33 @@ class mapState extends State<RoutesPage> {
     });
   }
 
+  static final double epsilon = .00001;
   void readHelmetData(BluetoothData data) {
     print("In callback function: $data");
     {
+      if (data.latitude.abs()<epsilon || data.longitude.abs()<epsilon) {
+        print("0, 0 found, returning");
+        return;
+      }
       final newCenter = LatLng(data.latitude, data.longitude);
       if (newCenter == center) return;
     }
 
+
     if (recordingDistance) prevLoc = center;
-    center = LatLng(data.latitude, data.longitude);
+    final newCenter = LatLng(data.latitude, data.longitude);
+    if (center != null) {
+      final distPoints = Geolocator.distanceBetween(
+        center!.latitude,
+        center!.longitude,
+        data.latitude,
+        data.longitude,
+      );
+      
+      if (!recordingDistance || distPoints <= 50) {
+        center = newCenter;
+      } else return;
+    }
     if (recordingDistance) {
       calcDist();
       // if (dest == null || (dest?.latitude == 0.0 && dest?.longitude == 0.0)) {
@@ -854,6 +877,67 @@ class mapState extends State<RoutesPage> {
     // print("Min distance calculation: $start, $end, $point, $res");
     return res;
   }
+
+
+  Future<int> _addRideInfo(double distance, double calories, double time) async {
+    final timestamp = await SubmitRideService.addRideRaw(distance, calories, time, [], [], 0, 0);
+    print("Successfully added ride info! Timestamp: $timestamp");
+    return timestamp;
+  }
+
+  final distanceController = TextEditingController();
+  final caloriesController = TextEditingController();
+  final timeController = TextEditingController();
+
+  Widget _numberField(TextEditingController controller, String hint) => TextField(
+    decoration: InputDecoration(
+      filled: true,
+      fillColor: Colors.white,
+      hintText: hint,
+      border: OutlineInputBorder(),
+    ),
+    style: TextStyle(color: Colors.black),
+    controller: controller,
+    keyboardType: TextInputType.numberWithOptions(signed: false, decimal: true),
+    textInputAction: TextInputAction.done,
+  );
+
+  void _showRideInputPage(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text("Manually add ride", style: TextStyle(color: Colors.black87),),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _numberField(distanceController, "Distance (miles)"),
+              const SizedBox(height: 12),
+              _numberField(caloriesController, "Calories burned"),
+              const SizedBox(height: 12),
+              _numberField(timeController, "Time (minutes)"),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: () {
+                  final distance = double.tryParse(distanceController.text) ?? 0.0;
+                  final calories = double.tryParse(caloriesController.text) ?? 0.0;
+                  final time = double.tryParse(timeController.text) ?? 0.0;
+
+                  _addRideInfo(distance, calories, time);
+                  Navigator.pop(context);
+                },
+                child: Text("Submit Ride Info"),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text("Cancel"),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
 }
 
 class AccumRideData {
@@ -866,7 +950,7 @@ class AccumRideData {
 
   /// AccumRideData is immutable. Instead, return a new object with the accumulated data.
   AccumRideData addToCur(double distance, double time, double altitude, HealthInfo healthInfo) {
-    final speed = distance/time;
+    final speed = 60 * distance/time;
     final calories = healthInfo.getCaloriesBurned(distance, time);
 
     var climb = this.climb + max(0, altitude-this.altitude);

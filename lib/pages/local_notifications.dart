@@ -79,7 +79,7 @@ class LocalNotificationService {
     if (!permissionStatus.isGranted) {
       // Request permission if not granted
       requestExactAlarmPermission();
-      return;
+      // return;
     }
 
     final now = tz.TZDateTime.now(tz.local);
@@ -121,7 +121,7 @@ class LocalNotificationService {
     final permissionStatus = await Permission.notification.status;
     if (!permissionStatus.isGranted) {
       requestExactAlarmPermission();
-      return;
+      // return;
     }
 
     final now = tz.TZDateTime.now(tz.local);
@@ -174,7 +174,7 @@ class LocalNotificationService {
     final permissionStatus = await Permission.notification.status;
     if (!permissionStatus.isGranted) {
       requestExactAlarmPermission();
-      return;
+      // return;
     }
 
     // Create a scheduled date with the specific date and time

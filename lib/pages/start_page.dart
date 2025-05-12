@@ -50,7 +50,7 @@ class _StartPageState extends State<StartPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFFF5E7C4),
+      backgroundColor: Color(0xFFFAECCF), //0xFFF5E7C4 0xFFFCF6CC 0xFFFAECCF
       body: Stack(
         children: [
           // Background logomark

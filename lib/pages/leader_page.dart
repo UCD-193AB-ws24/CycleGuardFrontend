@@ -168,7 +168,7 @@ class _LeaderPageState extends State<LeaderPage> with SingleTickerProviderStateM
         } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
           return const Center(child: Text('No leaderboard data found.'));
         } else {
-          final leaders = snapshot.data!;
+          final leaders = snapshot.data!.take(10).toList();
 
           return ListView.builder(
             itemCount: leaders.length,

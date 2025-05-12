@@ -4,6 +4,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:cycle_guard_app/data/user_stats_provider.dart';
 import 'package:cycle_guard_app/data/packs_accessor.dart';
 import 'package:cycle_guard_app/data/pack_invites_accessor.dart';
+import 'package:confetti/confetti.dart';
 
 class PacksPage extends StatefulWidget {
   const PacksPage({super.key});
@@ -17,8 +18,10 @@ class _PacksPageState extends State<PacksPage> {
   PackInvites? _myInvites;
   bool _loading = true;
   bool _sendingInvite = false;
+  bool isConfettiPlaying = false;
 
   final List<int> _challengeDistances = [50, 100, 250, 500];
+  final _confettiController = ConfettiController(duration: Duration(milliseconds: 500));
 
   @override
   void initState() {
@@ -27,25 +30,54 @@ class _PacksPageState extends State<PacksPage> {
   }
 
   Future<void> _loadData() async {
-    setState(() {
-      _loading = true;
-    });
+    if (mounted) {
+      setState(() {
+        _loading = true;
+      });
+    }
 
     try {
       final pack = await PacksAccessor.getPackData();
       final invites = await PackInvitesAccessor.getInvites();
 
-      setState(() {
-        _myPack = pack;
-        _myInvites = invites;
-        _loading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _myPack = pack;
+          _myInvites = invites;
+          _loading = false;
+
+          if (pack == null) {
+            if (mounted) {
+              setState(() {
+                _loading = false;
+              });
+            }
+            return;
+          }
+
+          final goal = pack.packGoal;
+          final goalReached = goal.totalContribution >= goal.goalAmount && goal.goalAmount != 0;
+
+          if (goalReached && !isConfettiPlaying) {
+            _confettiController.play();
+            isConfettiPlaying = true;
+          }
+        });
+      }
     } catch (e) {
-      _showMessage('Failed to load data: $e');
-      setState(() {
-        _loading = false;
-      });
+      if (mounted) {
+        _showMessage('Failed to load data: $e');
+        setState(() {
+          _loading = false;
+        });
+      }
     }
+  }
+
+  @override
+  void dispose() {
+    _confettiController.dispose();
+    super.dispose();
   }
 
   void _showMessage(String message) {
@@ -58,13 +90,13 @@ class _PacksPageState extends State<PacksPage> {
 
   Future<void> _leavePack() async {
     final userStats = Provider.of<UserStatsProvider>(context, listen: false);
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     if (userStats.username == _myPack?.owner) {
       final members = _myPack!.memberList;
 
-      final selectableMembers = members
-          .where((m) => m != userStats.username)
-          .toList();
+      final selectableMembers =
+          members.where((m) => m != userStats.username).toList();
 
       String newOwnerToAssign = PacksAccessor.NO_NEW_OWNER;
 
@@ -78,15 +110,36 @@ class _PacksPageState extends State<PacksPage> {
             return StatefulBuilder(
               builder: (context, setState) {
                 return AlertDialog(
-                  title: const Text("Select New Pack Leader"),
+                  backgroundColor: isDarkMode
+                      ? Theme.of(context).colorScheme.onPrimaryFixed
+                      : null,
+                  title: Text(
+                    "Select New Pack Leader",
+                    style: TextStyle(
+                      color: isDarkMode ? Colors.white : null,
+                    ),
+                  ),
                   content: DropdownButton<String>(
                     isExpanded: true,
-                    hint: const Text("Select a member"),
+                    dropdownColor: isDarkMode
+                        ? Theme.of(context).colorScheme.onPrimaryFixed
+                        : null,
+                    hint: Text(
+                      "Select a member",
+                      style: TextStyle(
+                        color: isDarkMode ? Colors.white70 : null,
+                      ),
+                    ),
                     value: selectedNewOwner,
                     items: selectableMembers.map((member) {
                       return DropdownMenuItem(
                         value: member,
-                        child: Text(member),
+                        child: Text(
+                          member,
+                          style: TextStyle(
+                            color: isDarkMode ? Colors.white : null,
+                          ),
+                        ),
                       );
                     }).toList(),
                     onChanged: (value) {
@@ -97,21 +150,32 @@ class _PacksPageState extends State<PacksPage> {
                   ),
                   actions: [
                     TextButton(
-                      onPressed: () => Navigator.of(context).pop(), // Cancel
-                      child: const Text("Cancel"),
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: Text(
+                        "Cancel",
+                        style: TextStyle(
+                          color: isDarkMode ? Colors.white70 : null,
+                        ),
+                      ),
                     ),
                     TextButton(
                       onPressed: () {
                         if (selectedNewOwner == null) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text("Please select a new leader")),
+                            const SnackBar(
+                                content: Text("Please select a new leader")),
                           );
                           return;
                         }
                         newOwnerToAssign = selectedNewOwner!;
-                        Navigator.of(context).pop(); // Close the dialog
+                        Navigator.of(context).pop();
                       },
-                      child: const Text("Confirm"),
+                      child: Text(
+                        "Confirm",
+                        style: TextStyle(
+                          color: isDarkMode ? Colors.red[300] : null,
+                        ),
+                      ),
                     ),
                   ],
                 );
@@ -121,7 +185,8 @@ class _PacksPageState extends State<PacksPage> {
         );
 
         // If still NO_NEW_OWNER, that means dialog was cancelled or no selection was made
-        if (newOwnerToAssign == PacksAccessor.NO_NEW_OWNER && selectableMembers.isNotEmpty) {
+        if (newOwnerToAssign == PacksAccessor.NO_NEW_OWNER &&
+            selectableMembers.isNotEmpty) {
           return; // Abort leave process
         }
       }
@@ -198,20 +263,25 @@ class _PacksPageState extends State<PacksPage> {
               final username = usernameController.text.trim();
               if (username.isNotEmpty) {
                 Navigator.of(context).pop();
+                if (!mounted) return;
                 setState(() {
                   _sendingInvite = true;
                 });
 
                 try {
                   await PackInvitesAccessor.sendInvite(username);
+                  if (!mounted) return;
                   _showMessage('Invite sent to $username');
                   await _loadData();
                 } catch (e) {
+                  if (!mounted) return;
                   _showMessage('Failed to send invite: $e');
                 } finally {
-                  setState(() {
-                    _sendingInvite = false;
-                  });
+                  if (mounted) {
+                    setState(() {
+                      _sendingInvite = false;
+                    });
+                  }
                 }
               }
             },
@@ -490,6 +560,8 @@ class _PacksPageState extends State<PacksPage> {
     final List<PieChartSectionData> sections = [];
     final total = goal.goalAmount.toDouble();
     final remainder = (total - goal.totalContribution).clamp(0.0, total);
+    final goalReached =
+        goal.totalContribution >= goal.goalAmount && goal.goalAmount != 0;
 
     goal.contributionMap.forEach((member, value) {
       if (value <= 0.0) return;
@@ -497,7 +569,10 @@ class _PacksPageState extends State<PacksPage> {
         color: colorMap[member],
         value: value,
         title: '',
-        radius: 60,
+        radius: 100,
+        borderSide: goalReached
+            ? const BorderSide(color: Colors.amber, width: 2)
+            : BorderSide.none,
       ));
     });
 
@@ -506,7 +581,10 @@ class _PacksPageState extends State<PacksPage> {
       color: Colors.grey.shade400,
       value: remainder,
       title: '',
-      radius: 60,
+      radius: 100,
+      borderSide: goalReached
+          ? const BorderSide(color: Colors.amber, width: 2)
+          : BorderSide.none,
     ));
 
     return sections;
@@ -532,639 +610,816 @@ class _PacksPageState extends State<PacksPage> {
     final double progress = (goal.goalAmount > 0)
         ? (goal.totalContribution / goal.goalAmount).clamp(0.0, 1.0)
         : 0.0;
+    final bool goalReached = goal.totalContribution >= goal.goalAmount && goal.goalAmount != 0;
 
     final memberColors = _buildMemberColors(goal.contributionMap, context);
 
-    return Card(
-      elevation: 3,
-      margin: const EdgeInsets.all(12),
-      color: isDarkMode ? Theme.of(context).colorScheme.onPrimaryFixed : null,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Text(
-                  _myPack!.name,
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: isDarkMode ? Colors.white : null,
+    return Stack(
+      alignment: Alignment.topCenter,
+      children: [
+      Card(
+        elevation: 3,
+        margin: const EdgeInsets.all(12),
+        color: isDarkMode ? Theme.of(context).colorScheme.onPrimaryFixed : null,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Text(
+                    _myPack!.name,
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: isDarkMode ? Colors.white : null,
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              LinearProgressIndicator(
-                value: progress,
-                minHeight: 10,
-                color:
-                    isDarkMode ? Theme.of(context).colorScheme.primary : null,
-                backgroundColor: isDarkMode
-                    ? Theme.of(context).colorScheme.primaryContainer
-                    : null,
-              ),
-              const SizedBox(height: 8),
-              goal.totalContribution >= goal.goalAmount && goal.goalAmount != 0
-                  ? Text.rich(
-                      TextSpan(
-                        text:
-                            'Congratulations! You completed the ${goal.goalAmount.toStringAsFixed(1)} mi challenge!',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: isDarkMode ? Colors.white : Colors.black,
-                        ),
-                      ),
-                      textAlign: TextAlign.center,
-                    )
-                  : Text.rich(
-                      TextSpan(
-                        children: [
-                          TextSpan(
-                            text: goal.goalAmount == 0
-                                ? 'No goal set, the pack owner can set a new goal!\n'
-                                : 'Goal: ${goal.goalAmount} mi\n',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: isDarkMode ? Colors.white : null,
-                            ),
+                const SizedBox(height: 8),
+                LinearProgressIndicator(
+                  value: progress,
+                  minHeight: 10,
+                  color: (goal.totalContribution >= goal.goalAmount &&
+                          goal.goalAmount != 0)
+                      ? Colors.amber
+                      : (isDarkMode
+                          ? Theme.of(context).colorScheme.primary
+                          : null),
+                  backgroundColor: isDarkMode
+                      ? Theme.of(context).colorScheme.primaryContainer
+                      : null,
+                ),
+                const SizedBox(height: 8),
+                goal.totalContribution >= goal.goalAmount &&
+                        goal.goalAmount != 0
+                    ? Text.rich(
+                        TextSpan(
+                          text:
+                              'Congratulations! You completed the ${goal.goalAmount.toStringAsFixed(0)} mi challenge!',
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            color: isDarkMode ? Colors.white : Colors.black,
                           ),
-                          if (goal.goalAmount != 0) ...[
+                        ),
+                        textAlign: TextAlign.center,
+                      )
+                    : Text.rich(
+                        TextSpan(
+                          children: [
                             TextSpan(
-                              text:
-                                  'Total: ${goal.totalContribution.toStringAsFixed(1)} mi\n',
+                              text: goal.goalAmount == 0
+                                  ? 'No goal set, the pack owner can set a new goal!\n'
+                                  : 'Goal: ${goal.goalAmount} mi\n',
                               style: TextStyle(
                                 fontSize: 16,
                                 color: isDarkMode ? Colors.white : null,
                               ),
                             ),
-                            TextSpan(
-                              text:
-                                  'Remaining: ${(goal.goalAmount - goal.totalContribution).clamp(0.0, goal.goalAmount).toStringAsFixed(1)} mi',
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: isDarkMode ? Colors.white : null,
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-              SizedBox(height: 12),
-              // cancel goal
-              if (isOwner) ...[
-                if (goal.goalAmount > 0)
-                  Center(
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        elevation: 2,
-                      ),
-                      onPressed: () async {
-                        final shouldCancel = await showDialog<bool>(
-                          context: context,
-                          builder: (context) => AlertDialog(
-                            backgroundColor: isDarkMode
-                                ? Theme.of(context).colorScheme.onPrimaryFixed
-                                : null,
-                            title: Text(
-                              'Are you sure?',
-                              style: TextStyle(
-                                color: isDarkMode ? Colors.white : null,
-                              ),
-                            ),
-                            content: Text(
-                              "Canceling a goal will lose all goal progress forever.",
-                              style: TextStyle(
-                                color: isDarkMode ? Colors.white : null,
-                              ),
-                            ),
-                            actions: [
-                              TextButton(
-                                onPressed: () =>
-                                    Navigator.of(context).pop(false),
-                                child: Text(
-                                  'No',
-                                  style: TextStyle(
-                                    color: isDarkMode ? Colors.white70 : null,
-                                  ),
+                            if (goal.goalAmount != 0) ...[
+                              TextSpan(
+                                text:
+                                    'Total: ${goal.totalContribution.toStringAsFixed(1)} mi\n',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: isDarkMode ? Colors.white : null,
                                 ),
                               ),
-                              TextButton(
-                                onPressed: () =>
-                                    Navigator.of(context).pop(true),
-                                child: Text(
-                                  'Yes',
-                                  style: TextStyle(
-                                    color: isDarkMode ? Colors.red[300] : null,
-                                  ),
+                              TextSpan(
+                                text:
+                                    'Remaining: ${(goal.goalAmount - goal.totalContribution).clamp(0.0, goal.goalAmount).toStringAsFixed(1)} mi\n',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: isDarkMode ? Colors.white : null,
+                                ),
+                              ),
+                              TextSpan(
+                                text:
+                                    'Ends on: ${DateTime.fromMillisecondsSinceEpoch(goal.endTime * 1000).toLocal().toString().split(' ')[0]}\n',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: isDarkMode ? Colors.white : null,
                                 ),
                               ),
                             ],
-                          ),
-                        );
-
-                        if (shouldCancel == true) {
-                          try {
-                            final success =
-                                await PacksAccessor.cancelPackGoal();
-                            if (success) {
-                              await _loadData();
-                            }
-                          } catch (e) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                  content: Text('Failed to cancel goal: $e')),
-                            );
-                          }
-                        }
-                      },
-                      child: const Text('Cancel Goal'),
-                    ),
-                  )
-                else
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Set a new goal:',
-                        style: TextStyle(
-                          color: isDarkMode ? Colors.white : null,
+                          ],
                         ),
                       ),
-                      Wrap(
-                        spacing: 8,
-                        children: [50, 100, 250, 500].map((amount) {
-                          return ElevatedButton(
-                            onPressed: () async {
-                              try {
-                                await PacksAccessor.setPackGoal(
-                                  60 * 60 * 24 * 7,
-                                  PacksAccessor.GOAL_DISTANCE,
-                                  amount,
-                                );
-                                await _loadData();
-                              } catch (e) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                      content: Text('Failed to set goal: $e')),
-                                );
-                              }
-                            },
-                            child: Text('$amount mi'),
-                          );
-                        }).toList(),
-                      ),
-                    ],
-                  ),
-              ],
-              const Divider(height: 28),
-              Center(
-                child: Text(
-                  'Pack Member Contribution:',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: isDarkMode ? Colors.white : null,
-                  ),
-                ),
-              ),
-              ...(() {
-                final memberEntries = members.map((member) {
-                  final value = goal.contributionMap[member] ?? 0.0;
-                  return MapEntry(member, value);
-                }).toList()
-                  ..sort((a, b) => b.value.compareTo(a.value));
-
-                return List.generate(memberEntries.length, (index) {
-                  final entry = memberEntries[index];
-                  final member = entry.key;
-                  final value = entry.value;
-                  final color = memberColors[member];
-
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 2),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 12,
-                          height: 12,
-                          margin: const EdgeInsets.only(right: 8),
-                          decoration: BoxDecoration(
-                            color: color,
-                            shape: BoxShape.rectangle,
-                          ),
+                // cancel goal
+                if (isOwner) ...[
+                  if (goal.goalAmount > 0)
+                    Center(
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          elevation: 2,
                         ),
-                        Expanded(
-                          child: Text(
-                            member,
-                            style: TextStyle(
-                              color: isDarkMode ? Colors.white : null,
-                            ),
-                          ),
-                        ),
-                        Text(
-                          (goal.goalAmount == 0 || value == 0)
-                              ? '    ---    '
-                              : '${value.toStringAsFixed(1)} mi : ${((value / goal.goalAmount) * 100).toStringAsFixed(1)}%',
-                          style: TextStyle(
-                            color: isDarkMode ? Colors.white : null,
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                });
-              })(),
-              const SizedBox(height: 20),
-              if (goal.goalAmount > 0) ...[
-                SizedBox(
-                  height: 200,
-                  child: PieChart(
-                    PieChartData(
-                      sectionsSpace: 2,
-                      centerSpaceRadius: 40,
-                      sections:
-                          _buildContributionChartSections(goal, memberColors),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 24),
-              ],
-
-              // Invites section (for pack owner)
-              if (isOwner) ...[
-                const Divider(height: 24),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Pending Invites:',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                        color: isDarkMode ? Colors.white : null,
-                      ),
-                    ),
-                    ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        elevation: 2,
-                      ),
-                      onPressed:
-                          _sendingInvite ? null : _showInviteMemberDialog,
-                      icon: _sendingInvite
-                          ? SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: isDarkMode ? Colors.white54 : null,
+                        onPressed: () async {
+                          final shouldCancel = await showDialog<bool>(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              backgroundColor: isDarkMode
+                                  ? Theme.of(context).colorScheme.onPrimaryFixed
+                                  : null,
+                              title: Text(
+                                'Are you sure?',
+                                style: TextStyle(
+                                  color: isDarkMode ? Colors.white : null,
+                                ),
                               ),
-                            )
-                          : const Icon(Icons.person_add),
-                      label: const Text('Invite Member'),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                if (invites.isEmpty)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8.0),
-                    child: Text(
-                      'No pending invites',
-                      style: TextStyle(
-                        fontStyle: FontStyle.italic,
-                        color: isDarkMode ? Colors.white70 : Colors.grey,
-                      ),
-                    ),
-                  )
-                else
-                  ...invites
-                      .map((username) => Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 4.0),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  username,
-                                  style: TextStyle(
-                                    color: isDarkMode ? Colors.white : null,
+                              content: Text(
+                                "Canceling a goal will lose all goal progress forever.",
+                                style: TextStyle(
+                                  color: isDarkMode ? Colors.white : null,
+                                ),
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () =>
+                                      Navigator.of(context).pop(false),
+                                  child: Text(
+                                    'No',
+                                    style: TextStyle(
+                                      color: isDarkMode ? Colors.white70 : null,
+                                    ),
                                   ),
                                 ),
-                                TextButton.icon(
-                                  onPressed: () => _cancelInvite(username),
-                                  icon: const Icon(Icons.close),
-                                  label: const Text('Cancel'),
-                                  style: TextButton.styleFrom(
-                                    foregroundColor: Colors.red,
+                                TextButton(
+                                  onPressed: () =>
+                                      Navigator.of(context).pop(true),
+                                  child: Text(
+                                    'Yes',
+                                    style: TextStyle(
+                                      color:
+                                          isDarkMode ? Colors.red[300] : null,
+                                    ),
                                   ),
                                 ),
                               ],
                             ),
-                          ))
-                      .toList(),
-              ],
+                          );
 
-              if (isOwner) ...[
-                // kick members
-                const SizedBox(height: 12),
-                Center(
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      elevation: 2,
-                    ),
-                    onPressed: () async {
-                      String? selectedUser;
-                      final confirmedKickUser = await showDialog<String>(
-                        context: context,
-                        builder: (context) {
-                          return StatefulBuilder(
-                            builder: (context, setState) {
-                              final kickableMembers = members
-                                  .where((m) => m != userStats.username)
-                                  .toList();
-
-                              return AlertDialog(
-                                title: const Text("Kick Pack Member"),
-                                content: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    DropdownButton<String>(
-                                      hint: const Text("Select a member"),
-                                      value: selectedUser,
-                                      items: kickableMembers.map((user) {
-                                        return DropdownMenuItem(
-                                          value: user,
-                                          child: Text(user),
-                                        );
-                                      }).toList(),
-                                      onChanged: (value) {
-                                        setState(() {
-                                          selectedUser = value;
-                                        });
-                                      },
-                                    ),
-                                  ],
-                                ),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () =>
-                                        Navigator.of(context).pop(null),
-                                    child: const Text("Close"),
-                                  ),
-                                  TextButton(
-                                    onPressed: () async {
-                                      if (selectedUser == null) {
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          const SnackBar(content: Text("Please select a member")),
-                                        );
-                                        return;
-                                      }
-                                      final confirm = await showDialog<bool>(
-                                        context: context,
-                                        builder: (context) => AlertDialog(
-                                          title: const Text("Confirm Kick"),
-                                          content: Text(
-                                            "Are you sure you want to kick $selectedUser from the pack? Their progress will be lost.",
-                                          ),
-                                          actions: [
-                                            TextButton(
-                                              onPressed: () =>
-                                                  Navigator.of(context)
-                                                      .pop(false),
-                                              child: const Text("No"),
-                                            ),
-                                            TextButton(
-                                              onPressed: () =>
-                                                  Navigator.of(context)
-                                                      .pop(true),
-                                              child: const Text("Confirm"),
-                                            ),
-                                          ],
-                                        ),
-                                      );
-
-                                      if (confirm == true) {
-                                        Navigator.of(context).pop(selectedUser);
-                                      }
-                                    },
-                                    child: const Text("Kick"),
-                                  ),
-                                ],
+                          if (shouldCancel == true) {
+                            try {
+                              final success =
+                                  await PacksAccessor.cancelPackGoal();
+                              if (success) {
+                                await _loadData();
+                              }
+                            } catch (e) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                    content: Text('Failed to cancel goal: $e')),
                               );
-                            },
-                          );
-                        },
-                      );
-
-                      if (confirmedKickUser != null) {
-                        try {
-                          await PacksAccessor.kickUser(confirmedKickUser);
-                          if (!context.mounted) return;
-                          await _loadData();
-                          if (!context.mounted) return;
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                                content:
-                                    Text("$confirmedKickUser was kicked.")),
-                          );
-                        } catch (e) {
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                  content: Text(
-                                      "Failed to kick $confirmedKickUser: $e")),
-                            );
+                            }
                           }
-                        }
-                      }
-                    },
-                    child: const Text("Kick Pack Members"),
-                  ),
-                ),
-
-                // change pack owner
-                const SizedBox(height: 12),
-                Center(
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      elevation: 2,
-                    ),
-                    onPressed: () async {
-                      String? selectedNewOwner;
-
-                      final confirmedNewOwner = await showDialog<String>(
-                        context: context,
-                        builder: (context) {
-                          return StatefulBuilder(
-                            builder: (context, setState) {
-                              final selectableMembers = members
-                                  .where((m) => m != userStats.username)
-                                  .toList();
-
-                              return AlertDialog(
-                                title: const Text("Change Pack Leader"),
-                                content: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    DropdownButton<String>(
-                                      hint: const Text("Select new leader"),
-                                      value: selectedNewOwner,
-                                      items: selectableMembers.map((user) {
-                                        return DropdownMenuItem(
-                                          value: user,
-                                          child: Text(user),
-                                        );
-                                      }).toList(),
-                                      onChanged: (value) {
-                                        setState(() {
-                                          selectedNewOwner = value;
-                                        });
-                                      },
-                                    ),
-                                  ],
-                                ),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () =>
-                                        Navigator.of(context).pop(null),
-                                    child: const Text("Close"),
-                                  ),
-                                  TextButton(
-                                    onPressed: () async {
-                                      if (selectedNewOwner == null) {
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          const SnackBar(content: Text("Please select a member")),
-                                        );
-                                        return;
-                                      }
-                                      final confirm = await showDialog<bool>(
-                                        context: context,
-                                        builder: (context) => AlertDialog(
-                                          title: const Text(
-                                              "Confirm Leadership Change"),
-                                          content: Text(
-                                            "Are you sure you want to make $selectedNewOwner the new Pack Leader?",
-                                          ),
-                                          actions: [
-                                            TextButton(
-                                              onPressed: () =>
-                                                  Navigator.of(context)
-                                                      .pop(false),
-                                              child: const Text("No"),
-                                            ),
-                                            TextButton(
-                                              onPressed: () =>
-                                                  Navigator.of(context)
-                                                      .pop(true),
-                                              child: const Text("Confirm"),
-                                            ),
-                                          ],
-                                        ),
-                                      );
-
-                                      if (confirm == true) {
-                                        Navigator.of(context)
-                                            .pop(selectedNewOwner);
-                                      }
-                                    },
-                                    child: const Text("Confirm"),
-                                  ),
-                                ],
-                              );
-                            },
-                          );
                         },
-                      );
-
-                      if (confirmedNewOwner != null) {
-                        try {
-                          await PacksAccessor.changeOwner(confirmedNewOwner);
-                          if (!context.mounted) return;
-                          await _loadData();
-                          if (!context.mounted) return;
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                                content: Text(
-                                    "$confirmedNewOwner is now the Pack Leader.")),
-                          );
-                        } catch (e) {
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                  content: Text("Failed to change leader: $e")),
-                            );
-                          }
-                        }
-                      }
-                    },
-                    child: const Text("Change Pack Leader"),
-                  ),
-                ),
-              ],
-
-              const Divider(height: 24),
-              ElevatedButton(
-                onPressed: () async {
-                  final shouldLeave = await showDialog<bool>(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                      backgroundColor: isDarkMode
-                          ? Theme.of(context).colorScheme.onPrimaryFixed
-                          : null,
-                      title: Text(
-                        'Are you sure?',
-                        style: TextStyle(
-                          color: isDarkMode ? Colors.white : null,
-                        ),
+                        child: const Text('Cancel Goal'),
                       ),
-                      content: Text(
-                        "If you leave a pack your progress towards its contribution will be lost forever.",
-                        style: TextStyle(
-                          color: isDarkMode ? Colors.white : null,
-                        ),
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.of(context).pop(false),
-                          child: Text(
-                            'No',
-                            style: TextStyle(
-                              color: isDarkMode ? Colors.white70 : null,
-                            ),
+                    )
+                  else
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Set a new goal:',
+                          style: TextStyle(
+                            color: isDarkMode ? Colors.white : null,
                           ),
                         ),
-                        TextButton(
-                          onPressed: () => Navigator.of(context).pop(true),
-                          child: Text(
-                            'Yes',
-                            style: TextStyle(
-                              color: isDarkMode ? Colors.red[300] : null,
-                            ),
-                          ),
+                        Wrap(
+                          spacing: 8,
+                          children: [50, 100, 250, 500].map((amount) {
+                            return ElevatedButton(
+                              onPressed: () async {
+                                try {
+                                  await PacksAccessor.setPackGoal(
+                                    60 * 60 * 24 * 7,
+                                    PacksAccessor.GOAL_DISTANCE,
+                                    amount,
+                                  );
+                                  await _loadData();
+                                } catch (e) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                        content:
+                                            Text('Failed to set goal: $e')),
+                                  );
+                                }
+                              },
+                              child: Text('$amount mi'),
+                            );
+                          }).toList(),
                         ),
                       ],
                     ),
-                  );
+                ],
+                const Divider(height: 28),
+                Center(
+                  child: Text(
+                    'Pack Member Contribution:',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: isDarkMode ? Colors.white : null,
+                    ),
+                  ),
+                ),
+                ...(() {
+                  final memberEntries = members.map((member) {
+                    final value = goal.contributionMap[member] ?? 0.0;
+                    return MapEntry(member, value);
+                  }).toList()
+                    ..sort((a, b) => b.value.compareTo(a.value));
 
-                  if (shouldLeave == true) {
-                    _leavePack();
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
+                  return List.generate(memberEntries.length, (index) {
+                    final entry = memberEntries[index];
+                    final member = entry.key;
+                    final value = entry.value;
+                    final color = memberColors[member];
+
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 2),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 12,
+                            height: 12,
+                            margin: const EdgeInsets.only(right: 8),
+                            decoration: BoxDecoration(
+                              color: color,
+                              shape: BoxShape.rectangle,
+                            ),
+                          ),
+                          Expanded(
+                            child: Text(
+                              member,
+                              style: TextStyle(
+                                color: isDarkMode ? Colors.white : null,
+                              ),
+                            ),
+                          ),
+                          Text(
+                            (goal.goalAmount == 0 || value == 0)
+                                ? '    ---    '
+                                : '${value.toStringAsFixed(1)} mi : ${((value / goal.goalAmount) * 100).toStringAsFixed(1)}%',
+                            style: TextStyle(
+                              color: isDarkMode ? Colors.white : null,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  });
+                })(),
+                const SizedBox(height: 20),
+                if (goal.goalAmount > 0) ...[
+                  SizedBox(
+                    height: 200,
+                    child: PieChart(
+                      PieChartData(
+                        sectionsSpace: 2,
+                        centerSpaceRadius: 0,
+                        sections:
+                            _buildContributionChartSections(goal, memberColors),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                ],
+
+                // Invites section (for pack owner)
+                if (isOwner) ...[
+                  const Divider(height: 24),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Pending Invites:',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                          color: isDarkMode ? Colors.white : null,
+                        ),
+                      ),
+                      ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          elevation: 2,
+                        ),
+                        onPressed:
+                            _sendingInvite ? null : _showInviteMemberDialog,
+                        icon: _sendingInvite
+                            ? SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: isDarkMode ? Colors.white54 : null,
+                                ),
+                              )
+                            : const Icon(Icons.person_add),
+                        label: const Text('Invite Member'),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  if (invites.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+                      child: Text(
+                        'No pending invites',
+                        style: TextStyle(
+                          fontStyle: FontStyle.italic,
+                          color: isDarkMode ? Colors.white70 : Colors.grey,
+                        ),
+                      ),
+                    )
+                  else
+                    ...invites
+                        .map((username) => Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 4.0),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    username,
+                                    style: TextStyle(
+                                      color: isDarkMode ? Colors.white : null,
+                                    ),
+                                  ),
+                                  TextButton.icon(
+                                    onPressed: () => _cancelInvite(username),
+                                    icon: const Icon(Icons.close),
+                                    label: const Text('Cancel'),
+                                    style: TextButton.styleFrom(
+                                      foregroundColor: Colors.red,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ))
+                        .toList(),
+                ],
+
+                if (isOwner) ...[
+                  const SizedBox(height: 12),
+                  Center(
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(elevation: 2),
+                      onPressed: () async {
+                        String? selectedUser;
+                        final confirmedKickUser = await showDialog<String>(
+                          context: context,
+                          builder: (context) {
+                            return StatefulBuilder(
+                              builder: (context, setState) {
+                                final kickableMembers = members
+                                    .where((m) => m != userStats.username)
+                                    .toList();
+
+                                return AlertDialog(
+                                  backgroundColor: isDarkMode
+                                      ? Theme.of(context)
+                                          .colorScheme
+                                          .onPrimaryFixed
+                                      : null,
+                                  title: Text(
+                                    "Kick Pack Member",
+                                    style: TextStyle(
+                                      color: isDarkMode ? Colors.white : null,
+                                    ),
+                                  ),
+                                  content: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      DropdownButton<String>(
+                                        hint: Text(
+                                          "Select a member",
+                                          style: TextStyle(
+                                            color: isDarkMode
+                                                ? Colors.white70
+                                                : null,
+                                          ),
+                                        ),
+                                        dropdownColor: isDarkMode
+                                            ? Theme.of(context)
+                                                .colorScheme
+                                                .onPrimaryFixed
+                                            : null,
+                                        value: selectedUser,
+                                        items: kickableMembers.map((user) {
+                                          return DropdownMenuItem(
+                                            value: user,
+                                            child: Text(
+                                              user,
+                                              style: TextStyle(
+                                                color: isDarkMode
+                                                    ? Colors.white
+                                                    : null,
+                                              ),
+                                            ),
+                                          );
+                                        }).toList(),
+                                        onChanged: (value) {
+                                          setState(() {
+                                            selectedUser = value;
+                                          });
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.of(context).pop(null),
+                                      child: Text(
+                                        "Close",
+                                        style: TextStyle(
+                                          color: isDarkMode
+                                              ? Colors.white70
+                                              : null,
+                                        ),
+                                      ),
+                                    ),
+                                    TextButton(
+                                      onPressed: () async {
+                                        if (selectedUser == null) {
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                  "Please select a member"),
+                                            ),
+                                          );
+                                          return;
+                                        }
+                                        final confirm = await showDialog<bool>(
+                                          context: context,
+                                          builder: (context) => AlertDialog(
+                                            backgroundColor: isDarkMode
+                                                ? Theme.of(context)
+                                                    .colorScheme
+                                                    .onPrimaryFixed
+                                                : null,
+                                            title: Text(
+                                              "Confirm Kick",
+                                              style: TextStyle(
+                                                color: isDarkMode
+                                                    ? Colors.white
+                                                    : null,
+                                              ),
+                                            ),
+                                            content: Text(
+                                              "Are you sure you want to kick $selectedUser from the pack? Their progress will be lost.",
+                                              style: TextStyle(
+                                                color: isDarkMode
+                                                    ? Colors.white
+                                                    : null,
+                                              ),
+                                            ),
+                                            actions: [
+                                              TextButton(
+                                                onPressed: () =>
+                                                    Navigator.of(context)
+                                                        .pop(false),
+                                                child: Text(
+                                                  "No",
+                                                  style: TextStyle(
+                                                    color: isDarkMode
+                                                        ? Colors.white70
+                                                        : null,
+                                                  ),
+                                                ),
+                                              ),
+                                              TextButton(
+                                                onPressed: () =>
+                                                    Navigator.of(context)
+                                                        .pop(true),
+                                                child: Text(
+                                                  "Confirm",
+                                                  style: TextStyle(
+                                                    color: isDarkMode
+                                                        ? Colors.red[300]
+                                                        : null,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        );
+
+                                        if (confirm == true) {
+                                          Navigator.of(context)
+                                              .pop(selectedUser);
+                                        }
+                                      },
+                                      child: Text(
+                                        "Kick",
+                                        style: TextStyle(
+                                          color: isDarkMode
+                                              ? Colors.red[300]
+                                              : null,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                );
+                              },
+                            );
+                          },
+                        );
+
+                        if (confirmedKickUser != null) {
+                          try {
+                            await PacksAccessor.kickUser(confirmedKickUser);
+                            if (!context.mounted) return;
+                            await _loadData();
+                            if (!context.mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                  content:
+                                      Text("$confirmedKickUser was kicked.")),
+                            );
+                          } catch (e) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                    content: Text(
+                                        "Failed to kick $confirmedKickUser: $e")),
+                              );
+                            }
+                          }
+                        }
+                      },
+                      child: const Text("Kick Pack Members"),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Center(
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(elevation: 2),
+                      onPressed: () async {
+                        String? selectedNewOwner;
+                        final confirmedNewOwner = await showDialog<String>(
+                          context: context,
+                          builder: (context) {
+                            return StatefulBuilder(
+                              builder: (context, setState) {
+                                final selectableMembers = members
+                                    .where((m) => m != userStats.username)
+                                    .toList();
+
+                                return AlertDialog(
+                                  backgroundColor: isDarkMode
+                                      ? Theme.of(context)
+                                          .colorScheme
+                                          .onPrimaryFixed
+                                      : null,
+                                  title: Text(
+                                    "Change Pack Leader",
+                                    style: TextStyle(
+                                      color: isDarkMode ? Colors.white : null,
+                                    ),
+                                  ),
+                                  content: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      DropdownButton<String>(
+                                        hint: Text(
+                                          "Select new leader",
+                                          style: TextStyle(
+                                            color: isDarkMode
+                                                ? Colors.white70
+                                                : null,
+                                          ),
+                                        ),
+                                        dropdownColor: isDarkMode
+                                            ? Theme.of(context)
+                                                .colorScheme
+                                                .onPrimaryFixed
+                                            : null,
+                                        value: selectedNewOwner,
+                                        items: selectableMembers.map((user) {
+                                          return DropdownMenuItem(
+                                            value: user,
+                                            child: Text(
+                                              user,
+                                              style: TextStyle(
+                                                color: isDarkMode
+                                                    ? Colors.white
+                                                    : null,
+                                              ),
+                                            ),
+                                          );
+                                        }).toList(),
+                                        onChanged: (value) {
+                                          setState(() {
+                                            selectedNewOwner = value;
+                                          });
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.of(context).pop(null),
+                                      child: Text(
+                                        "Close",
+                                        style: TextStyle(
+                                          color: isDarkMode
+                                              ? Colors.white70
+                                              : null,
+                                        ),
+                                      ),
+                                    ),
+                                    TextButton(
+                                      onPressed: () async {
+                                        if (selectedNewOwner == null) {
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(
+                                            const SnackBar(
+                                                content: Text(
+                                                    "Please select a member")),
+                                          );
+                                          return;
+                                        }
+                                        final confirm = await showDialog<bool>(
+                                          context: context,
+                                          builder: (context) => AlertDialog(
+                                            backgroundColor: isDarkMode
+                                                ? Theme.of(context)
+                                                    .colorScheme
+                                                    .onPrimaryFixed
+                                                : null,
+                                            title: Text(
+                                              "Confirm Leadership Change",
+                                              style: TextStyle(
+                                                color: isDarkMode
+                                                    ? Colors.white
+                                                    : null,
+                                              ),
+                                            ),
+                                            content: Text(
+                                              "Are you sure you want to make $selectedNewOwner the new Pack Leader?",
+                                              style: TextStyle(
+                                                color: isDarkMode
+                                                    ? Colors.white
+                                                    : null,
+                                              ),
+                                            ),
+                                            actions: [
+                                              TextButton(
+                                                onPressed: () =>
+                                                    Navigator.of(context)
+                                                        .pop(false),
+                                                child: Text(
+                                                  "No",
+                                                  style: TextStyle(
+                                                    color: isDarkMode
+                                                        ? Colors.white70
+                                                        : null,
+                                                  ),
+                                                ),
+                                              ),
+                                              TextButton(
+                                                onPressed: () =>
+                                                    Navigator.of(context)
+                                                        .pop(true),
+                                                child: Text(
+                                                  "Confirm",
+                                                  style: TextStyle(
+                                                    color: isDarkMode
+                                                        ? Colors.red[300]
+                                                        : null,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        );
+
+                                        if (confirm == true) {
+                                          Navigator.of(context)
+                                              .pop(selectedNewOwner);
+                                        }
+                                      },
+                                      child: Text(
+                                        "Confirm",
+                                        style: TextStyle(
+                                          color: isDarkMode
+                                              ? Colors.red[300]
+                                              : null,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                );
+                              },
+                            );
+                          },
+                        );
+
+                        if (confirmedNewOwner != null) {
+                          try {
+                            await PacksAccessor.changeOwner(confirmedNewOwner);
+                            if (!context.mounted) return;
+                            await _loadData();
+                            if (!context.mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                  content: Text(
+                                      "$confirmedNewOwner is now the Pack Leader.")),
+                            );
+                          } catch (e) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                    content:
+                                        Text("Failed to change leader: $e")),
+                              );
+                            }
+                          }
+                        }
+                      },
+                      child: const Text("Change Pack Leader"),
+                    ),
+                  ),
+                ],
+
+                const Divider(height: 24),
+                ElevatedButton(
+                  onPressed: () async {
+                    final shouldLeave = await showDialog<bool>(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        backgroundColor: isDarkMode
+                            ? Theme.of(context).colorScheme.onPrimaryFixed
+                            : null,
+                        title: Text(
+                          'Are you sure?',
+                          style: TextStyle(
+                            color: isDarkMode ? Colors.white : null,
+                          ),
+                        ),
+                        content: Text(
+                          "If you leave a pack your progress towards its contribution will be lost forever.",
+                          style: TextStyle(
+                            color: isDarkMode ? Colors.white : null,
+                          ),
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.of(context).pop(false),
+                            child: Text(
+                              'No',
+                              style: TextStyle(
+                                color: isDarkMode ? Colors.white70 : null,
+                              ),
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: () => Navigator.of(context).pop(true),
+                            child: Text(
+                              'Yes',
+                              style: TextStyle(
+                                color: isDarkMode ? Colors.red[300] : null,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+
+                    if (shouldLeave == true) {
+                      _leavePack();
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                  ),
+                  child: const Text(
+                    'Leave Pack',
+                    style: TextStyle(color: Colors.white),
+                  ),
                 ),
-                child: const Text(
-                  'Leave Pack',
-                  style: TextStyle(color: Colors.white),
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
-    );
+      ConfettiWidget(
+        confettiController: _confettiController,
+        shouldLoop: false,
+
+        blastDirectionality: BlastDirectionality.explosive,
+        numberOfParticles: 50,
+        gravity: 0.5,
+      ),
+    ]);
   }
 
   Widget _buildInvitesSection() {

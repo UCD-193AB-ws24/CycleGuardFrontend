@@ -534,7 +534,7 @@ class mapState extends State<RoutesPage> {
                 'Distance',
                 rideData.distance,
                 'mi',
-                Colors.redAccent),
+                Colors.orangeAccent),
             ),
             Positioned(
               top: DimUtil.safeHeight(context) * 4.2 / 16,
@@ -546,7 +546,7 @@ class mapState extends State<RoutesPage> {
                   'Speed',
                   rideData.speed,
                   'mph',
-                  Colors.orangeAccent),
+                  Colors.lightBlueAccent),
             ),
             Positioned(
               top: DimUtil.safeHeight(context) * 3 / 16,
@@ -566,11 +566,11 @@ class mapState extends State<RoutesPage> {
               height: DimUtil.safeHeight(context) * 1.2 / 16,
               left: DimUtil.safeWidth(context) * 3.4 / 10,
               child: _buildStatCard(
-                  Icons.local_fire_department,
-                  'Calories',
-                  rideData.calories,
-                  'cal',
-                  Colors.lightBlueAccent),
+                Icons.trending_up,
+                  'Altitude',
+                  rideData.altitude,
+                  'ft',
+                  Colors.deepPurpleAccent),
             ),
             Positioned(
               top: DimUtil.safeHeight(context) * 3 / 16,
@@ -578,11 +578,11 @@ class mapState extends State<RoutesPage> {
               height: DimUtil.safeHeight(context) * 1.2 / 16,
               right: DimUtil.safeWidth(context) * .2 / 10,
               child: _buildStatCard(
-                  Icons.trending_up,
-                  'Altitude',
-                  rideData.altitude,
-                  'ft',
-                  Colors.deepPurpleAccent),
+                  Icons.local_fire_department,
+                  'Calories',
+                  rideData.calories,
+                  'cal',
+                  Colors.redAccent),
             ),
             Positioned(
               top: DimUtil.safeHeight(context) * 4.2 / 16,

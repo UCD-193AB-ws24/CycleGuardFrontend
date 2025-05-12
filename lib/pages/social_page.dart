@@ -1099,7 +1099,7 @@ class UserDailyGoalsSection extends StatelessWidget {
                 "Daily Goals",
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
-                  fontSize: 28,
+                  fontSize: 24,
                 ),
               ),
             ),
@@ -1131,9 +1131,22 @@ class UserDailyGoalsSection extends StatelessWidget {
               ],
             ),
             SizedBox(height: 8), 
-            OutlinedButton(
+            ElevatedButton(
               onPressed: () => _showChangeGoalsDialog(context, userGoals),
-              child: Text("Change Goals"),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).brightness == Brightness.dark
+                    ? Theme.of(context).colorScheme.secondary
+                    : Theme.of(context)
+                        .colorScheme
+                        .onInverseSurface,
+              ),
+              child: Text(
+                "Change Goals", 
+                style: TextStyle(
+                  color: Theme.of(context).brightness == Brightness.dark ? Colors.white70 : null,
+                ),
+              ),
+              
             ),
             SizedBox(height: 8), 
           ]

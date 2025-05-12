@@ -53,6 +53,8 @@ class _SocialPageState extends State<SocialPage>
   @override
   void initState() {
     super.initState();
+
+    print("Social: initState()");
     _tabController = TabController(length: numOfTabs, vsync: this);
     _profileFuture = UserProfileAccessor.getOwnProfile();
     Future.microtask(() =>
@@ -62,7 +64,7 @@ class _SocialPageState extends State<SocialPage>
     bioController = TextEditingController();
     _searchController = TextEditingController();
     _searchScrollController = ScrollController();
-    _usersAndFriendsFuture = _fetchUsersAndFriends();
+    // _usersAndFriendsFuture = _fetchUsersAndFriends();
     _searchController.addListener(() => setState(() {}));
     _loadProfile();
 
@@ -186,6 +188,8 @@ class _SocialPageState extends State<SocialPage>
     _tabController.dispose();
     super.dispose();
   }
+
+  List<String> allUsers = [], friends = [];
 
   /// **Fetch all users & friend list separately**
   Future<Map<String, dynamic>> _fetchUsersAndFriends() async {
@@ -927,6 +931,12 @@ class _SocialPageState extends State<SocialPage>
     );
   }
 
+  Future<List> _searchTabFuture = Future.wait([
+    UserProfileAccessor.fetchAllUsernames(),
+    FriendsListAccessor.getFriendsList(),
+    FriendRequestsListAccessor.getFriendRequestList(),
+  ]);
+
   /// **2️⃣ Bikers Tab — show all bikers and filter by the search field**
   Widget _buildSearchTab() {
     bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
@@ -954,11 +964,7 @@ class _SocialPageState extends State<SocialPage>
         ),
         Expanded(
           child: FutureBuilder<List<dynamic>>(
-            future: Future.wait([
-              UserProfileAccessor.fetchAllUsernames(),
-              FriendsListAccessor.getFriendsList(),
-              FriendRequestsListAccessor.getFriendRequestList(),
-            ]),
+            future: _searchTabFuture,
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return Center(child: CircularProgressIndicator());

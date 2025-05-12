@@ -3,9 +3,11 @@ import 'dart:math';
 
 import 'package:cycle_guard_app/data/coordinates_accessor.dart';
 import 'package:cycle_guard_app/data/health_info_accessor.dart';
+import 'package:cycle_guard_app/data/navigation_accessor.dart';
 import 'package:cycle_guard_app/data/single_trip_history.dart';
 import 'package:cycle_guard_app/data/user_profile_accessor.dart';
 import 'package:cycle_guard_app/pages/ble.dart';
+import 'package:cycle_guard_app/pages/routes_autofill.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
@@ -312,6 +314,20 @@ class mapState extends State<RoutesPage> {
     // print(totalDist);
   }
 
+
+
+  String? destString;
+  void setRoutesAutofillCallback(BuildContext context) {
+    setCallback((input) {
+      // print("Selected autofill value: $input");
+      destString = input;
+      getGooglePolylinePoints().then((coordinates) {
+        generatePolyLines(coordinates, RoutesPage.POLYLINE_GENERATED);
+        dest = coordinates[coordinates.length-1];
+      });
+    });
+  }
+
   Widget mainMap() => GoogleMap(
     onTap: (argument) {
       print("Map tap");
@@ -355,49 +371,7 @@ class mapState extends State<RoutesPage> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          GooglePlaceAutoCompleteTextField(
-            boxDecoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 8.0,
-                  spreadRadius: 2.0,
-                  offset: Offset(0, 4),
-                ),
-              ],
-            ),
-            textEditingController: textController,
-            googleAPIKey: apiService.getGoogleApiKey(),
-            isLatLngRequired: true,
-            getPlaceDetailWithLatLng: (prediction) {
-              dest = LatLng(
-                double.parse(prediction.lat!),
-                double.parse(prediction.lng!),
-              );
-              LatLngBounds bounds = getBounds();
-              mapController.animateCamera(
-                CameraUpdate.newLatLngBounds(bounds, 50),
-              );
-              dstFound = true;
-              showStartButton = true;
-              getGooglePolylinePoints().then((coordinates) {
-                generatePolyLines(coordinates, RoutesPage.POLYLINE_GENERATED);
-                // print(coordinates);
-                // print(coordinates.length);
-              });
-            },
-            itemClick: (prediction) {
-              textController.text = prediction.description!;
-              recordedLocations.clear();
-              recordedAltitudes.clear();
-              print("Destination selected");
-              FocusScope.of(context).unfocus();
-              // FocusManager.instance.primaryFocus?.unfocus();
-              // FocusScope.of(context).requestFocus(FocusNode());
-            },
-          ),
+          RoutesAutofill(),
         ],
       ),
     ),
@@ -420,6 +394,8 @@ class mapState extends State<RoutesPage> {
     Color selectedColor = Provider.of<MyAppState>(context, listen: false).selectedColor;
     final colorScheme = Theme.of(context).colorScheme;
     //final isDarkTheme = Theme.of(context).brightness == Brightness.dark;
+
+    setRoutesAutofillCallback(context);
 
     return Scaffold(
       body: Stack(
@@ -754,19 +730,21 @@ class mapState extends State<RoutesPage> {
   }
 
   Future<List<LatLng>> getGooglePolylinePoints() async {
-    PolylinePoints polylinePoints = PolylinePoints();
+    // PolylinePoints polylinePoints = PolylinePoints();
 
-    if(dest!=null) {
-      PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
-        googleApiKey: apiService.getGoogleApiKey(),
-        request: PolylineRequest(
-          origin: PointLatLng(center!.latitude, center!.longitude),
-          destination: PointLatLng(dest!.latitude, dest!.longitude),
-          mode: TravelMode.bicycling,
-        ),
-      );
+    if(destString!=null) {
+      // PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
+      //   googleApiKey: apiService.getGoogleApiKey(),
+      //   request: PolylineRequest(
+      //     origin: PointLatLng(center!.latitude, center!.longitude),
+      //     destination: PointLatLng(dest!.latitude, dest!.longitude),
+      //     mode: TravelMode.bicycling,
+      //   ),
+      // );
 
-      final res = result.points.map((point) => LatLng(point.latitude, point.longitude)).toList();
+      final result = await NavigationAccessor.getRoute(center!, destString!);
+
+      final res = result.polyline;
       generatedPolylines = res;
       return res;
     }
@@ -920,7 +898,7 @@ class mapState extends State<RoutesPage> {
     ),
     style: TextStyle(color: Colors.black),
     controller: controller,
-    keyboardType: TextInputType.numberWithOptions(signed: false, decimal: false),
+    keyboardType: TextInputType.numberWithOptions(signed: false, decimal: true),
     textInputAction: TextInputAction.done,
   );
 

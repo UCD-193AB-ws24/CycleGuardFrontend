@@ -86,7 +86,7 @@ class LoginFormState extends State<CreateAccountPage> {
         return StatefulBuilder(
           builder: (context, setStateDialog) {
             return AlertDialog(
-              title: Text("Terms of Service"),
+              title: Text("Terms of Service", style: TextStyle(color: Colors.black)),
               content: Container(
                 width: double.maxFinite,
                 height: MediaQuery.of(context).size.height * 0.6,
@@ -102,6 +102,11 @@ class LoginFormState extends State<CreateAccountPage> {
                               data: termsText,
                               shrinkWrap: true,
                               physics: ClampingScrollPhysics(),
+                              styleSheet: MarkdownStyleSheet(
+                                  a: const TextStyle(
+                                  color: Colors.black,
+                                ),
+                              )
                             )
                           ],
                         ),

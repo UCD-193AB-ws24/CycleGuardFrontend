@@ -132,13 +132,17 @@ class AuthUtil {
 
     // selectedIndexGlobal.value=1;
 
-    Restart.restartApp(notificationBody: "Logging out...");
+    // print("Calling main...");
+    main();
+    // print("Called main...");
 
-    // if (context.mounted) {
-    //   Navigator.pushAndRemoveUntil(context,
-    //       MaterialPageRoute(builder: (_) => OnBoardStart()), (route) => false);
-    // } else {
-    //   print("Failed to logout");
-    // }
+    // Restart.restartApp(notificationBody: "Logging out...");
+
+    if (context.mounted) {
+      Navigator.pushAndRemoveUntil(context,
+          MaterialPageRoute(builder: (_) => OnBoardStart()), (route) => false);
+    } else {
+      print("Failed to logout");
+    }
   }
 }

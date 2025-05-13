@@ -19,6 +19,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:google_places_flutter/google_places_flutter.dart';
 import 'package:cycle_guard_app/data/user_daily_goal_provider.dart';
 import 'package:cycle_guard_app/data/week_history_provider.dart';
+import 'package:vibration/vibration.dart';
 import 'package:location/location.dart' hide LocationAccuracy;
 
 import 'package:provider/provider.dart';
@@ -91,7 +92,7 @@ class mapState extends State<RoutesPage> {
   double distanceGoal = 0.0;
   double caloriesGoal = 0.0;
   double timeGoal = 0.0;
-  
+
   double targetDistance = 0.0;
   double targetCalories = 0.0;
   double targetTime = 0.0;
@@ -585,14 +586,14 @@ class mapState extends State<RoutesPage> {
               width: DimUtil.safeWidth(context) * 3.2 / 10,
               height: DimUtil.safeHeight(context) * 1.2 / 16,
               left: DimUtil.safeWidth(context) * .2 / 10,
-              child: _buildStatCard(
-                Icons.directions_bike,
-                'Distance',
-                rideData.distance,
-                targetDistance,
-                distanceGoal,
-                'mi',
-                Colors.orangeAccent),
+              child: StatCard(
+                icon: Icons.timer,
+                label: 'Time',
+                value: rideData.time,
+                remaining: targetTime,
+                goal: timeGoal,
+                unit: 'min',
+                color: Colors.blueAccent),
             ),
             Positioned(
               top: DimUtil.safeHeight(context) * 4.2 / 16,
@@ -613,14 +614,14 @@ class mapState extends State<RoutesPage> {
               width: DimUtil.safeWidth(context) * 3.2 / 10,
               height: DimUtil.safeHeight(context) * 1.2 / 16,
               left: DimUtil.safeWidth(context) * 3.4 / 10,
-              child: _buildStatCard(
-                  Icons.timer,
-                  'Time',
-                  rideData.time,
-                  targetTime,
-                  timeGoal,
-                  'min',
-                  Colors.blueAccent),
+              child: StatCard(
+                icon: Icons.directions_bike,
+                label: 'Distance',
+                value: rideData.distance,
+                remaining: targetDistance,
+                goal: distanceGoal,
+                unit: 'mi',
+                color: Colors.greenAccent),
             ),
             Positioned(
               top: DimUtil.safeHeight(context) * 4.2 / 16,
@@ -641,14 +642,14 @@ class mapState extends State<RoutesPage> {
               width: DimUtil.safeWidth(context) * 3.2 / 10,
               height: DimUtil.safeHeight(context) * 1.2 / 16,
               right: DimUtil.safeWidth(context) * .2 / 10,
-              child: _buildStatCard(
-                  Icons.local_fire_department,
-                  'Calories',
-                  rideData.calories,
-                  targetCalories,
-                  caloriesGoal,
-                  'cal',
-                  Colors.redAccent),
+              child: StatCard(
+                  icon: Icons.local_fire_department,
+                  label: 'Calories',
+                  value: rideData.calories,
+                  remaining: targetCalories,
+                  goal: caloriesGoal,
+                  unit: 'cal',
+                  color: Colors.redAccent),
             ),
             Positioned(
               top: DimUtil.safeHeight(context) * 4.2 / 16,
@@ -1135,4 +1136,137 @@ class PostRideData {
     );
   }
 
+}
+
+class StatCard extends StatefulWidget {
+  final IconData icon;
+  final String label;
+  final double value;
+  final double remaining;
+  final double goal;
+  final String unit;
+  final Color color;
+
+  const StatCard({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.remaining,
+    required this.goal,
+    required this.unit,
+    required this.color,
+    Key? key,
+  }) : super(key: key);
+
+  @override
+  _StatCardState createState() => _StatCardState();
+}
+
+class _StatCardState extends State<StatCard> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+  bool _animationPlayed = false;
+  bool _isDisposed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: Duration(milliseconds: 3000),
+      vsync: this,
+    );
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 1.08) 
+        .chain(CurveTween(curve: Curves.easeInOut))
+        .animate(_controller);
+  }
+
+  @override
+  void didUpdateWidget(covariant StatCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Only trigger if not previously played AND goal is met AND not disposed
+    if (!_animationPlayed && 
+        widget.value >= widget.remaining && 
+        widget.goal > 0 &&
+        !_isDisposed) {
+      
+      // Safe vibration - wrapped in try/catch
+      try {
+        Vibration.hasVibrator().then((hasVibrator) {
+          if (hasVibrator && !_isDisposed) {
+            Vibration.vibrate(duration: 200); // Reduced from 500ms to 200ms
+          }
+        });
+      } catch (e) {
+        print('Vibration error: $e');
+      }
+
+      // Safe animation with proper state checking
+      if (!_isDisposed) {
+        _controller.forward().then((_) {
+          if (!_isDisposed) {
+            _controller.reverse();
+            if (mounted) {
+              setState(() {
+                _animationPlayed = true;
+              });
+            }
+          }
+        });
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _isDisposed = true;
+    // Ensure any ongoing vibration is canceled
+    try {
+      Vibration.cancel();
+    } catch (e) {
+      print('Error canceling vibration: $e');
+    }
+    _controller.stop();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    bool highlight = widget.value >= widget.remaining && widget.goal > 0;
+
+    return ScaleTransition(
+      scale: _scaleAnimation,
+      child: Card(
+        color: widget.color.withAlpha(192),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: highlight
+              ? BorderSide(color: Colors.amber, width: 2)
+              : BorderSide.none,
+        ),
+        elevation: 2,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 0.0),
+          child: Row(
+            children: [
+              Icon(widget.icon, color: Colors.white),
+              SizedBox(width: 8),
+              Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Text(widget.label,
+                      style:
+                          TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                  Text("${widget.value.toStringAsFixed(1)} ${widget.unit}",
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }

@@ -227,6 +227,17 @@ class mapState extends State<RoutesPage> {
 
     _notifyCurrentRideData.value = AccumRideData.blank();
     final appState = Provider.of<MyAppState>(context, listen: false);
+
+    if (appState.isCalorieGoalMet == true) {
+      targetCalories = 0.0;
+    }
+    if (appState.isDistanceGoalMet == true) {
+      targetDistance = 0.0;
+    }
+    if(appState.isTimeGoalMet == true) {
+      targetTime = 0.0;
+    }
+
     setState(() {
       showStartButton = false;
       showStopButton = true;
@@ -565,7 +576,7 @@ class mapState extends State<RoutesPage> {
   final ValueNotifier<AccumRideData> _notifyCurrentRideData = ValueNotifier<AccumRideData>(AccumRideData.blank());
 
   Widget _curRideInfoWidget(Color bg) {
-    print("-------- DISTANCE -------");
+    /*print("-------- DISTANCE -------");
     print(distanceGoal);
     print(targetDistance);
     print("------- TIME --------");
@@ -574,7 +585,7 @@ class mapState extends State<RoutesPage> {
     print("------- CALORIES --------");
     print(caloriesGoal);
     print(targetCalories);
-    print("---------------");
+    print("---------------");*/
 
     return ValueListenableBuilder(
       valueListenable: _notifyCurrentRideData,
@@ -1170,6 +1181,7 @@ class _StatCardState extends State<StatCard> with SingleTickerProviderStateMixin
 
   @override
   void initState() {
+    final appState = Provider.of<MyAppState>(context, listen: false);
     super.initState();
     _controller = AnimationController(
       duration: Duration(milliseconds: 3000),
@@ -1178,10 +1190,19 @@ class _StatCardState extends State<StatCard> with SingleTickerProviderStateMixin
     _scaleAnimation = Tween<double>(begin: 1.0, end: 1.08) 
         .chain(CurveTween(curve: Curves.easeInOut))
         .animate(_controller);
+
+    if (widget.label == 'Distance') {
+      _animationPlayed = appState.isDistanceGoalMet;
+    } else if (widget.label == 'Time') {
+      _animationPlayed = appState.isTimeGoalMet;
+    } else {
+      _animationPlayed = appState.isCalorieGoalMet;
+    }
   }
 
   @override
   void didUpdateWidget(covariant StatCard oldWidget) {
+    final appState = Provider.of<MyAppState>(context, listen: false);
     super.didUpdateWidget(oldWidget);
     // Only trigger if not previously played AND goal is met AND not disposed
     if (!_animationPlayed && 
@@ -1193,32 +1214,34 @@ class _StatCardState extends State<StatCard> with SingleTickerProviderStateMixin
       try {
         Vibration.hasVibrator().then((hasVibrator) {
           if (hasVibrator && !_isDisposed) {
-            Vibration.vibrate(duration: 200); // Reduced from 500ms to 200ms
+            Vibration.vibrate(duration: 200); // ms
           }
         });
       } catch (e) {
         print('Vibration error: $e');
       }
 
-      // Safe animation with proper state checking
-      if (!_isDisposed) {
-        _controller.forward().then((_) {
-          if (!_isDisposed) {
-            _controller.reverse();
-            if (mounted) {
-              setState(() {
-                _animationPlayed = true;
-              });
-            }
+      if (mounted) {
+        setState(() {
+          if (widget.label == 'Distance') {
+            appState.isDistanceGoalMet = true;
+          } else if (widget.label == 'Time') {
+            appState.isTimeGoalMet = true;
+          } else {
+            appState.isCalorieGoalMet = true;
           }
+          _animationPlayed = true;
         });
       }
+
+      _controller.forward().then((_) {
+        _controller.reverse();
+      });
     }
   }
 
   @override
   void dispose() {
-    _isDisposed = true;
     // Ensure any ongoing vibration is canceled
     try {
       Vibration.cancel();

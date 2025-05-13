@@ -50,7 +50,7 @@ class FriendsList {
     final username = jsonInit['username'] as String;
     final raw = jsonInit['friends'] as List<dynamic>;
     final friends = raw.map((e) => e as String).toList();
-    if (jsonInit.containsKey("bestFriend")) {
+    if (jsonInit["bestFriend"] != null) {
       final bestFriend = jsonInit['bestFriend'] as String;
       return FriendsList(username: username, friends: friends, bestFriend: bestFriend);
     }

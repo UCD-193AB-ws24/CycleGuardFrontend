@@ -5,25 +5,22 @@ import 'package:cycle_guard_app/data/coordinates_accessor.dart';
 import 'package:cycle_guard_app/data/health_info_accessor.dart';
 import 'package:cycle_guard_app/data/navigation_accessor.dart';
 import 'package:cycle_guard_app/data/single_trip_history.dart';
+import 'package:cycle_guard_app/data/user_daily_goal_provider.dart';
 import 'package:cycle_guard_app/data/user_profile_accessor.dart';
+import 'package:cycle_guard_app/data/week_history_provider.dart';
+import 'package:cycle_guard_app/main.dart';
 import 'package:cycle_guard_app/pages/ble.dart';
 import 'package:cycle_guard_app/pages/routes_autofill.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:google_places_flutter/google_places_flutter.dart';
-import 'package:cycle_guard_app/data/user_daily_goal_provider.dart';
-import 'package:cycle_guard_app/data/week_history_provider.dart';
-import 'package:vibration/vibration.dart';
 import 'package:location/location.dart' hide LocationAccuracy;
-
 import 'package:provider/provider.dart';
-import 'package:cycle_guard_app/main.dart';
+import 'package:vibration/vibration.dart';
 
 import '../auth/dim_util.dart';
 import '../auth/key_util.dart';
@@ -103,11 +100,19 @@ class mapState extends State<RoutesPage> {
 
     final polylines = [for(var i=0; i<latitudes.length; i++) LatLng(latitudes[i], longitudes[i])];
 
-    generatedPolylines = polylines;
-    generatePolyLines(polylines, RoutesPage.POLYLINE_GENERATED);
+    // generatedPolylines.clear();
+    // for (final point in polylines) {
+    //   generatedPolylines.add(point);
+    //   // compressCoords(generatedPolylines);
+    // }
 
-    if (polylines.isNotEmpty) {
-      center = polylines[0];
+    generatedPolylines = polylines;
+    generatePolyLines(generatedPolylines, RoutesPage.POLYLINE_GENERATED);
+
+    print("Generated polylines with length ${generatedPolylines.length}");
+
+    if (generatedPolylines.isNotEmpty) {
+      center = generatedPolylines[0];
       recenterMap();
       recenterMap();
     }
@@ -307,8 +312,9 @@ class mapState extends State<RoutesPage> {
         minutes,
         _toLats(recordedLocations),
         _toLngs(recordedLocations),
-        _notifyCurrentRideData.value.climb,
-        avg(recordedAltitudes),
+        // _notifyCurrentRideData.value.climb,
+        // avg(recordedAltitudes),
+      0, 0
     );
     print(rideInfo.toJson());
 
@@ -547,17 +553,17 @@ class mapState extends State<RoutesPage> {
                 onPressed: () {
                   print("Ride info display pressed");
                   _timestamp=-1;
-                  generatedPolylines.clear();
-                  generatePolyLines([], RoutesPage.POLYLINE_GENERATED);
+                  // generatedPolylines.clear();
+                  // generatePolyLines([], RoutesPage.POLYLINE_GENERATED);
                   setState(() => {});
                 },
                 label: Text(
                   "Ride $_rideIdx on $_rideDate:\n"
                     "${_tripInfo!.distance} miles, "
                     "${_tripInfo!.time} minutes, "
-                    "${_tripInfo!.calories} calories\n"
-                    "${_tripInfo!.averageAltitude} ft. elevation, "
-                    "${_tripInfo!.climb} ft. climbed",
+                    "${_tripInfo!.calories} calories",
+                    // "${_tripInfo!.averageAltitude} ft. elevation, "
+                    // "${_tripInfo!.climb} ft. climbed",
                   style: TextStyle(fontSize: 16, height: 1.5),
                 ),
                 backgroundColor: selectedColor,
@@ -621,10 +627,10 @@ class mapState extends State<RoutesPage> {
                   Colors.lightBlueAccent),
             ),
             Positioned(
-              top: DimUtil.safeHeight(context) * 3 / 16,
-              width: DimUtil.safeWidth(context) * 3.2 / 10,
-              height: DimUtil.safeHeight(context) * 1.2 / 16,
-              left: DimUtil.safeWidth(context) * 3.4 / 10,
+                top: DimUtil.safeHeight(context) * 4.2 / 16,
+                width: DimUtil.safeWidth(context) * 3.2 / 10,
+                height: DimUtil.safeHeight(context) * 1.2 / 16,
+                right: DimUtil.safeWidth(context) * .2 / 10,
               child: StatCard(
                 icon: Icons.directions_bike,
                 label: 'Distance',
@@ -634,20 +640,20 @@ class mapState extends State<RoutesPage> {
                 unit: 'mi',
                 color: Colors.greenAccent),
             ),
-            Positioned(
-              top: DimUtil.safeHeight(context) * 4.2 / 16,
-              width: DimUtil.safeWidth(context) * 3.2 / 10,
-              height: DimUtil.safeHeight(context) * 1.2 / 16,
-              left: DimUtil.safeWidth(context) * 3.4 / 10,
-              child: _buildStatCard(
-                Icons.trending_up,
-                  'Altitude',
-                  rideData.altitude,
-                  0.0,
-                  0.0,
-                  'ft',
-                  Colors.deepPurpleAccent),
-            ),
+            // Positioned(
+            //   top: DimUtil.safeHeight(context) * 4.2 / 16,
+            //   width: DimUtil.safeWidth(context) * 3.2 / 10,
+            //   height: DimUtil.safeHeight(context) * 1.2 / 16,
+            //   left: DimUtil.safeWidth(context) * 3.4 / 10,
+            //   child: _buildStatCard(
+            //     Icons.trending_up,
+            //       'Altitude',
+            //       rideData.altitude,
+            //       0.0,
+            //       0.0,
+            //       'ft',
+            //       Colors.deepPurpleAccent),
+            // ),
             Positioned(
               top: DimUtil.safeHeight(context) * 3 / 16,
               width: DimUtil.safeWidth(context) * 3.2 / 10,
@@ -662,20 +668,20 @@ class mapState extends State<RoutesPage> {
                   unit: 'cal',
                   color: Colors.redAccent),
             ),
-            Positioned(
-              top: DimUtil.safeHeight(context) * 4.2 / 16,
-              width: DimUtil.safeWidth(context) * 3.2 / 10,
-              height: DimUtil.safeHeight(context) * 1.2 / 16,
-              right: DimUtil.safeWidth(context) * .2 / 10,
-              child: _buildStatCard(
-                  Icons.arrow_upward,
-                  'Climb',
-                  rideData.climb,
-                  0.0,
-                  0.0,
-                  'ft',
-                  Colors.purpleAccent),
-            ),
+            // Positioned(
+            //   top: DimUtil.safeHeight(context) * 4.2 / 16,
+            //   width: DimUtil.safeWidth(context) * 3.2 / 10,
+            //   height: DimUtil.safeHeight(context) * 1.2 / 16,
+            //   right: DimUtil.safeWidth(context) * .2 / 10,
+            //   child: _buildStatCard(
+            //       Icons.arrow_upward,
+            //       'Climb',
+            //       rideData.climb,
+            //       0.0,
+            //       0.0,
+            //       'ft',
+            //       Colors.purpleAccent),
+            // ),
           ],
         );
       });
@@ -765,7 +771,9 @@ class mapState extends State<RoutesPage> {
               // if (dest == null || (dest?.latitude == 0.0 && dest?.longitude == 0.0)) {
 
                 recordedLocations.add(center!);
-                recordedAltitudes.add(altitudeFeet);
+                compressCoords(recordedLocations);
+
+                // recordedAltitudes.add(altitudeFeet);
                 generatePolyLines(recordedLocations, RoutesPage.POLYLINE_USER);
                 if (isOffTrack(center!)) {
                   getGooglePolylinePoints().then((coordinates) {
@@ -883,8 +891,9 @@ class mapState extends State<RoutesPage> {
       // if (dest == null || (dest?.latitude == 0.0 && dest?.longitude == 0.0)) {
 
       recordedLocations.add(center!);
+      compressCoords(recordedLocations);
       // TODO handle altitudes from helmet
-      recordedAltitudes.add(0);
+      // recordedAltitudes.add(0);
       generatePolyLines(recordedLocations, RoutesPage.POLYLINE_USER);
       if (isOffTrack(center!)) {
         getGooglePolylinePoints().then((coordinates) {
@@ -897,6 +906,44 @@ class mapState extends State<RoutesPage> {
       if (offCenter) animateCameraWithHeading(center!, heading ?? 0);
     } else {
       if (offCenter) centerCamera(center!);
+    }
+  }
+
+  double distanceBetweenMeters(LatLng a, LatLng b) {
+    return Geolocator.distanceBetween(
+      a.latitude,
+      a.longitude,
+      b.latitude,
+      b.longitude,
+    );
+  }
+
+  double _cosines(LatLng A, LatLng B, LatLng C) {
+    double a = distanceBetweenMeters(B, C);
+    double b = distanceBetweenMeters(A, C);
+    double c = distanceBetweenMeters(A, B);
+
+    double squares = a*a + c*c - b*b;
+    double angle = acos(squares/(2*a*c));
+
+    return angle;
+  }
+
+  static final double COSINES_THRESHOLD_RADIANS = 20 * (pi/180);
+  void compressCoords(List<LatLng> list) {
+    if (list.length<3) return;
+
+    LatLng C=list[list.length-1];
+    while (list.length>=3) {
+      LatLng A=list[list.length-3], B=list[list.length-2];
+      double angleRadians = _cosines(A, B, C);
+
+      // Angle is big enough to be considered a turn: stop combining
+      if ((180-angleRadians) > COSINES_THRESHOLD_RADIANS) {
+        break;
+      } else {
+        list.removeAt(list.length-2);
+      }
     }
   }
 
@@ -1099,8 +1146,8 @@ class PostRideData {
                 _buildInfoRow(Icons.directions_bike, "$miles miles biked"),
                 _buildInfoRow(Icons.local_fire_department, "$cals calories burned"),
                 _buildInfoRow(Icons.timer, "$mins min $secs sec"),
-                _buildInfoRow(Icons.trending_up, "$avgAltitude ft. average elevation"),
-                _buildInfoRow(Icons.arrow_upward, "$climb ft. climbed"),
+                // _buildInfoRow(Icons.trending_up, "$avgAltitude ft. average elevation"),
+                // _buildInfoRow(Icons.arrow_upward, "$climb ft. climbed"),
                 SizedBox(height: 25),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(

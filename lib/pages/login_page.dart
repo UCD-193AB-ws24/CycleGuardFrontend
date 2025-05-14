@@ -130,10 +130,8 @@ class LoginFormState extends State<LoginPage> {
         print("[Login] Failed to schedule notifications: $e");
       }*/
 
-      setState(() {
-        Navigator.pushReplacement(
-            context, MaterialPageRoute(builder: (context) => MyHomePage()));
-      });
+      Navigator.pushReplacement(
+          context, MaterialPageRoute(builder: (context) => MyHomePage()));
     } else {
       Fluttertoast.cancel();
       Fluttertoast.showToast(
@@ -149,10 +147,8 @@ class LoginFormState extends State<LoginPage> {
 
   void _createAccount() {
     print("Creating account...");
-    setState(() {
-      Navigator.pushReplacement(context,
-          MaterialPageRoute(builder: (context) => CreateAccountPage()));
-    });
+    Navigator.pushReplacement(context,
+        MaterialPageRoute(builder: (context) => CreateAccountPage()));
   }
 
   @override
@@ -198,11 +194,11 @@ class LoginFormState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFFF5E7C4),
+      backgroundColor: Color(0xFFFAECCF), 
       appBar: AppBar(
         title:
             Text('Login', style: GoogleFonts.poppins(textStyle: poppinsStyle)),
-        backgroundColor: Color(0xFFF5E7C4),
+        backgroundColor: Color(0xFFFAECCF),
       ),
       body: Center(
           child: ListView(

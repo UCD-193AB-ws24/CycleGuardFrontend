@@ -3,9 +3,11 @@ import 'dart:math';
 
 import 'package:cycle_guard_app/data/coordinates_accessor.dart';
 import 'package:cycle_guard_app/data/health_info_accessor.dart';
+import 'package:cycle_guard_app/data/navigation_accessor.dart';
 import 'package:cycle_guard_app/data/single_trip_history.dart';
 import 'package:cycle_guard_app/data/user_profile_accessor.dart';
 import 'package:cycle_guard_app/pages/ble.dart';
+import 'package:cycle_guard_app/pages/routes_autofill.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
@@ -15,6 +17,9 @@ import 'package:geolocator/geolocator.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:google_places_flutter/google_places_flutter.dart';
+import 'package:cycle_guard_app/data/user_daily_goal_provider.dart';
+import 'package:cycle_guard_app/data/week_history_provider.dart';
+import 'package:vibration/vibration.dart';
 import 'package:location/location.dart' hide LocationAccuracy;
 
 import 'package:provider/provider.dart';
@@ -84,6 +89,14 @@ class mapState extends State<RoutesPage> {
   List<double> recordedAltitudes = [];
   double? heading;
 
+  double distanceGoal = 0.0;
+  double caloriesGoal = 0.0;
+  double timeGoal = 0.0;
+
+  double targetDistance = 0.0;
+  double targetCalories = 0.0;
+  double targetTime = 0.0;
+
   Future<void> drawTimestampData(int timestamp) async {
     final coords = await CoordinatesAccessor.getCoordinates(timestamp);
     final latitudes = coords.latitudes, longitudes = coords.longitudes;
@@ -92,6 +105,12 @@ class mapState extends State<RoutesPage> {
 
     generatedPolylines = polylines;
     generatePolyLines(polylines, RoutesPage.POLYLINE_GENERATED);
+
+    if (polylines.isNotEmpty) {
+      center = polylines[0];
+      recenterMap();
+      recenterMap();
+    }
   }
 
   Future<void> setCustomIcon() async {
@@ -132,6 +151,16 @@ class mapState extends State<RoutesPage> {
       });
     });
 
+    Future.microtask(() {
+      Provider.of<UserDailyGoalProvider>(context, listen: false).fetchDailyGoals();
+      Provider.of<WeekHistoryProvider>(context, listen: false).fetchWeekHistory();
+    });
+
+    final userGoals = Provider.of<UserDailyGoalProvider>(context, listen: false);
+    distanceGoal = userGoals.dailyDistanceGoal;
+    timeGoal = userGoals.dailyTimeGoal;
+    caloriesGoal = userGoals.dailyCaloriesGoal;
+
     initHealthInfo();
     SubmitRideService.tryAddAllRides();
   }
@@ -171,8 +200,44 @@ class mapState extends State<RoutesPage> {
   }
 
   void startDistanceRecord() {
+    final weekHistory = Provider.of<WeekHistoryProvider>(context, listen: false);
+    final todayUtcTimestamp = DateTime.utc(
+          DateTime.now().year,
+          DateTime.now().month,
+          DateTime.now().day,
+          0,
+          0,
+          0,
+          0,
+          0,
+        ).millisecondsSinceEpoch ~/
+        1000;
+
+    final todayInfo = weekHistory.dayHistoryMap[todayUtcTimestamp] ??
+      const SingleTripInfo(
+          distance: 0.0,
+          calories: 0.0,
+          time: 0.0,
+          averageAltitude: 0,
+          climb: 0);
+
+    targetDistance = distanceGoal - todayInfo.distance;
+    targetTime = timeGoal - todayInfo.time;
+    targetCalories = caloriesGoal - todayInfo.calories;
+
     _notifyCurrentRideData.value = AccumRideData.blank();
     final appState = Provider.of<MyAppState>(context, listen: false);
+
+    if (appState.isCalorieGoalMet == true) {
+      targetCalories = 0.0;
+    }
+    if (appState.isDistanceGoalMet == true) {
+      targetDistance = 0.0;
+    }
+    if(appState.isTimeGoalMet == true) {
+      targetTime = 0.0;
+    }
+
     setState(() {
       showStartButton = false;
       showStopButton = true;
@@ -306,6 +371,20 @@ class mapState extends State<RoutesPage> {
     // print(totalDist);
   }
 
+
+
+  String? destString;
+  void setRoutesAutofillCallback(BuildContext context) {
+    setCallback((input) {
+      // print("Selected autofill value: $input");
+      destString = input;
+      getGooglePolylinePoints().then((coordinates) {
+        generatePolyLines(coordinates, RoutesPage.POLYLINE_GENERATED);
+        dest = coordinates[coordinates.length-1];
+      });
+    });
+  }
+
   Widget mainMap() => GoogleMap(
     onTap: (argument) {
       print("Map tap");
@@ -349,49 +428,7 @@ class mapState extends State<RoutesPage> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          GooglePlaceAutoCompleteTextField(
-            boxDecoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 8.0,
-                  spreadRadius: 2.0,
-                  offset: Offset(0, 4),
-                ),
-              ],
-            ),
-            textEditingController: textController,
-            googleAPIKey: apiService.getGoogleApiKey(),
-            isLatLngRequired: true,
-            getPlaceDetailWithLatLng: (prediction) {
-              dest = LatLng(
-                double.parse(prediction.lat!),
-                double.parse(prediction.lng!),
-              );
-              LatLngBounds bounds = getBounds();
-              mapController.animateCamera(
-                CameraUpdate.newLatLngBounds(bounds, 50),
-              );
-              dstFound = true;
-              showStartButton = true;
-              getGooglePolylinePoints().then((coordinates) {
-                generatePolyLines(coordinates, RoutesPage.POLYLINE_GENERATED);
-                // print(coordinates);
-                // print(coordinates.length);
-              });
-            },
-            itemClick: (prediction) {
-              textController.text = prediction.description!;
-              recordedLocations.clear();
-              recordedAltitudes.clear();
-              print("Destination selected");
-              FocusScope.of(context).unfocus();
-              // FocusManager.instance.primaryFocus?.unfocus();
-              // FocusScope.of(context).requestFocus(FocusNode());
-            },
-          ),
+          RoutesAutofill(),
         ],
       ),
     ),
@@ -414,6 +451,8 @@ class mapState extends State<RoutesPage> {
     Color selectedColor = Provider.of<MyAppState>(context, listen: false).selectedColor;
     final colorScheme = Theme.of(context).colorScheme;
     //final isDarkTheme = Theme.of(context).brightness == Brightness.dark;
+
+    setRoutesAutofillCallback(context);
 
     return Scaffold(
       body: Stack(
@@ -537,6 +576,17 @@ class mapState extends State<RoutesPage> {
   final ValueNotifier<AccumRideData> _notifyCurrentRideData = ValueNotifier<AccumRideData>(AccumRideData.blank());
 
   Widget _curRideInfoWidget(Color bg) {
+    /*print("-------- DISTANCE -------");
+    print(distanceGoal);
+    print(targetDistance);
+    print("------- TIME --------");
+    print(timeGoal);
+    print(targetTime);
+    print("------- CALORIES --------");
+    print(caloriesGoal);
+    print(targetCalories);
+    print("---------------");*/
+
     return ValueListenableBuilder(
       valueListenable: _notifyCurrentRideData,
       builder: (BuildContext context, AccumRideData rideData, Widget? child) {
@@ -547,12 +597,14 @@ class mapState extends State<RoutesPage> {
               width: DimUtil.safeWidth(context) * 3.2 / 10,
               height: DimUtil.safeHeight(context) * 1.2 / 16,
               left: DimUtil.safeWidth(context) * .2 / 10,
-              child: _buildStatCard(
-                Icons.directions_bike,
-                'Distance',
-                rideData.distance,
-                'mi',
-                Colors.redAccent),
+              child: StatCard(
+                icon: Icons.timer,
+                label: 'Time',
+                value: rideData.time,
+                remaining: targetTime,
+                goal: timeGoal,
+                unit: 'min',
+                color: Colors.blueAccent),
             ),
             Positioned(
               top: DimUtil.safeHeight(context) * 4.2 / 16,
@@ -563,20 +615,24 @@ class mapState extends State<RoutesPage> {
                   Icons.speed,
                   'Speed',
                   rideData.speed,
+                  0.0,
+                  0.0,
                   'mph',
-                  Colors.orangeAccent),
+                  Colors.lightBlueAccent),
             ),
             Positioned(
               top: DimUtil.safeHeight(context) * 3 / 16,
               width: DimUtil.safeWidth(context) * 3.2 / 10,
               height: DimUtil.safeHeight(context) * 1.2 / 16,
               left: DimUtil.safeWidth(context) * 3.4 / 10,
-              child: _buildStatCard(
-                  Icons.timer,
-                  'Time',
-                  rideData.time,
-                  'min',
-                  Colors.blueAccent),
+              child: StatCard(
+                icon: Icons.directions_bike,
+                label: 'Distance',
+                value: rideData.distance,
+                remaining: targetDistance,
+                goal: distanceGoal,
+                unit: 'mi',
+                color: Colors.greenAccent),
             ),
             Positioned(
               top: DimUtil.safeHeight(context) * 4.2 / 16,
@@ -584,23 +640,27 @@ class mapState extends State<RoutesPage> {
               height: DimUtil.safeHeight(context) * 1.2 / 16,
               left: DimUtil.safeWidth(context) * 3.4 / 10,
               child: _buildStatCard(
-                  Icons.local_fire_department,
-                  'Calories',
-                  rideData.calories,
-                  'cal',
-                  Colors.lightBlueAccent),
+                Icons.trending_up,
+                  'Altitude',
+                  rideData.altitude,
+                  0.0,
+                  0.0,
+                  'ft',
+                  Colors.deepPurpleAccent),
             ),
             Positioned(
               top: DimUtil.safeHeight(context) * 3 / 16,
               width: DimUtil.safeWidth(context) * 3.2 / 10,
               height: DimUtil.safeHeight(context) * 1.2 / 16,
               right: DimUtil.safeWidth(context) * .2 / 10,
-              child: _buildStatCard(
-                  Icons.trending_up,
-                  'Altitude',
-                  rideData.altitude,
-                  'ft',
-                  Colors.deepPurpleAccent),
+              child: StatCard(
+                  icon: Icons.local_fire_department,
+                  label: 'Calories',
+                  value: rideData.calories,
+                  remaining: targetCalories,
+                  goal: caloriesGoal,
+                  unit: 'cal',
+                  color: Colors.redAccent),
             ),
             Positioned(
               top: DimUtil.safeHeight(context) * 4.2 / 16,
@@ -611,6 +671,8 @@ class mapState extends State<RoutesPage> {
                   Icons.arrow_upward,
                   'Climb',
                   rideData.climb,
+                  0.0,
+                  0.0,
                   'ft',
                   Colors.purpleAccent),
             ),
@@ -619,10 +681,15 @@ class mapState extends State<RoutesPage> {
       });
   }
 
-  Widget _buildStatCard(IconData icon, String label, double value, String unit, Color color) {
+  Widget _buildStatCard(IconData icon, String label, double value, double remaining, double goal, String unit, Color color) {
     return Card(
       color: color.withAlpha(192),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(12),
+      side: value >= remaining && goal > 0
+          ? BorderSide(color: Colors.amber, width: 2)
+          : BorderSide.none,
+    ),
       elevation: 2,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 0.0),
@@ -748,19 +815,21 @@ class mapState extends State<RoutesPage> {
   }
 
   Future<List<LatLng>> getGooglePolylinePoints() async {
-    PolylinePoints polylinePoints = PolylinePoints();
+    // PolylinePoints polylinePoints = PolylinePoints();
 
-    if(dest!=null) {
-      PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
-        googleApiKey: apiService.getGoogleApiKey(),
-        request: PolylineRequest(
-          origin: PointLatLng(center!.latitude, center!.longitude),
-          destination: PointLatLng(dest!.latitude, dest!.longitude),
-          mode: TravelMode.bicycling,
-        ),
-      );
+    if(destString!=null) {
+      // PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
+      //   googleApiKey: apiService.getGoogleApiKey(),
+      //   request: PolylineRequest(
+      //     origin: PointLatLng(center!.latitude, center!.longitude),
+      //     destination: PointLatLng(dest!.latitude, dest!.longitude),
+      //     mode: TravelMode.bicycling,
+      //   ),
+      // );
 
-      final res = result.points.map((point) => LatLng(point.latitude, point.longitude)).toList();
+      final result = await NavigationAccessor.getRoute(center!, destString!);
+
+      final res = result.polyline;
       generatedPolylines = res;
       return res;
     }
@@ -914,7 +983,7 @@ class mapState extends State<RoutesPage> {
     ),
     style: TextStyle(color: Colors.black),
     controller: controller,
-    keyboardType: TextInputType.numberWithOptions(signed: false, decimal: false),
+    keyboardType: TextInputType.numberWithOptions(signed: false, decimal: true),
     textInputAction: TextInputAction.done,
   );
 
@@ -966,7 +1035,7 @@ class AccumRideData {
 
   /// AccumRideData is immutable. Instead, return a new object with the accumulated data.
   AccumRideData addToCur(double distance, double time, double altitude, HealthInfo healthInfo) {
-    final speed = distance/time;
+    final speed = 60 * distance/time;
     final calories = healthInfo.getCaloriesBurned(distance, time);
 
     var climb = this.climb + max(0, altitude-this.altitude);
@@ -1078,4 +1147,149 @@ class PostRideData {
     );
   }
 
+}
+
+class StatCard extends StatefulWidget {
+  final IconData icon;
+  final String label;
+  final double value;
+  final double remaining;
+  final double goal;
+  final String unit;
+  final Color color;
+
+  const StatCard({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.remaining,
+    required this.goal,
+    required this.unit,
+    required this.color,
+    Key? key,
+  }) : super(key: key);
+
+  @override
+  _StatCardState createState() => _StatCardState();
+}
+
+class _StatCardState extends State<StatCard> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+  bool _animationPlayed = false;
+  bool _isDisposed = false;
+
+  @override
+  void initState() {
+    final appState = Provider.of<MyAppState>(context, listen: false);
+    super.initState();
+    _controller = AnimationController(
+      duration: Duration(milliseconds: 3000),
+      vsync: this,
+    );
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 1.08) 
+        .chain(CurveTween(curve: Curves.easeInOut))
+        .animate(_controller);
+
+    if (widget.label == 'Distance') {
+      _animationPlayed = appState.isDistanceGoalMet;
+    } else if (widget.label == 'Time') {
+      _animationPlayed = appState.isTimeGoalMet;
+    } else {
+      _animationPlayed = appState.isCalorieGoalMet;
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant StatCard oldWidget) {
+    final appState = Provider.of<MyAppState>(context, listen: false);
+    super.didUpdateWidget(oldWidget);
+    // Only trigger if not previously played AND goal is met AND not disposed
+    if (!_animationPlayed && 
+        widget.value >= widget.remaining && 
+        widget.goal > 0 &&
+        !_isDisposed) {
+      
+      // Safe vibration - wrapped in try/catch
+      try {
+        Vibration.hasVibrator().then((hasVibrator) {
+          if (hasVibrator && !_isDisposed) {
+            Vibration.vibrate(duration: 200); // ms
+          }
+        });
+      } catch (e) {
+        print('Vibration error: $e');
+      }
+
+      if (mounted) {
+        setState(() {
+          if (widget.label == 'Distance') {
+            appState.isDistanceGoalMet = true;
+          } else if (widget.label == 'Time') {
+            appState.isTimeGoalMet = true;
+          } else {
+            appState.isCalorieGoalMet = true;
+          }
+          _animationPlayed = true;
+        });
+      }
+
+      _controller.forward().then((_) {
+        _controller.reverse();
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    // Ensure any ongoing vibration is canceled
+    try {
+      Vibration.cancel();
+    } catch (e) {
+      print('Error canceling vibration: $e');
+    }
+    _controller.stop();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    bool highlight = widget.value >= widget.remaining && widget.goal > 0;
+
+    return ScaleTransition(
+      scale: _scaleAnimation,
+      child: Card(
+        color: widget.color.withAlpha(192),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: highlight
+              ? BorderSide(color: Colors.amber, width: 2)
+              : BorderSide.none,
+        ),
+        elevation: 2,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 0.0),
+          child: Row(
+            children: [
+              Icon(widget.icon, color: Colors.white),
+              SizedBox(width: 8),
+              Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Text(widget.label,
+                      style:
+                          TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                  Text("${widget.value.toStringAsFixed(1)} ${widget.unit}",
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }

@@ -50,6 +50,7 @@ class _SocialPageState extends State<SocialPage>
   final GlobalKey _dailyGoalsKey = GlobalKey();
   final GlobalKey _notificationsKey = GlobalKey();
   final GlobalKey _finalMessageKey = GlobalKey();
+//  final GlobalKey _socialPageKey = GlobalKey();
 
   @override
   void initState() {
@@ -302,7 +303,7 @@ class _SocialPageState extends State<SocialPage>
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    '🚴 Total Distance: ${entry.value.toStringAsFixed(2)} km',
+                    '🚴 Total Distance: ${entry.value.toStringAsFixed(2)} mi',
                     style: TextStyle(
                       fontSize: 16,
                       color: Theme.of(context).textTheme.bodyLarge?.color,
@@ -376,6 +377,21 @@ class _SocialPageState extends State<SocialPage>
     // Only build the full scaffold when we have data
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: Icon(
+            Icons.settings,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? Colors.white70
+                : Colors.black, // or any contrasting color
+          ),
+          tooltip: 'Settings',
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => SettingsPage()),
+            );
+          },
+        ),  
         title: Text(
           'Social',
           style: TextStyle(
@@ -447,10 +463,10 @@ class _SocialPageState extends State<SocialPage>
                   colorFilter: ColorFilter.mode(
                     isDarkMode ? Colors.white70 : Colors.black,
                     BlendMode.srcIn,
-                  ),
                 ),
               ),
             ),
+          ),
           )
         ],
       ),
@@ -583,63 +599,6 @@ class _SocialPageState extends State<SocialPage>
                       ),
                     );
                   }),
-                  Align(
-                    alignment: Alignment.topRight,
-                    child: TextButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          PageRouteBuilder(
-                            pageBuilder:
-                                (context, animation, secondaryAnimation) =>
-                                SettingsPage(),
-                            transitionDuration: Duration(milliseconds: 300),
-                            transitionsBuilder: (context, animation,
-                                secondaryAnimation, child) {
-                              var offsetAnimation = Tween<Offset>(
-                                begin: Offset(-1.0, 0.0),
-                                end: Offset.zero,
-                              ).animate(CurvedAnimation(
-                                parent: animation,
-                                curve: Curves.easeOut,
-                              ));
-
-                              return SlideTransition(
-                                position: offsetAnimation,
-                                child: child,
-                              );
-                            },
-                          ),
-                        );
-                      },
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.settings,
-                            size: 40,
-                            color: isDarkMode
-                                ? Theme.of(context)
-                                .colorScheme
-                                .secondaryFixedDim
-                                : Theme.of(context).colorScheme.secondary,
-                          ),
-                          SizedBox(height: 2),
-                          Text(
-                            'Settings',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: isDarkMode
-                                  ? Theme.of(context)
-                                  .colorScheme
-                                  .secondaryFixedDim
-                                  : Theme.of(context).colorScheme.secondary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
                 ],
               ),
               Showcase(
@@ -1024,7 +983,6 @@ class _SocialPageState extends State<SocialPage>
               return Scrollbar(
                 controller: _searchScrollController,
                 thumbVisibility: true,
-                controller: _searchScrollController,
                 child: ListView.builder(
                   controller: _searchScrollController,
                   itemCount: filtered.length,
@@ -1072,12 +1030,156 @@ class _SocialPageState extends State<SocialPage>
                           .onSecondaryFixedVariant
                           : Colors.white,
                       child: ListTile(
-                        leading: CircleAvatar(child: Text(user[0].toUpperCase())),
-                        title: Text(
-                          user,
+                        leading:
+                        CircleAvatar(child: Text(user[0].toUpperCase())),
+                        title: GestureDetector(
+                          onTap: () async {
+                            var userInfo =
+                            await UserProfileAccessor.getPublicProfile(
+                                user);
+                            var userDisplayName =
+                            userInfo.displayName.isNotEmpty
+                                ? userInfo.displayName
+                                : userInfo.username;
+                            var userBio =
+                            userInfo.bio.isNotEmpty ? userInfo.bio : "";
+                            var userIcon = userInfo.profileIcon;
+                            Provider.of<WeekHistoryProvider>(context,
+                                listen: false)
+                                .fetchUserWeekHistory(user);
+                            final weekHistory =
+                            Provider.of<WeekHistoryProvider>(context,
+                                listen: false);
+
+                            showDialog(
+                              context: context,
+                              builder: (context) {
+                                return AlertDialog(
+                                  insetPadding: const EdgeInsets.symmetric(
+                                      horizontal: 10, vertical: 40),
+                                  contentPadding: const EdgeInsets.all(16),
+                                  title: Text(
+                                    "$user's Profile",
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 20,
+                                        color: Colors.black),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  content: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      SvgPicture.asset(
+                                        'assets/$userIcon.svg',
+                                        height: 100,
+                                        width: 100,
+                                      ),
+                                      const SizedBox(height: 16),
+                                      Text(
+                                        userDisplayName,
+                                        style: const TextStyle(
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.black),
+                                      ),
+                                      Text(
+                                        "$userBio\n",
+                                        style: const TextStyle(fontSize: 20,
+                                        color: Colors.black),
+                                      ),
+                                      const SizedBox(height: 16),
+                                      Text(
+                                        'Average Ride this Week',
+                                        style: const TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.black),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                      const SizedBox(height: 16),
+                                      Row(
+                                        mainAxisAlignment:
+                                        MainAxisAlignment.spaceEvenly,
+                                        children: [
+                                          Flexible(
+                                            child: _buildStatCard(
+                                              Icons.timer,
+                                              'Time',
+                                              '${weekHistory.averageTime.round()} min',
+                                              Colors.blueAccent,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Flexible(
+                                            child: _buildStatCard(
+                                              Icons.directions_bike,
+                                              'Distance',
+                                              '${weekHistory.averageDistance.round()} mi',
+                                              Colors.orangeAccent,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Flexible(
+                                            child: _buildStatCard(
+                                              Icons.local_fire_department,
+                                              'Calories',
+                                              '${weekHistory.averageCalories.round()} cal',
+                                              Colors.redAccent,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 16),
+                                      if (isFriend)
+                                        const Padding(
+                                          padding: EdgeInsets.only(top: 8),
+                                          child: Text(
+                                            "This user is your friend.",
+                                            style: TextStyle(
+                                                color: Colors.green,
+                                                fontWeight: FontWeight.bold),
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(context),
+                                      child: const Text(
+                                        "Close",
+                                        style: TextStyle(fontSize: 16),
+                                      ),
+                                    ),
+                                  ],
+                                );
+                              },
+                            );
+                          },
+                          child: Text(
+                            user,
                           style: TextStyle(color: isDarkMode ? Colors.white70 : null),
+                          ),
                         ),
-                        trailing: trailingWidget,
+                        subtitle: isFriend
+                            ? Text("Friend",
+                            style: TextStyle(color: Colors.green))
+                            : null,
+                        trailing: isFriend
+                            ? null
+                            : ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: isDarkMode
+                                ? Theme.of(context).colorScheme.secondary
+                                : Theme.of(context)
+                                .colorScheme
+                                .onInverseSurface,
+                            foregroundColor: isDarkMode
+                                ? Colors.white70
+                                : Theme.of(context).colorScheme.primary,
+                          ),
+                          onPressed: () => _sendFriendRequest(user),
+                          child: Text("Add Friend"),
+                        ),
                       ),
                     );
                   },

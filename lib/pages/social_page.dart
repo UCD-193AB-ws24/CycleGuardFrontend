@@ -6,6 +6,7 @@ import 'package:cycle_guard_app/data/friend_requests_accessor.dart';
 import 'package:cycle_guard_app/data/health_info_accessor.dart';
 import 'package:cycle_guard_app/pages/settings_page.dart';
 import 'package:cycle_guard_app/data/global_leaderboards_accessor.dart';
+import 'package:cycle_guard_app/utils/ui_theme_helpers.dart';
 
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
@@ -574,33 +575,6 @@ class _SocialPageState extends State<SocialPage>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  Consumer<MyAppState>(builder: (context, appState, child) {
-                    String displayIcon = _hasLocalProfileChanges
-                        ? _currentIconSelection
-                        : appState.selectedIcon;
-                    return GestureDetector(
-                      onTap: () => _showIconSelectionModal(context, appState, profile),
-                      child: Container(
-                        width: 125,
-                        height: 125,
-                        padding: EdgeInsets.all(15),
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: isDarkMode
-                              ? Theme.of(context).colorScheme.secondary
-                              : Theme.of(context).colorScheme.primaryContainer,
-                        ),
-                        child: SvgPicture.asset(
-                          'assets/$displayIcon.svg',
-                        ),
-                      ),
-                    );
-                  }),
-                ],
-              ),
               Showcase(
                 key: _profileKey,
                 title: 'Profile Management',
@@ -608,240 +582,84 @@ class _SocialPageState extends State<SocialPage>
                 'Update your icon, profile, status, and health information.',
                 child: Column(
                   children: [
-                    Column(
-                      children: [
-                        TextField(
-                          controller: nameController,
-                          decoration: InputDecoration(labelText: "Name"),
-                        ),
-                        TextField(
-                          controller: bioController,
-                          decoration: InputDecoration(labelText: "Bio"),
-                        ),
-                        Row(
-                          children: [
-                            Checkbox(
-                              value: isPublic,
-                              onChanged: (bool? newValue) {
-                                setState(() {
-                                  isPublic = newValue ?? true;
-                                });
-                              },
-                            ),
-                            Text("Make My Profile Public"),
-                          ],
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 20),
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        ElevatedButton(
-                          onPressed: () async {
-                            try {
-                              UserProfile updatedProfile = UserProfile(
-                                username:
-                                "", // The backend handles this, but I'll find a way on the frontend too
-                                displayName: nameController.text.trim(),
-                                bio: bioController.text.trim(),
-                                isPublic: isPublic,
-                                isNewAccount: false,
-                                profileIcon: appState.selectedIcon,
-                              );
-
-                              await UserProfileAccessor.updateOwnProfile(
-                                  updatedProfile);
-
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                    content:
-                                    Text("Profile updated successfully!")),
-                              );
-                            } catch (e) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                    content:
-                                    Text("Failed to update profile: $e")),
-                              );
-                            }
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: isDarkMode
-                                ? Theme.of(context).colorScheme.secondary
-                                : Theme.of(context)
-                                .colorScheme
-                                .onInverseSurface,
-                          ),
-                          child: Text(
-                            "Update Profile",
-                            style: TextStyle(
-                              color: isDarkMode ? Colors.white70 : null,
+                        Consumer<MyAppState>(builder: (context, appState, child) {
+                          String displayIcon = _hasLocalProfileChanges
+                              ? _currentIconSelection
+                              : appState.selectedIcon;
+                          return GestureDetector(
+                            onTap: () => _showIconSelectionModal(context, appState, profile),
+                            child: Container(
+                              width: 125,
+                              height: 125,
+                              padding: EdgeInsets.all(15),
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: isDarkMode
+                                    ? Theme.of(context).colorScheme.secondary
+                                    : Theme.of(context).colorScheme.primaryContainer,
+                              ),
+                              child: SvgPicture.asset(
+                                'assets/$displayIcon.svg',
+                              ),
                             ),
-                          ),
-                        ),
-                        ElevatedButton(
-                          onPressed: () async {
-                            final healthInfo =
-                            await HealthInfoAccessor.getHealthInfo();
-                            final heightController = TextEditingController(
-                                text: healthInfo.heightInches.toString());
-                            final weightController = TextEditingController(
-                                text: healthInfo.weightPounds.toString());
-                            final ageController = TextEditingController(
-                                text: healthInfo.ageYears.toString());
-
-                            showDialog(
-                              context: context,
-                              builder: (BuildContext context) {
-                                return AlertDialog(
-                                  backgroundColor: isDarkMode
-                                      ? Colors.grey[900]
-                                      : Colors.white,
-                                  title: Column(
-                                    crossAxisAlignment:
-                                    CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        "Set Health Information",
-                                        style: TextStyle(
-                                            color: isDarkMode
-                                                ? Colors.white
-                                                : Colors.black),
-                                      ),
-                                      SizedBox(height: 8),
-                                      Text(
-                                        "Health information is kept private and will be used to estimate how many calories are burned on a ride.",
-                                        style: TextStyle(
-                                          color: isDarkMode
-                                              ? Colors.white70
-                                              : Colors.black87,
-                                          fontSize: 13,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  content: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      TextField(
-                                        controller: heightController,
-                                        keyboardType: TextInputType.number,
-                                        style: TextStyle(
-                                            color: isDarkMode
-                                                ? Colors.white
-                                                : Colors.black),
-                                        decoration: InputDecoration(
-                                          labelText: "Height (inches)",
-                                          labelStyle: TextStyle(
-                                              color: isDarkMode
-                                                  ? Colors.white70
-                                                  : Colors.black),
-                                        ),
-                                      ),
-                                      TextField(
-                                        controller: weightController,
-                                        keyboardType: TextInputType.number,
-                                        style: TextStyle(
-                                            color: isDarkMode
-                                                ? Colors.white
-                                                : Colors.black),
-                                        decoration: InputDecoration(
-                                          labelText: "Weight (pounds)",
-                                          labelStyle: TextStyle(
-                                              color: isDarkMode
-                                                  ? Colors.white70
-                                                  : Colors.black),
-                                        ),
-                                      ),
-                                      TextField(
-                                        controller: ageController,
-                                        keyboardType: TextInputType.number,
-                                        style: TextStyle(
-                                            color: isDarkMode
-                                                ? Colors.white
-                                                : Colors.black),
-                                        decoration: InputDecoration(
-                                          labelText: "Age (years)",
-                                          labelStyle: TextStyle(
-                                              color: isDarkMode
-                                                  ? Colors.white70
-                                                  : Colors.black),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () => Navigator.pop(context),
-                                      child: Text("Cancel",
-                                          style: TextStyle(
-                                              color: isDarkMode
-                                                  ? Colors.white70
-                                                  : Colors.black)),
-                                    ),
-                                    TextButton(
-                                      onPressed: () async {
-                                        try {
-                                          await HealthInfoAccessor
-                                              .setHealthInfoInts(
-                                            int.parse(
-                                                heightController.text.trim()),
-                                            int.parse(
-                                                weightController.text.trim()),
-                                            int.parse(
-                                                ageController.text.trim()),
-                                          );
-
-                                          Navigator.pop(context);
-
-                                          ScaffoldMessenger.of(context)
-                                              .showSnackBar(
-                                            SnackBar(
-                                                content: Text(
-                                                    'Health info updated successfully!')),
-                                          );
-                                        } catch (e) {
-                                          Navigator.pop(context);
-                                          ScaffoldMessenger.of(context)
-                                              .showSnackBar(
-                                            SnackBar(
-                                                content: Text(
-                                                    'Failed to update health info: $e')),
-                                          );
-                                        }
-                                      },
-                                      child: Text("Submit",
-                                          style: TextStyle(
-                                              color: isDarkMode
-                                                  ? Colors.white70
-                                                  : Colors.black)),
-                                    ),
-                                  ],
-                                );
-                              },
-                            );
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: isDarkMode
-                                ? Theme.of(context).colorScheme.secondary
-                                : Theme.of(context)
-                                .colorScheme
-                                .onInverseSurface,
-                          ),
-                          child: Text(
-                            "Set Health Information",
-                            style: TextStyle(
-                              color: isDarkMode ? Colors.white70 : null,
-                            ),
+                          );
+                        }),
+                        const SizedBox(width: 24),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                nameController.text.isEmpty
+                                    ? "(No display name set)"
+                                    : nameController.text,
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: isDarkMode ? Colors.white70 : Colors.black,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                bioController.text.isEmpty
+                                    ? "(No bio provided)"
+                                    : bioController.text,
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontStyle: FontStyle.italic,
+                                  color: isDarkMode ? Colors.white60 : Colors.black87,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                isPublic ? "🌐 Public" : "🔒 Private",
+                                style: TextStyle(
+                                  color: isDarkMode ? Colors.blue[200] : Colors.blue[800],
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              // Update profile button (aligned right)
+                              Align(
+                                alignment: Alignment.centerRight,
+                                child: IconButton(icon: Icon(Icons.edit_note_sharp, color: isDarkMode ? Colors.white70 : Theme.of(context).colorScheme.primary),
+                                  tooltip: "Edit Profile",
+                                  onPressed: () => _showEditProfileDialog(profile),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
                     ),
+                    //SizedBox(height: 10),
                   ],
                 ),
               ),
-              SizedBox(height: 40),
+              SizedBox(height: 5),
               Column(
                 children: [
                   Showcase(
@@ -867,13 +685,7 @@ class _SocialPageState extends State<SocialPage>
                       onPressed: () {
                         AuthUtil.logout(context);
                       },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: isDarkMode
-                            ? Theme.of(context).colorScheme.secondary
-                            : Theme.of(context)
-                            .colorScheme
-                            .onInverseSurface,
-                      ),
+                      style: themedButtonStyle(context),
                       child: Text(
                         "Logout",
                         style: TextStyle(
@@ -1010,14 +822,7 @@ class _SocialPageState extends State<SocialPage>
                       );
                     } else {
                       trailingWidget = ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: isDarkMode
-                              ? Theme.of(context).colorScheme.secondary
-                              : Theme.of(context).colorScheme.onInverseSurface,
-                          foregroundColor: isDarkMode
-                              ? Colors.white70
-                              : Theme.of(context).colorScheme.primary,
-                        ),
+                        style: themedButtonStyle(context),
                         onPressed: () => _sendFriendRequest(user),
                         child: const Text("Add Friend"),
                       );
@@ -1167,16 +972,7 @@ class _SocialPageState extends State<SocialPage>
                         trailing: isFriend
                             ? null
                             : ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: isDarkMode
-                                ? Theme.of(context).colorScheme.secondary
-                                : Theme.of(context)
-                                .colorScheme
-                                .onInverseSurface,
-                            foregroundColor: isDarkMode
-                                ? Colors.white70
-                                : Theme.of(context).colorScheme.primary,
-                          ),
+                          style: themedButtonStyle(context),
                           onPressed: () => _sendFriendRequest(user),
                           child: Text("Add Friend"),
                         ),
@@ -1189,6 +985,135 @@ class _SocialPageState extends State<SocialPage>
           ),
         ),
       ],
+    );
+  }
+
+  void _showEditProfileDialog(UserProfile profile) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final appState = context.read<MyAppState>();
+
+    final nameController = TextEditingController(text: profile.displayName);
+    final bioController = TextEditingController(text: profile.bio);
+    final heightController = TextEditingController();
+    final weightController = TextEditingController();
+    final ageController = TextEditingController();
+
+    // Preload health info
+    HealthInfoAccessor.getHealthInfo().then((health) {
+      if (!mounted) return;
+      setState(() {
+        heightController.text = health.heightInches.toString();
+        weightController.text = health.weightPounds.toString();
+        ageController.text = health.ageYears.toString();
+      });
+    });
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return AlertDialog(
+              backgroundColor: isDarkMode ? Colors.grey[900] : Colors.white,
+              title: Text("Edit Profile", style: TextStyle(color: themedTextColor(context))),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: nameController,
+                      style: TextStyle(color: themedTextColor(context)),
+                      decoration: themedInputDecoration(context, "Display Name"),
+                    ),
+                    TextField(
+                      controller: bioController,
+                      style: TextStyle(color: themedTextColor(context)),
+                      decoration: themedInputDecoration(context, "Bio"),
+                    ),
+                    Row(
+                      children: [
+                        Checkbox(
+                          value: isPublic,
+                          activeColor: Theme.of(context).colorScheme.primary,
+                          onChanged: (value) {
+                            setState(() {
+                              isPublic = value ?? true;
+                            });
+                          },
+                        ),
+                        Text(
+                          "Make My Profile Public",
+                          style: TextStyle(color: themedTextColor(context)),
+                        ),
+                      ],
+                    ),
+                    const Divider(),
+                    TextField(
+                      controller: heightController,
+                      keyboardType: TextInputType.number,
+                      style: TextStyle(color: themedTextColor(context)),
+                      decoration: themedInputDecoration(context, "Height (cm)"),
+                    ),
+                    TextField(
+                      controller: weightController,
+                      keyboardType: TextInputType.number,
+                      style: TextStyle(color: themedTextColor(context)),
+                      decoration: themedInputDecoration(context, "Weight (kg)"),
+                    ),
+                    TextField(
+                      controller: ageController,
+                      keyboardType: TextInputType.number,
+                      style: TextStyle(color: themedTextColor(context)),
+                      decoration: themedInputDecoration(context, "Age"),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text("Cancel", style: TextStyle(color: themedTextColor(context))),
+                ),
+                ElevatedButton(
+                  style: themedButtonStyle(context),
+                  onPressed: () async {
+                    try {
+                      final updatedProfile = UserProfile(
+                        username: profile.username,
+                        displayName: nameController.text.trim(),
+                        bio: bioController.text.trim(),
+                        isPublic: isPublic,
+                        isNewAccount: false,
+                        profileIcon: appState.selectedIcon,
+                        pack: profile.pack,
+                      );
+
+                      final updatedHealth = HealthInfo(
+                        heightInches: int.tryParse(heightController.text) ?? 0,
+                        weightPounds: int.tryParse(weightController.text) ?? 0,
+                        ageYears: int.tryParse(ageController.text) ?? 0,
+                      );
+
+                      await UserProfileAccessor.updateOwnProfile(updatedProfile);
+                      await HealthInfoAccessor.setHealthInfoInts(updatedHealth.heightInches, updatedHealth.weightPounds, updatedHealth.ageYears);
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("Profile and health info updated.")),
+                      );
+                    } catch (e) {
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text("Error: $e")),
+                      );
+                    }
+                  },
+                  child: const Text("Save"),
+                ),
+              ],
+            );
+          }
+        );
+      },
     );
   }
 

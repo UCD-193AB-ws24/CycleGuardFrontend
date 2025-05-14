@@ -312,8 +312,9 @@ class mapState extends State<RoutesPage> {
         minutes,
         _toLats(recordedLocations),
         _toLngs(recordedLocations),
-        _notifyCurrentRideData.value.climb,
-        avg(recordedAltitudes),
+        // _notifyCurrentRideData.value.climb,
+        // avg(recordedAltitudes),
+      0, 0
     );
     print(rideInfo.toJson());
 
@@ -560,9 +561,9 @@ class mapState extends State<RoutesPage> {
                   "Ride $_rideIdx on $_rideDate:\n"
                     "${_tripInfo!.distance} miles, "
                     "${_tripInfo!.time} minutes, "
-                    "${_tripInfo!.calories} calories\n"
-                    "${_tripInfo!.averageAltitude} ft. elevation, "
-                    "${_tripInfo!.climb} ft. climbed",
+                    "${_tripInfo!.calories} calories",
+                    // "${_tripInfo!.averageAltitude} ft. elevation, "
+                    // "${_tripInfo!.climb} ft. climbed",
                   style: TextStyle(fontSize: 16, height: 1.5),
                 ),
                 backgroundColor: selectedColor,
@@ -626,10 +627,10 @@ class mapState extends State<RoutesPage> {
                   Colors.lightBlueAccent),
             ),
             Positioned(
-              top: DimUtil.safeHeight(context) * 3 / 16,
-              width: DimUtil.safeWidth(context) * 3.2 / 10,
-              height: DimUtil.safeHeight(context) * 1.2 / 16,
-              left: DimUtil.safeWidth(context) * 3.4 / 10,
+                top: DimUtil.safeHeight(context) * 4.2 / 16,
+                width: DimUtil.safeWidth(context) * 3.2 / 10,
+                height: DimUtil.safeHeight(context) * 1.2 / 16,
+                right: DimUtil.safeWidth(context) * .2 / 10,
               child: StatCard(
                 icon: Icons.directions_bike,
                 label: 'Distance',
@@ -639,20 +640,20 @@ class mapState extends State<RoutesPage> {
                 unit: 'mi',
                 color: Colors.greenAccent),
             ),
-            Positioned(
-              top: DimUtil.safeHeight(context) * 4.2 / 16,
-              width: DimUtil.safeWidth(context) * 3.2 / 10,
-              height: DimUtil.safeHeight(context) * 1.2 / 16,
-              left: DimUtil.safeWidth(context) * 3.4 / 10,
-              child: _buildStatCard(
-                Icons.trending_up,
-                  'Altitude',
-                  rideData.altitude,
-                  0.0,
-                  0.0,
-                  'ft',
-                  Colors.deepPurpleAccent),
-            ),
+            // Positioned(
+            //   top: DimUtil.safeHeight(context) * 4.2 / 16,
+            //   width: DimUtil.safeWidth(context) * 3.2 / 10,
+            //   height: DimUtil.safeHeight(context) * 1.2 / 16,
+            //   left: DimUtil.safeWidth(context) * 3.4 / 10,
+            //   child: _buildStatCard(
+            //     Icons.trending_up,
+            //       'Altitude',
+            //       rideData.altitude,
+            //       0.0,
+            //       0.0,
+            //       'ft',
+            //       Colors.deepPurpleAccent),
+            // ),
             Positioned(
               top: DimUtil.safeHeight(context) * 3 / 16,
               width: DimUtil.safeWidth(context) * 3.2 / 10,
@@ -667,20 +668,20 @@ class mapState extends State<RoutesPage> {
                   unit: 'cal',
                   color: Colors.redAccent),
             ),
-            Positioned(
-              top: DimUtil.safeHeight(context) * 4.2 / 16,
-              width: DimUtil.safeWidth(context) * 3.2 / 10,
-              height: DimUtil.safeHeight(context) * 1.2 / 16,
-              right: DimUtil.safeWidth(context) * .2 / 10,
-              child: _buildStatCard(
-                  Icons.arrow_upward,
-                  'Climb',
-                  rideData.climb,
-                  0.0,
-                  0.0,
-                  'ft',
-                  Colors.purpleAccent),
-            ),
+            // Positioned(
+            //   top: DimUtil.safeHeight(context) * 4.2 / 16,
+            //   width: DimUtil.safeWidth(context) * 3.2 / 10,
+            //   height: DimUtil.safeHeight(context) * 1.2 / 16,
+            //   right: DimUtil.safeWidth(context) * .2 / 10,
+            //   child: _buildStatCard(
+            //       Icons.arrow_upward,
+            //       'Climb',
+            //       rideData.climb,
+            //       0.0,
+            //       0.0,
+            //       'ft',
+            //       Colors.purpleAccent),
+            // ),
           ],
         );
       });
@@ -1145,8 +1146,8 @@ class PostRideData {
                 _buildInfoRow(Icons.directions_bike, "$miles miles biked"),
                 _buildInfoRow(Icons.local_fire_department, "$cals calories burned"),
                 _buildInfoRow(Icons.timer, "$mins min $secs sec"),
-                _buildInfoRow(Icons.trending_up, "$avgAltitude ft. average elevation"),
-                _buildInfoRow(Icons.arrow_upward, "$climb ft. climbed"),
+                // _buildInfoRow(Icons.trending_up, "$avgAltitude ft. average elevation"),
+                // _buildInfoRow(Icons.arrow_upward, "$climb ft. climbed"),
                 SizedBox(height: 25),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(

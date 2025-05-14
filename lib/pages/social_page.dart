@@ -1472,6 +1472,7 @@ class UserDailyGoalsSection extends StatelessWidget {
 
   void _showChangeGoalsDialog(
       BuildContext context, UserDailyGoalProvider userGoals) {
+    final appState = Provider.of<MyAppState>(context, listen: false);
     bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final distanceController =
     TextEditingController(text: userGoals.dailyDistanceGoal.toString());
@@ -1546,6 +1547,8 @@ class UserDailyGoalsSection extends StatelessWidget {
 
                   await userGoals.updateUserGoals(
                       newDistance, newTime, newCalories);
+
+                  appState.updateGoalStatus();
 
                   Navigator.pop(context);
 

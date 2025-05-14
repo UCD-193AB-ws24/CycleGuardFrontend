@@ -146,6 +146,7 @@ class _HomePageState extends State<HomePage>
     final weekHistory = Provider.of<WeekHistoryProvider>(context);
     final userGoals = Provider.of<UserDailyGoalProvider>(context);
     Color selectedColor = Provider.of<MyAppState>(context).selectedColor;
+    final appState = Provider.of<MyAppState>(context, listen: false);
     final colorScheme = Theme.of(context).colorScheme;
 
     final todayUtcTimestamp = DateTime.utc(
@@ -171,6 +172,10 @@ class _HomePageState extends State<HomePage>
     double todayDistance = todayInfo.distance;
     double todayCalories = todayInfo.calories;
     double todayTime = todayInfo.time;
+
+    appState.isDistanceGoalMet = todayDistance >= userGoals.dailyDistanceGoal;
+    appState.isCalorieGoalMet = todayCalories >= userGoals.dailyCaloriesGoal;
+    appState.isTimeGoalMet = todayTime >= userGoals.dailyTimeGoal;
 
     List<double> distancesForWeek = List.filled(7, 0.0);
     for (int i = 0; i < weekHistory.days.length; i++) {

@@ -1036,7 +1036,7 @@ class _SocialPageState extends State<SocialPage>
                           value: isPublic,
                           activeColor: Theme.of(context).colorScheme.primary,
                           onChanged: (value) {
-                            setState(() {
+                            setModalState(() {
                               isPublic = value ?? true;
                             });
                           },

@@ -773,7 +773,7 @@ class mapState extends State<RoutesPage> {
                 recordedLocations.add(center!);
                 compressCoords(recordedLocations);
 
-                recordedAltitudes.add(altitudeFeet);
+                // recordedAltitudes.add(altitudeFeet);
                 generatePolyLines(recordedLocations, RoutesPage.POLYLINE_USER);
                 if (isOffTrack(center!)) {
                   getGooglePolylinePoints().then((coordinates) {
@@ -893,7 +893,7 @@ class mapState extends State<RoutesPage> {
       recordedLocations.add(center!);
       compressCoords(recordedLocations);
       // TODO handle altitudes from helmet
-      recordedAltitudes.add(0);
+      // recordedAltitudes.add(0);
       generatePolyLines(recordedLocations, RoutesPage.POLYLINE_USER);
       if (isOffTrack(center!)) {
         getGooglePolylinePoints().then((coordinates) {

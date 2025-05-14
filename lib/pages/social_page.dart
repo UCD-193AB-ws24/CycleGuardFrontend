@@ -973,7 +973,9 @@ class _SocialPageState extends State<SocialPage>
 
               return Scrollbar(
                 thumbVisibility: true,
+                controller: _searchScrollController,
                 child: ListView.builder(
+                  controller: _searchScrollController,
                   itemCount: filtered.length,
                   itemBuilder: (context, idx) {
                     final user = filtered[idx];
@@ -1016,12 +1018,20 @@ class _SocialPageState extends State<SocialPage>
                           ? Theme.of(context).colorScheme.onSecondaryFixedVariant
                           : Colors.white,
                       child: ListTile(
-                        leading: CircleAvatar(child: Text(user[0].toUpperCase())),
-                        title: Text(
-                          user,
-                          style: TextStyle(color: isDarkMode ? Colors.white70 : null),
-                        ),
-                        trailing: trailingWidget,
+                          leading: GestureDetector(
+                            onTap: () => _showUserProfileDialog(user),
+                            child: Tooltip(
+                              message: "Tap to view profile",
+                              child: CircleAvatar(child: Text(user[0].toUpperCase())),
+                            ),
+                          ),
+                          title: Text(
+                            user,
+                            style: TextStyle(
+                              color: isDarkMode ? Colors.white70 : null,
+                            ),
+                          ),
+                          trailing: trailingWidget,
                       ),
                     );
                   },
@@ -1069,6 +1079,93 @@ class _SocialPageState extends State<SocialPage>
         }
       },
     );
+  }
+
+  Future<void> _showUserProfileDialog(String username) async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      print("getting profile for $username");
+      final profile = await UserProfileAccessor.getPublicProfile(username);
+      print("retrieved profile $profile");
+
+      if (!mounted) return;
+      Navigator.pop(context); // dismiss loading
+
+      // If profile is private and not the current user's friend, block access
+      if (!profile.isPublic) {
+        showDialog(
+          context: context,
+          builder: (_) => AlertDialog(
+            title: Text("Profile is Private"),
+            content: Text("You don't have permission to view $username’s profile."),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text("Close"),
+              ),
+            ],
+          ),
+        );
+        return;
+      }
+
+      // Normal public profile display
+      final icon = profile.profileIcon;
+      final isEmoji = RegExp(r'^[\u{1F300}-\u{1FAFF}]+$', unicode: true).hasMatch(icon);
+      final bio = profile.bio.trim().isEmpty ? "No bio available" : profile.bio;
+      final pack = (profile.pack?.trim().isNotEmpty ?? false) ? profile.pack : null;
+
+      showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: Row(
+            children: [
+              if (isEmoji)
+                Text(icon, style: const TextStyle(fontSize: 28))
+              else if (icon.isNotEmpty)
+                Image.asset(
+                  'assets/icons/$icon.png',
+                  width: 32,
+                  height: 32,
+                  errorBuilder: (_, __, ___) => const Icon(Icons.person),
+                ),
+              const SizedBox(width: 8),
+              Expanded(child: Text(profile.username)),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text("📝 Bio: $bio"),
+              if (pack != null) ...[
+                const SizedBox(height: 8),
+                Text("📦 Pack: $pack"),
+              ],
+              const SizedBox(height: 8),
+              Text("👁️ Profile: Public"),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Close"),
+            ),
+          ],
+        ),
+      );
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error loading profile for $username")),
+        );
+      }
+    }
   }
 }
 

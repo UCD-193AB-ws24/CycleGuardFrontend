@@ -5,25 +5,22 @@ import 'package:cycle_guard_app/data/coordinates_accessor.dart';
 import 'package:cycle_guard_app/data/health_info_accessor.dart';
 import 'package:cycle_guard_app/data/navigation_accessor.dart';
 import 'package:cycle_guard_app/data/single_trip_history.dart';
+import 'package:cycle_guard_app/data/user_daily_goal_provider.dart';
 import 'package:cycle_guard_app/data/user_profile_accessor.dart';
+import 'package:cycle_guard_app/data/week_history_provider.dart';
+import 'package:cycle_guard_app/main.dart';
 import 'package:cycle_guard_app/pages/ble.dart';
 import 'package:cycle_guard_app/pages/routes_autofill.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:google_places_flutter/google_places_flutter.dart';
-import 'package:cycle_guard_app/data/user_daily_goal_provider.dart';
-import 'package:cycle_guard_app/data/week_history_provider.dart';
-import 'package:vibration/vibration.dart';
 import 'package:location/location.dart' hide LocationAccuracy;
-
 import 'package:provider/provider.dart';
-import 'package:cycle_guard_app/main.dart';
+import 'package:vibration/vibration.dart';
 
 import '../auth/dim_util.dart';
 import '../auth/key_util.dart';
@@ -103,11 +100,19 @@ class mapState extends State<RoutesPage> {
 
     final polylines = [for(var i=0; i<latitudes.length; i++) LatLng(latitudes[i], longitudes[i])];
 
-    generatedPolylines = polylines;
-    generatePolyLines(polylines, RoutesPage.POLYLINE_GENERATED);
+    // generatedPolylines.clear();
+    // for (final point in polylines) {
+    //   generatedPolylines.add(point);
+    //   // compressCoords(generatedPolylines);
+    // }
 
-    if (polylines.isNotEmpty) {
-      center = polylines[0];
+    generatedPolylines = polylines;
+    generatePolyLines(generatedPolylines, RoutesPage.POLYLINE_GENERATED);
+
+    print("Generated polylines with length ${generatedPolylines.length}");
+
+    if (generatedPolylines.isNotEmpty) {
+      center = generatedPolylines[0];
       recenterMap();
       recenterMap();
     }
@@ -547,8 +552,8 @@ class mapState extends State<RoutesPage> {
                 onPressed: () {
                   print("Ride info display pressed");
                   _timestamp=-1;
-                  generatedPolylines.clear();
-                  generatePolyLines([], RoutesPage.POLYLINE_GENERATED);
+                  // generatedPolylines.clear();
+                  // generatePolyLines([], RoutesPage.POLYLINE_GENERATED);
                   setState(() => {});
                 },
                 label: Text(
@@ -765,6 +770,8 @@ class mapState extends State<RoutesPage> {
               // if (dest == null || (dest?.latitude == 0.0 && dest?.longitude == 0.0)) {
 
                 recordedLocations.add(center!);
+                compressCoords(recordedLocations);
+
                 recordedAltitudes.add(altitudeFeet);
                 generatePolyLines(recordedLocations, RoutesPage.POLYLINE_USER);
                 if (isOffTrack(center!)) {
@@ -883,6 +890,7 @@ class mapState extends State<RoutesPage> {
       // if (dest == null || (dest?.latitude == 0.0 && dest?.longitude == 0.0)) {
 
       recordedLocations.add(center!);
+      compressCoords(recordedLocations);
       // TODO handle altitudes from helmet
       recordedAltitudes.add(0);
       generatePolyLines(recordedLocations, RoutesPage.POLYLINE_USER);
@@ -897,6 +905,44 @@ class mapState extends State<RoutesPage> {
       if (offCenter) animateCameraWithHeading(center!, heading ?? 0);
     } else {
       if (offCenter) centerCamera(center!);
+    }
+  }
+
+  double distanceBetweenMeters(LatLng a, LatLng b) {
+    return Geolocator.distanceBetween(
+      a.latitude,
+      a.longitude,
+      b.latitude,
+      b.longitude,
+    );
+  }
+
+  double _cosines(LatLng A, LatLng B, LatLng C) {
+    double a = distanceBetweenMeters(B, C);
+    double b = distanceBetweenMeters(A, C);
+    double c = distanceBetweenMeters(A, B);
+
+    double squares = a*a + c*c - b*b;
+    double angle = acos(squares/(2*a*c));
+
+    return angle;
+  }
+
+  static final double COSINES_THRESHOLD_RADIANS = 20 * (pi/180);
+  void compressCoords(List<LatLng> list) {
+    if (list.length<3) return;
+
+    LatLng C=list[list.length-1];
+    while (list.length>=3) {
+      LatLng A=list[list.length-3], B=list[list.length-2];
+      double angleRadians = _cosines(A, B, C);
+
+      // Angle is big enough to be considered a turn: stop combining
+      if ((180-angleRadians) > COSINES_THRESHOLD_RADIANS) {
+        break;
+      } else {
+        list.removeAt(list.length-2);
+      }
     }
   }
 

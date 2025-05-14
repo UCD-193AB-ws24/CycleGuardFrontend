@@ -100,13 +100,13 @@ class mapState extends State<RoutesPage> {
 
     final polylines = [for(var i=0; i<latitudes.length; i++) LatLng(latitudes[i], longitudes[i])];
 
-    // generatedPolylines.clear();
-    // for (final point in polylines) {
-    //   generatedPolylines.add(point);
-    //   // compressCoords(generatedPolylines);
-    // }
+    generatedPolylines.clear();
+    for (final point in polylines) {
+      generatedPolylines.add(point);
+      compressCoords(generatedPolylines);
+    }
 
-    generatedPolylines = polylines;
+    // generatedPolylines = polylines;
     generatePolyLines(generatedPolylines, RoutesPage.POLYLINE_GENERATED);
 
     print("Generated polylines with length ${generatedPolylines.length}");
@@ -939,7 +939,7 @@ class mapState extends State<RoutesPage> {
       double angleRadians = _cosines(A, B, C);
 
       // Angle is big enough to be considered a turn: stop combining
-      if ((180-angleRadians) > COSINES_THRESHOLD_RADIANS) {
+      if ((pi-angleRadians) > COSINES_THRESHOLD_RADIANS) {
         break;
       } else {
         list.removeAt(list.length-2);

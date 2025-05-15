@@ -752,25 +752,28 @@ Widget _buildProfileTab() {
       color: color.withAlpha(30),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       elevation: 2,
+
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 10.0),
-        child: Row(
-          children: [
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10.0),
+        child: Column(
+          children : [
             Icon(icon, color: color),
-            SizedBox(width: 8),
+            SizedBox(width: 15),
             Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(label,
-                    style:
-                    TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.black)),
-                Text(value,
-                    style:
-                    TextStyle(fontSize: 16, fontWeight: FontWeight.bold,color: Colors.black)),
-              ],
-            ),
-          ],
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Text(label,
+                  style:
+                  TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.black)),
+              SizedBox(width: 5),
+              Text(value,
+                  style:
+                  TextStyle(fontSize: 12, fontWeight: FontWeight.bold,color: Colors.black)),
+            ],
+          ),
+      ],
         ),
+
       ),
     );
   }
@@ -951,7 +954,7 @@ Widget _buildProfileTab() {
                                               Colors.blueAccent,
                                             ),
                                           ),
-                                          const SizedBox(width: 8),
+                                          const SizedBox(width: 4),
                                           Flexible(
                                             child: _buildStatCard(
                                               Icons.directions_bike,
@@ -960,7 +963,7 @@ Widget _buildProfileTab() {
                                               Colors.orangeAccent,
                                             ),
                                           ),
-                                          const SizedBox(width: 8),
+                                          const SizedBox(width: 4),
                                           Flexible(
                                             child: _buildStatCard(
                                               Icons.local_fire_department,
@@ -1268,7 +1271,7 @@ Widget _buildProfileTab() {
                                         Colors.blueAccent,
                                       ),
                                     ),
-                                    const SizedBox(width: 8),
+                                    const SizedBox(width: 4),
                                     Flexible(
                                       child: _buildStatCard(
                                         Icons.directions_bike,
@@ -1277,7 +1280,7 @@ Widget _buildProfileTab() {
                                         Colors.orangeAccent,
                                       ),
                                     ),
-                                    const SizedBox(width: 8),
+                                    const SizedBox(width: 4),
                                     Flexible(
                                       child: _buildStatCard(
                                         Icons.local_fire_department,

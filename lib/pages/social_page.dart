@@ -949,16 +949,17 @@ class _SocialPageState extends State<SocialPage>
         child: Row(
           children: [
             Icon(icon, color: color),
-            SizedBox(width: 8),
+            SizedBox(width: 10),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(label,
                     style:
-                    TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.black)),
+                    TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: Colors.black)),
+                SizedBox(width: 10),
                 Text(value,
                     style:
-                    TextStyle(fontSize: 16, fontWeight: FontWeight.bold,color: Colors.black)),
+                    TextStyle(fontSize: 9, fontWeight: FontWeight.bold,color: Colors.black)),
               ],
             ),
           ],

@@ -1426,9 +1426,13 @@ class UserDailyGoalsSection extends StatelessWidget {
                 style:
                 TextStyle(color: isDarkMode ? Colors.white : Colors.black),
                 decoration: InputDecoration(
-                  labelText: "Time (mins)",
-                  labelStyle: TextStyle(
-                      color: isDarkMode ? Colors.white70 : Colors.black),
+                  label: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text("Time (mins)", style: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black)),
+                      Text("max 1440", style: TextStyle(color: isDarkMode ? Colors.white38 : Colors.black54)),
+                    ],
+                  ),
                 ),
               ),
               TextField(
@@ -1437,9 +1441,13 @@ class UserDailyGoalsSection extends StatelessWidget {
                 style:
                 TextStyle(color: isDarkMode ? Colors.white : Colors.black),
                 decoration: InputDecoration(
-                  labelText: "Distance (mi)",
-                  labelStyle: TextStyle(
-                      color: isDarkMode ? Colors.white70 : Colors.black),
+                  label: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text("Distance (mi)", style: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black)),
+                      Text("max 999", style: TextStyle(color: isDarkMode ? Colors.white38 : Colors.black54)),
+                    ],
+                  ),
                 ),
               ),
               TextField(
@@ -1448,9 +1456,13 @@ class UserDailyGoalsSection extends StatelessWidget {
                 style:
                 TextStyle(color: isDarkMode ? Colors.white : Colors.black),
                 decoration: InputDecoration(
-                  labelText: "Calories",
-                  labelStyle: TextStyle(
-                      color: isDarkMode ? Colors.white70 : Colors.black),
+                  label: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text("Calories", style: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black)),
+                      Text("max 9999", style: TextStyle(color: isDarkMode ? Colors.white38 : Colors.black54)),
+                    ],
+                  ),
                 ),
               ),
             ],
@@ -1465,15 +1477,23 @@ class UserDailyGoalsSection extends StatelessWidget {
             TextButton(
               onPressed: () async {
                 try {
-                  final newDistance =
-                      double.tryParse(distanceController.text.trim()) ?? 0;
-                  final newTime =
-                      double.tryParse(timeController.text.trim()) ?? 0;
-                  final newCalories =
-                      double.tryParse(caloriesController.text.trim()) ?? 0;
+                  double newDistance = double.tryParse(distanceController.text.trim()) ?? 0;
+                  double newTime = double.tryParse(timeController.text.trim()) ?? 0;
+                  double newCalories = double.tryParse(caloriesController.text.trim()) ?? 0;
 
-                  await userGoals.updateUserGoals(
-                      newDistance, newTime, newCalories);
+                  if (newTime > 1440) {
+                    newTime = 1440;
+                  }
+
+                  if (newDistance > 999) {
+                    newDistance = 999;
+                  }
+
+                  if (newCalories > 9999) {
+                    newCalories = 9999;
+                  }
+
+                  await userGoals.updateUserGoals(newDistance, newTime, newCalories);
 
                   appState.updateGoalStatus();
 

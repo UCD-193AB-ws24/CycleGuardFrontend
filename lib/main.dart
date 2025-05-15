@@ -15,6 +15,7 @@ import 'package:cycle_guard_app/data/week_history_provider.dart';
 import 'package:cycle_guard_app/data/trip_history_provider.dart';
 import 'package:cycle_guard_app/data/user_settings_accessor.dart';
 import 'package:cycle_guard_app/data/user_profile_accessor.dart';
+import 'package:cycle_guard_app/data/single_trip_history.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
@@ -123,6 +124,12 @@ class MyApp extends StatelessWidget {
           UserDailyGoalProvider>(
         builder: (context, appState, userStats, achievementsProgress,
             weekHistory, tripHistory, userDailyGoal, child) {
+          
+          appState.setDependencies(
+            weekHistoryProvider: weekHistory,
+            userGoalProvider: userDailyGoal,
+          );
+
           return ShowCaseWidget(
             enableAutoScroll: true,
             globalTooltipActions: [
@@ -162,6 +169,17 @@ class MyApp extends StatelessWidget {
 }
 
 class MyAppState extends ChangeNotifier {
+  late WeekHistoryProvider weekHistory;
+  late UserDailyGoalProvider userGoals;
+
+  void setDependencies({
+    required WeekHistoryProvider weekHistoryProvider,
+    required UserDailyGoalProvider userGoalProvider,
+  }) {
+    weekHistory = weekHistoryProvider;
+    userGoals = userGoalProvider;
+  }
+
   final isRouteRecordingActive = ValueNotifier<bool>(false);
   Color selectedColor = Colors.orange;
   String selectedIcon = "icon_default";
@@ -170,7 +188,41 @@ class MyAppState extends ChangeNotifier {
   bool isSocialTutorialActive = false;
   bool _tutorialSkipped = false;
 
+  bool isDistanceGoalMet = false;
+  bool isTimeGoalMet = false;
+  bool isCalorieGoalMet = false;
+
   bool get tutorialSkipped => _tutorialSkipped;
+
+  void updateGoalStatus() {
+    final todayUtcTimestamp = DateTime.utc(
+          DateTime.now().year,
+          DateTime.now().month,
+          DateTime.now().day,
+          0,
+          0,
+          0,
+          0,
+          0,
+        ).millisecondsSinceEpoch ~/
+        1000;
+
+    final todayInfo = weekHistory.dayHistoryMap[todayUtcTimestamp] ??
+        const SingleTripInfo(
+            distance: 0.0,
+            calories: 0.0,
+            time: 0.0,
+            averageAltitude: 0,
+            climb: 0);
+
+    double todayDistance = todayInfo.distance;
+    double todayCalories = todayInfo.calories;
+    double todayTime = todayInfo.time;
+
+    isDistanceGoalMet = todayDistance >= userGoals.dailyDistanceGoal;
+    isCalorieGoalMet = todayCalories >= userGoals.dailyCaloriesGoal;
+    isTimeGoalMet = todayTime >= userGoals.dailyTimeGoal;
+  }
 
   void startRouteRecording() {
     isRouteRecordingActive.value = true;

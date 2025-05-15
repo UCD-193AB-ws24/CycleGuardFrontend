@@ -5,22 +5,22 @@ import 'package:cycle_guard_app/data/coordinates_accessor.dart';
 import 'package:cycle_guard_app/data/health_info_accessor.dart';
 import 'package:cycle_guard_app/data/navigation_accessor.dart';
 import 'package:cycle_guard_app/data/single_trip_history.dart';
+import 'package:cycle_guard_app/data/user_daily_goal_provider.dart';
 import 'package:cycle_guard_app/data/user_profile_accessor.dart';
+import 'package:cycle_guard_app/data/week_history_provider.dart';
+import 'package:cycle_guard_app/main.dart';
 import 'package:cycle_guard_app/pages/ble.dart';
 import 'package:cycle_guard_app/pages/routes_autofill.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:google_places_flutter/google_places_flutter.dart';
 import 'package:location/location.dart' hide LocationAccuracy;
-
 import 'package:provider/provider.dart';
-import 'package:cycle_guard_app/main.dart';
+import 'package:vibration/vibration.dart';
 
 import '../auth/dim_util.dart';
 import '../auth/key_util.dart';
@@ -86,17 +86,33 @@ class mapState extends State<RoutesPage> {
   List<double> recordedAltitudes = [];
   double? heading;
 
+  double distanceGoal = 0.0;
+  double caloriesGoal = 0.0;
+  double timeGoal = 0.0;
+
+  double targetDistance = 0.0;
+  double targetCalories = 0.0;
+  double targetTime = 0.0;
+
   Future<void> drawTimestampData(int timestamp) async {
     final coords = await CoordinatesAccessor.getCoordinates(timestamp);
     final latitudes = coords.latitudes, longitudes = coords.longitudes;
 
     final polylines = [for(var i=0; i<latitudes.length; i++) LatLng(latitudes[i], longitudes[i])];
 
-    generatedPolylines = polylines;
-    generatePolyLines(polylines, RoutesPage.POLYLINE_GENERATED);
+    generatedPolylines.clear();
+    for (final point in polylines) {
+      generatedPolylines.add(point);
+      compressCoords(generatedPolylines);
+    }
 
-    if (polylines.isNotEmpty) {
-      center = polylines[0];
+    // generatedPolylines = polylines;
+    generatePolyLines(generatedPolylines, RoutesPage.POLYLINE_GENERATED);
+
+    print("Generated polylines with length ${generatedPolylines.length}");
+
+    if (generatedPolylines.isNotEmpty) {
+      center = generatedPolylines[0];
       recenterMap();
       recenterMap();
     }
@@ -140,6 +156,16 @@ class mapState extends State<RoutesPage> {
       });
     });
 
+    Future.microtask(() {
+      Provider.of<UserDailyGoalProvider>(context, listen: false).fetchDailyGoals();
+      Provider.of<WeekHistoryProvider>(context, listen: false).fetchWeekHistory();
+    });
+
+    final userGoals = Provider.of<UserDailyGoalProvider>(context, listen: false);
+    distanceGoal = userGoals.dailyDistanceGoal;
+    timeGoal = userGoals.dailyTimeGoal;
+    caloriesGoal = userGoals.dailyCaloriesGoal;
+
     initHealthInfo();
     SubmitRideService.tryAddAllRides();
   }
@@ -179,8 +205,44 @@ class mapState extends State<RoutesPage> {
   }
 
   void startDistanceRecord() {
+    final weekHistory = Provider.of<WeekHistoryProvider>(context, listen: false);
+    final todayUtcTimestamp = DateTime.utc(
+          DateTime.now().year,
+          DateTime.now().month,
+          DateTime.now().day,
+          0,
+          0,
+          0,
+          0,
+          0,
+        ).millisecondsSinceEpoch ~/
+        1000;
+
+    final todayInfo = weekHistory.dayHistoryMap[todayUtcTimestamp] ??
+      const SingleTripInfo(
+          distance: 0.0,
+          calories: 0.0,
+          time: 0.0,
+          averageAltitude: 0,
+          climb: 0);
+
+    targetDistance = distanceGoal - todayInfo.distance;
+    targetTime = timeGoal - todayInfo.time;
+    targetCalories = caloriesGoal - todayInfo.calories;
+
     _notifyCurrentRideData.value = AccumRideData.blank();
     final appState = Provider.of<MyAppState>(context, listen: false);
+
+    if (appState.isCalorieGoalMet == true) {
+      targetCalories = 0.0;
+    }
+    if (appState.isDistanceGoalMet == true) {
+      targetDistance = 0.0;
+    }
+    if(appState.isTimeGoalMet == true) {
+      targetTime = 0.0;
+    }
+
     setState(() {
       showStartButton = false;
       showStopButton = true;
@@ -250,8 +312,9 @@ class mapState extends State<RoutesPage> {
         minutes,
         _toLats(recordedLocations),
         _toLngs(recordedLocations),
-        _notifyCurrentRideData.value.climb,
-        avg(recordedAltitudes),
+        // _notifyCurrentRideData.value.climb,
+        // avg(recordedAltitudes),
+      0, 0
     );
     print(rideInfo.toJson());
 
@@ -490,17 +553,17 @@ class mapState extends State<RoutesPage> {
                 onPressed: () {
                   print("Ride info display pressed");
                   _timestamp=-1;
-                  generatedPolylines.clear();
-                  generatePolyLines([], RoutesPage.POLYLINE_GENERATED);
+                  // generatedPolylines.clear();
+                  // generatePolyLines([], RoutesPage.POLYLINE_GENERATED);
                   setState(() => {});
                 },
                 label: Text(
                   "Ride $_rideIdx on $_rideDate:\n"
                     "${_tripInfo!.distance} miles, "
                     "${_tripInfo!.time} minutes, "
-                    "${_tripInfo!.calories} calories\n"
-                    "${_tripInfo!.averageAltitude} ft. elevation, "
-                    "${_tripInfo!.climb} ft. climbed",
+                    "${_tripInfo!.calories} calories",
+                    // "${_tripInfo!.averageAltitude} ft. elevation, "
+                    // "${_tripInfo!.climb} ft. climbed",
                   style: TextStyle(fontSize: 16, height: 1.5),
                 ),
                 backgroundColor: selectedColor,
@@ -519,6 +582,17 @@ class mapState extends State<RoutesPage> {
   final ValueNotifier<AccumRideData> _notifyCurrentRideData = ValueNotifier<AccumRideData>(AccumRideData.blank());
 
   Widget _curRideInfoWidget(Color bg) {
+    /*print("-------- DISTANCE -------");
+    print(distanceGoal);
+    print(targetDistance);
+    print("------- TIME --------");
+    print(timeGoal);
+    print(targetTime);
+    print("------- CALORIES --------");
+    print(caloriesGoal);
+    print(targetCalories);
+    print("---------------");*/
+
     return ValueListenableBuilder(
       valueListenable: _notifyCurrentRideData,
       builder: (BuildContext context, AccumRideData rideData, Widget? child) {
@@ -529,12 +603,14 @@ class mapState extends State<RoutesPage> {
               width: DimUtil.safeWidth(context) * 3.2 / 10,
               height: DimUtil.safeHeight(context) * 1.2 / 16,
               left: DimUtil.safeWidth(context) * .2 / 10,
-              child: _buildStatCard(
-                Icons.directions_bike,
-                'Distance',
-                rideData.distance,
-                'mi',
-                Colors.redAccent),
+              child: StatCard(
+                icon: Icons.timer,
+                label: 'Time',
+                value: rideData.time,
+                remaining: targetTime,
+                goal: timeGoal,
+                unit: 'min',
+                color: Colors.blueAccent),
             ),
             Positioned(
               top: DimUtil.safeHeight(context) * 4.2 / 16,
@@ -545,66 +621,81 @@ class mapState extends State<RoutesPage> {
                   Icons.speed,
                   'Speed',
                   rideData.speed,
+                  0.0,
+                  0.0,
                   'mph',
-                  Colors.orangeAccent),
-            ),
-            Positioned(
-              top: DimUtil.safeHeight(context) * 3 / 16,
-              width: DimUtil.safeWidth(context) * 3.2 / 10,
-              height: DimUtil.safeHeight(context) * 1.2 / 16,
-              left: DimUtil.safeWidth(context) * 3.4 / 10,
-              child: _buildStatCard(
-                  Icons.timer,
-                  'Time',
-                  rideData.time,
-                  'min',
-                  Colors.blueAccent),
-            ),
-            Positioned(
-              top: DimUtil.safeHeight(context) * 4.2 / 16,
-              width: DimUtil.safeWidth(context) * 3.2 / 10,
-              height: DimUtil.safeHeight(context) * 1.2 / 16,
-              left: DimUtil.safeWidth(context) * 3.4 / 10,
-              child: _buildStatCard(
-                  Icons.local_fire_department,
-                  'Calories',
-                  rideData.calories,
-                  'cal',
                   Colors.lightBlueAccent),
             ),
             Positioned(
+                top: DimUtil.safeHeight(context) * 4.2 / 16,
+                width: DimUtil.safeWidth(context) * 3.2 / 10,
+                height: DimUtil.safeHeight(context) * 1.2 / 16,
+                right: DimUtil.safeWidth(context) * .2 / 10,
+              child: StatCard(
+                icon: Icons.directions_bike,
+                label: 'Distance',
+                value: rideData.distance,
+                remaining: targetDistance,
+                goal: distanceGoal,
+                unit: 'mi',
+                color: Colors.greenAccent),
+            ),
+            // Positioned(
+            //   top: DimUtil.safeHeight(context) * 4.2 / 16,
+            //   width: DimUtil.safeWidth(context) * 3.2 / 10,
+            //   height: DimUtil.safeHeight(context) * 1.2 / 16,
+            //   left: DimUtil.safeWidth(context) * 3.4 / 10,
+            //   child: _buildStatCard(
+            //     Icons.trending_up,
+            //       'Altitude',
+            //       rideData.altitude,
+            //       0.0,
+            //       0.0,
+            //       'ft',
+            //       Colors.deepPurpleAccent),
+            // ),
+            Positioned(
               top: DimUtil.safeHeight(context) * 3 / 16,
               width: DimUtil.safeWidth(context) * 3.2 / 10,
               height: DimUtil.safeHeight(context) * 1.2 / 16,
               right: DimUtil.safeWidth(context) * .2 / 10,
-              child: _buildStatCard(
-                  Icons.trending_up,
-                  'Altitude',
-                  rideData.altitude,
-                  'ft',
-                  Colors.deepPurpleAccent),
+              child: StatCard(
+                  icon: Icons.local_fire_department,
+                  label: 'Calories',
+                  value: rideData.calories,
+                  remaining: targetCalories,
+                  goal: caloriesGoal,
+                  unit: 'cal',
+                  color: Colors.redAccent),
             ),
-            Positioned(
-              top: DimUtil.safeHeight(context) * 4.2 / 16,
-              width: DimUtil.safeWidth(context) * 3.2 / 10,
-              height: DimUtil.safeHeight(context) * 1.2 / 16,
-              right: DimUtil.safeWidth(context) * .2 / 10,
-              child: _buildStatCard(
-                  Icons.arrow_upward,
-                  'Climb',
-                  rideData.climb,
-                  'ft',
-                  Colors.purpleAccent),
-            ),
+            // Positioned(
+            //   top: DimUtil.safeHeight(context) * 4.2 / 16,
+            //   width: DimUtil.safeWidth(context) * 3.2 / 10,
+            //   height: DimUtil.safeHeight(context) * 1.2 / 16,
+            //   right: DimUtil.safeWidth(context) * .2 / 10,
+            //   child: _buildStatCard(
+            //       Icons.arrow_upward,
+            //       'Climb',
+            //       rideData.climb,
+            //       0.0,
+            //       0.0,
+            //       'ft',
+            //       Colors.purpleAccent),
+            // ),
           ],
         );
       });
   }
 
-  Widget _buildStatCard(IconData icon, String label, double value, String unit, Color color) {
+  Widget _buildStatCard(IconData icon, String label, double value, double remaining, double goal, String unit, Color color) {
     return Card(
       color: color.withAlpha(192),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(12),
+      side: value >= remaining && goal > 0
+          ? BorderSide(color: Colors.amber, width: 2)
+          : BorderSide.none,
+    ),
       elevation: 2,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 0.0),
@@ -680,7 +771,9 @@ class mapState extends State<RoutesPage> {
               // if (dest == null || (dest?.latitude == 0.0 && dest?.longitude == 0.0)) {
 
                 recordedLocations.add(center!);
-                recordedAltitudes.add(altitudeFeet);
+                compressCoords(recordedLocations);
+
+                // recordedAltitudes.add(altitudeFeet);
                 generatePolyLines(recordedLocations, RoutesPage.POLYLINE_USER);
                 if (isOffTrack(center!)) {
                   getGooglePolylinePoints().then((coordinates) {
@@ -798,8 +891,9 @@ class mapState extends State<RoutesPage> {
       // if (dest == null || (dest?.latitude == 0.0 && dest?.longitude == 0.0)) {
 
       recordedLocations.add(center!);
+      compressCoords(recordedLocations);
       // TODO handle altitudes from helmet
-      recordedAltitudes.add(0);
+      // recordedAltitudes.add(0);
       generatePolyLines(recordedLocations, RoutesPage.POLYLINE_USER);
       if (isOffTrack(center!)) {
         getGooglePolylinePoints().then((coordinates) {
@@ -812,6 +906,44 @@ class mapState extends State<RoutesPage> {
       if (offCenter) animateCameraWithHeading(center!, heading ?? 0);
     } else {
       if (offCenter) centerCamera(center!);
+    }
+  }
+
+  double distanceBetweenMeters(LatLng a, LatLng b) {
+    return Geolocator.distanceBetween(
+      a.latitude,
+      a.longitude,
+      b.latitude,
+      b.longitude,
+    );
+  }
+
+  double _cosines(LatLng A, LatLng B, LatLng C) {
+    double a = distanceBetweenMeters(B, C);
+    double b = distanceBetweenMeters(A, C);
+    double c = distanceBetweenMeters(A, B);
+
+    double squares = a*a + c*c - b*b;
+    double angle = acos(squares/(2*a*c));
+
+    return angle;
+  }
+
+  static final double COSINES_THRESHOLD_RADIANS = 20 * (pi/180);
+  void compressCoords(List<LatLng> list) {
+    if (list.length<3) return;
+
+    LatLng C=list[list.length-1];
+    while (list.length>=3) {
+      LatLng A=list[list.length-3], B=list[list.length-2];
+      double angleRadians = _cosines(A, B, C);
+
+      // Angle is big enough to be considered a turn: stop combining
+      if ((pi-angleRadians) > COSINES_THRESHOLD_RADIANS) {
+        break;
+      } else {
+        list.removeAt(list.length-2);
+      }
     }
   }
 
@@ -1014,8 +1146,8 @@ class PostRideData {
                 _buildInfoRow(Icons.directions_bike, "$miles miles biked"),
                 _buildInfoRow(Icons.local_fire_department, "$cals calories burned"),
                 _buildInfoRow(Icons.timer, "$mins min $secs sec"),
-                _buildInfoRow(Icons.trending_up, "$avgAltitude ft. average elevation"),
-                _buildInfoRow(Icons.arrow_upward, "$climb ft. climbed"),
+                // _buildInfoRow(Icons.trending_up, "$avgAltitude ft. average elevation"),
+                // _buildInfoRow(Icons.arrow_upward, "$climb ft. climbed"),
                 SizedBox(height: 25),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
@@ -1062,4 +1194,149 @@ class PostRideData {
     );
   }
 
+}
+
+class StatCard extends StatefulWidget {
+  final IconData icon;
+  final String label;
+  final double value;
+  final double remaining;
+  final double goal;
+  final String unit;
+  final Color color;
+
+  const StatCard({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.remaining,
+    required this.goal,
+    required this.unit,
+    required this.color,
+    Key? key,
+  }) : super(key: key);
+
+  @override
+  _StatCardState createState() => _StatCardState();
+}
+
+class _StatCardState extends State<StatCard> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+  bool _animationPlayed = false;
+  bool _isDisposed = false;
+
+  @override
+  void initState() {
+    final appState = Provider.of<MyAppState>(context, listen: false);
+    super.initState();
+    _controller = AnimationController(
+      duration: Duration(milliseconds: 3000),
+      vsync: this,
+    );
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 1.08) 
+        .chain(CurveTween(curve: Curves.easeInOut))
+        .animate(_controller);
+
+    if (widget.label == 'Distance') {
+      _animationPlayed = appState.isDistanceGoalMet;
+    } else if (widget.label == 'Time') {
+      _animationPlayed = appState.isTimeGoalMet;
+    } else {
+      _animationPlayed = appState.isCalorieGoalMet;
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant StatCard oldWidget) {
+    final appState = Provider.of<MyAppState>(context, listen: false);
+    super.didUpdateWidget(oldWidget);
+    // Only trigger if not previously played AND goal is met AND not disposed
+    if (!_animationPlayed && 
+        widget.value >= widget.remaining && 
+        widget.goal > 0 &&
+        !_isDisposed) {
+      
+      // Safe vibration - wrapped in try/catch
+      try {
+        Vibration.hasVibrator().then((hasVibrator) {
+          if (hasVibrator && !_isDisposed) {
+            Vibration.vibrate(duration: 200); // ms
+          }
+        });
+      } catch (e) {
+        print('Vibration error: $e');
+      }
+
+      if (mounted) {
+        setState(() {
+          if (widget.label == 'Distance') {
+            appState.isDistanceGoalMet = true;
+          } else if (widget.label == 'Time') {
+            appState.isTimeGoalMet = true;
+          } else {
+            appState.isCalorieGoalMet = true;
+          }
+          _animationPlayed = true;
+        });
+      }
+
+      _controller.forward().then((_) {
+        _controller.reverse();
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    // Ensure any ongoing vibration is canceled
+    try {
+      Vibration.cancel();
+    } catch (e) {
+      print('Error canceling vibration: $e');
+    }
+    _controller.stop();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    bool highlight = widget.value >= widget.remaining && widget.goal > 0;
+
+    return ScaleTransition(
+      scale: _scaleAnimation,
+      child: Card(
+        color: widget.color.withAlpha(192),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: highlight
+              ? BorderSide(color: Colors.amber, width: 2)
+              : BorderSide.none,
+        ),
+        elevation: 2,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 0.0),
+          child: Row(
+            children: [
+              Icon(widget.icon, color: Colors.white),
+              SizedBox(width: 8),
+              Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Text(widget.label,
+                      style:
+                          TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                  Text("${widget.value.toStringAsFixed(1)} ${widget.unit}",
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }

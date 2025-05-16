@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:cycle_guard_app/data/navigation_accessor.dart';
 import 'package:flutter/material.dart';
+import 'package:cycle_guard_app/main.dart';
+import 'package:provider/provider.dart';
 
 // Thanks, Flutter guides!
 // https://api.flutter.dev/flutter/material/Autocomplete-class.html
@@ -60,23 +62,43 @@ class _RoutesAutofillState extends State<RoutesAutofill> {
 
   @override
   Widget build(BuildContext context) {
+    Color selectedColor = Provider.of<MyAppState>(context).selectedColor;
     return Autocomplete<String>(
-      fieldViewBuilder: (BuildContext context, TextEditingController textEditingController, FocusNode focusNode, VoidCallback onFieldSubmitted) {
+      fieldViewBuilder: (
+        BuildContext context,
+        TextEditingController textEditingController,
+        FocusNode focusNode,
+        VoidCallback onFieldSubmitted,
+      ) {
         return TextFormField(
           controller: textEditingController,
-          decoration: InputDecoration(
-            icon: Icon(Icons.search),
-            filled: true,
-            fillColor: Colors.black45,
-          ),
           focusNode: focusNode,
+          decoration: InputDecoration(
+            prefixIcon: Icon(Icons.search, color: selectedColor),
+            hintText: 'Search...',
+            hintStyle: TextStyle(color: Colors.grey[500]),
+            filled: true,
+            fillColor: Colors.grey[200],
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(30),
+              borderSide: BorderSide.none,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(30),
+              borderSide: BorderSide(color: Colors.grey, width: 1),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(30),
+              borderSide: BorderSide(color: selectedColor, width: 2),
+            ),
+            contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+          ),
         );
       },
       optionsBuilder: (TextEditingValue textEditingValue) async {
-        final Iterable<String>? options = await _debouncedSearch(textEditingValue.text);
-        if (options == null) {
-          return _lastOptions;
-        }
+        final Iterable<String>? options =
+            await _debouncedSearch(textEditingValue.text);
+        if (options == null) return _lastOptions;
         _lastOptions = options;
         return options;
       },

@@ -1526,6 +1526,7 @@ class _PacksPageState extends State<PacksPage> {
                     ? () => _showMessage('You can only be in one pack at a time.')
                     : () => _showCreatePackDialog(distance),
                 style: ElevatedButton.styleFrom(
+                  elevation: 2,
                   backgroundColor: disabled
                       ? Colors.grey
                       : isDarkMode

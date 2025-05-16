@@ -1495,39 +1495,71 @@ class _PacksPageState extends State<PacksPage> {
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      elevation: 2,
-      color: isDarkMode ? Theme.of(context).colorScheme.onPrimaryFixed : null,
+      elevation: 4,
+      color: isDarkMode ? Theme.of(context).colorScheme.onSurfaceVariant : Theme.of(context).colorScheme.surfaceContainerLowest,
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
             Text(
-              '$distance Mile Challenge',
+              '$distance Miles',
               style: TextStyle(
-                fontSize: 16,
+                fontSize: 20,
                 fontWeight: FontWeight.bold,
                 color: isDarkMode ? Colors.white : null,
               ),
             ),
-            ElevatedButton(
-              onPressed: disabled
-                  ? () => _showMessage('You can only be in one pack at a time.')
-                  : () => _showCreatePackDialog(distance),
-              style: ElevatedButton.styleFrom(
-                elevation: 4,
-                backgroundColor: disabled
-                    ? Colors.grey
-                    : isDarkMode
-                        ? Theme.of(context).colorScheme.secondary
-                        : null,
-                foregroundColor: isDarkMode ? Colors.white70 : null,
+            const SizedBox(height: 8),
+            Text(
+              _getChallengeDescription(distance),
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14,
+                color: isDarkMode ? Colors.white70 : Colors.grey[700],
               ),
-              child: const Text('Accept Challenge'),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: disabled
+                    ? () => _showMessage('You can only be in one pack at a time.')
+                    : () => _showCreatePackDialog(distance),
+                style: ElevatedButton.styleFrom(
+                  elevation: 2,
+                  backgroundColor: disabled
+                      ? Colors.grey
+                      : isDarkMode
+                          ? Theme.of(context).colorScheme.secondary
+                          : null,
+                  foregroundColor: isDarkMode ? Colors.white70 : null,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: const Text('Accept Challenge'),
+              ),
             ),
           ],
         ),
       ),
     );
+  }
+
+  String _getChallengeDescription(int distance) {
+    switch (distance) {
+      case 50:
+        return "Get started by crushing 50 miles with some friends!";
+      case 100:
+        return "Double up and go the distance! Can you conquer 100 miles?";
+      case 250:
+        return "You’re in serious territory now. 250 miles of determination!";
+      case 500:
+        return "This is elite-level commitment. 500 miles – you've got this!";
+      default:
+        return "Push yourself to complete $distance miles. Ready to commit?";
+    }
   }
 
   @override
@@ -1568,11 +1600,22 @@ class _PacksPageState extends State<PacksPage> {
         ),
         const Padding(
           padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          child: Center(
-            child: Text(
-              'Available Challenges',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Text(
+                'Available Challenges',
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: 4),
+              Text( 
+                'Accept a challenge to create a pack',
+                style: TextStyle(fontSize: 16),
+                textAlign: TextAlign.center,
+              ),
+            ],
           ),
         ),
         ..._challengeDistances.map(_buildChallengeCard).toList(),

@@ -86,7 +86,7 @@ class StorePage extends StatelessWidget {
                         _buildItem(
                           context: context,
                           title: "Profile Icon",
-                          cost: "50 CycleCoins",
+                          cost: "30 CycleCoins",
                           onBuy: () => _showIconMenu(context, appState),
                           icon: Icons.person, 
                         ),

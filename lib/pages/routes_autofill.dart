@@ -71,6 +71,7 @@ class _RoutesAutofillState extends State<RoutesAutofill> {
         VoidCallback onFieldSubmitted,
       ) {
         return TextFormField(
+          style: TextStyle(color: Colors.black),
           controller: textEditingController,
           focusNode: focusNode,
           decoration: InputDecoration(

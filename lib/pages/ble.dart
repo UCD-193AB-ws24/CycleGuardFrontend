@@ -101,7 +101,17 @@ Future<void> showCustomDialog(BuildContext context,
     builder: (BuildContext context) {
       return AlertDialog(
         contentPadding: EdgeInsets.symmetric(horizontal: 10,vertical: 10),
-        title: Text('Select Your Helmet', style: TextStyle(color: Colors.black)),
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text('Select Your Helmet', style: TextStyle(color: Colors.black)),
+            IconButton(
+              icon: Icon(Icons.close, color: Colors.grey[700]),
+              onPressed: () => Navigator.of(context).pop(),
+              tooltip: 'Close',
+            ),
+          ],
+        ),
         content: Container(
 
           height: 1000,

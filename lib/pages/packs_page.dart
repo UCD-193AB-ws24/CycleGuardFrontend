@@ -1502,9 +1502,9 @@ class _PacksPageState extends State<PacksPage> {
         child: Column(
           children: [
             Text(
-              '$distance Mile Challenge',
+              '$distance Miles',
               style: TextStyle(
-                fontSize: 16,
+                fontSize: 20,
                 fontWeight: FontWeight.bold,
                 color: isDarkMode ? Colors.white : null,
               ),

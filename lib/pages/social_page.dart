@@ -740,6 +740,11 @@ class _SocialPageState extends State<SocialPage>
       ),
     );
   }
+
+
+
+
+
   /// **2️⃣ Bikers Tab — show all bikers and filter by the search field**
   Widget _buildSearchTab() {
     bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
@@ -838,6 +843,7 @@ class _SocialPageState extends State<SocialPage>
                           .onSecondaryFixedVariant
                           : Colors.white,
                       child: ListTile(
+
                         leading:
                         CircleAvatar(child: Text(user[0].toUpperCase())),
                         title: GestureDetector(
@@ -858,7 +864,6 @@ class _SocialPageState extends State<SocialPage>
                             final weekHistory =
                             Provider.of<WeekHistoryProvider>(context,
                                 listen: false);
-
                             showDialog(
                               context: context,
                               builder: (context) {

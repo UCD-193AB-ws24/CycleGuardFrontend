@@ -23,10 +23,14 @@ class NavigationAccessor {
     }
   }
 
-  static Future<AutofillResult> getAutofill(String input) async {
+  static Future<AutofillResult> getAutofill(String input, LatLng center) async {
     final body = {
-      "input": input
+      "input": input,
+      "latitude": center.latitude,
+      "longitude": center.longitude
     };
+
+    print(body);
 
     final response = await RequestsUtil.postWithToken("/navigation/getAutofill", body);
     print(response.body);

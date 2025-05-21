@@ -121,7 +121,6 @@ class mapState extends State<RoutesPage> {
   Future<void> setCustomIcon() async {
     try{
       UserProfile userProfile = await UserProfileAccessor.getOwnProfile();
-      //print('${userProfile.profileIcon}.png aaaaaaaaaaaaaaaaaaaaAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
       BitmapDescriptor.asset(
         ImageConfiguration(size: Size(30, 30)),
         'assets/${userProfile.profileIcon}.png',
@@ -261,7 +260,6 @@ class mapState extends State<RoutesPage> {
   }
 
   List<double> _toLats(List<LatLng> list) => list.map((e) => e.latitude).toList(growable: false);
-
   List<double> _toLngs(List<LatLng> list) => list.map((e) => e.longitude).toList(growable: false);
 
   double _calculateCalories(double miles, double minutes) {
@@ -434,7 +432,7 @@ class mapState extends State<RoutesPage> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          RoutesAutofill(),
+          RoutesAutofill(this),
         ],
       ),
     ),

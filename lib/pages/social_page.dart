@@ -118,7 +118,7 @@ class _SocialPageState extends State<SocialPage>
       });
     }
   }
-  
+
   void _loadUserProfile() async {
     try {
       final profile = await UserProfileAccessor.getOwnProfile();
@@ -423,7 +423,7 @@ class _SocialPageState extends State<SocialPage>
               MaterialPageRoute(builder: (context) => SettingsPage()),
             );
           },
-        ),  
+        ),
         title: Text(
           'Social',
           style: TextStyle(
@@ -495,10 +495,10 @@ class _SocialPageState extends State<SocialPage>
                   colorFilter: ColorFilter.mode(
                     isDarkMode ? Colors.white70 : Colors.black,
                     BlendMode.srcIn,
+                  ),
                 ),
               ),
             ),
-          ),
           )
         ],
       ),
@@ -584,161 +584,161 @@ class _SocialPageState extends State<SocialPage>
   }
 
   /// **1️⃣ Profile Tab - View & Edit Profile**
-Widget _buildProfileTab() {
-  bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
+  Widget _buildProfileTab() {
+    bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
-  return FutureBuilder<UserProfile>(
-    future: _profileFuture,
-    builder: (context, snapshot) {
-      if (snapshot.connectionState == ConnectionState.waiting) {
-        return Center(child: CircularProgressIndicator());
-      } else if (snapshot.hasError) {
-        return Center(child: Text("Error loading profile"));
-      } else if (!snapshot.hasData) {
-        return Center(child: Text("No profile data found."));
-      }
+    return FutureBuilder<UserProfile>(
+      future: _profileFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(child: CircularProgressIndicator());
+        } else if (snapshot.hasError) {
+          return Center(child: Text("Error loading profile"));
+        } else if (!snapshot.hasData) {
+          return Center(child: Text("No profile data found."));
+        }
 
-      UserProfile profile = snapshot.data!;
-      final appState = Provider.of<MyAppState>(context);
+        UserProfile profile = snapshot.data!;
+        final appState = Provider.of<MyAppState>(context);
 
-      return Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Showcase(
-              key: _profileKey,
-              title: 'Profile Management',
-              description:
-                  'Update your icon, profile, status, and health information.',
-              child: Column(
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Consumer<MyAppState>(builder: (context, appState, child) {
-                        String displayIcon = _hasLocalProfileChanges
-                            ? _currentIconSelection
-                            : appState.selectedIcon;
-                        return GestureDetector(
-                          onTap: () => _showIconSelectionModal(context, appState, profile),
-                          child: Container(
-                            width: 125,
-                            height: 125,
-                            padding: EdgeInsets.all(15),
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: isDarkMode
-                                  ? Theme.of(context).colorScheme.secondary
-                                  : Theme.of(context).colorScheme.primaryContainer,
-                            ),
-                            child: SvgPicture.asset(
-                              'assets/$displayIcon.svg',
-                            ),
-                          ),
-                        );
-                      }),
-                      const SizedBox(width: 24), // ← Added spacing between icon and info
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              nameController.text.isEmpty
-                                  ? "(No display name set)"
-                                  : nameController.text,
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                color: isDarkMode ? Colors.white70 : Colors.black,
+        return Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Showcase(
+                key: _profileKey,
+                title: 'Profile Management',
+                description:
+                'Update your icon, profile, status, and health information.',
+                child: Column(
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Consumer<MyAppState>(builder: (context, appState, child) {
+                          String displayIcon = _hasLocalProfileChanges
+                              ? _currentIconSelection
+                              : appState.selectedIcon;
+                          return GestureDetector(
+                            onTap: () => _showIconSelectionModal(context, appState, profile),
+                            child: Container(
+                              width: 125,
+                              height: 125,
+                              padding: EdgeInsets.all(15),
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: isDarkMode
+                                    ? Theme.of(context).colorScheme.secondary
+                                    : Theme.of(context).colorScheme.primaryContainer,
+                              ),
+                              child: SvgPicture.asset(
+                                'assets/$displayIcon.svg',
                               ),
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              bioController.text.isEmpty
-                                  ? "(No bio provided)"
-                                  : bioController.text,
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontStyle: FontStyle.italic,
-                                color: isDarkMode ? Colors.white60 : Colors.black87,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              isPublic ? "🌐 Public" : "🔒 Private",
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                                color: isDarkMode ? Colors.blue[200] : Colors.blue[800],
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Align(
-                              alignment: Alignment.centerRight,
-                              child: IconButton(
-                                icon: Icon(
-                                  Icons.edit_note_sharp,
-                                  color: isDarkMode
-                                      ? Colors.white70
-                                      : Theme.of(context).colorScheme.primary,
+                          );
+                        }),
+                        const SizedBox(width: 24), // ← Added spacing between icon and info
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                nameController.text.isEmpty
+                                    ? "(No display name set)"
+                                    : nameController.text,
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: isDarkMode ? Colors.white70 : Colors.black,
                                 ),
-                                tooltip: "Edit Profile",
-                                onPressed: () async {
-                                  final refreshedProfile = await UserProfileAccessor.getOwnProfile();
-                                  if (mounted) {
-                                    _showEditProfileDialog(refreshedProfile);
-                                  }
-                                },
                               ),
-                            ),
-                          ],
+                              const SizedBox(height: 4),
+                              Text(
+                                bioController.text.isEmpty
+                                    ? "(No bio provided)"
+                                    : bioController.text,
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontStyle: FontStyle.italic,
+                                  color: isDarkMode ? Colors.white60 : Colors.black87,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                isPublic ? "🌐 Public" : "🔒 Private",
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                  color: isDarkMode ? Colors.blue[200] : Colors.blue[800],
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Align(
+                                alignment: Alignment.centerRight,
+                                child: IconButton(
+                                  icon: Icon(
+                                    Icons.edit_note_sharp,
+                                    color: isDarkMode
+                                        ? Colors.white70
+                                        : Theme.of(context).colorScheme.primary,
+                                  ),
+                                  tooltip: "Edit Profile",
+                                  onPressed: () async {
+                                    final refreshedProfile = await UserProfileAccessor.getOwnProfile();
+                                    if (mounted) {
+                                      _showEditProfileDialog(refreshedProfile);
+                                    }
+                                  },
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                ],
+                      ],
+                    ),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(height: 5),
-            Column(
-              children: [
-                Showcase(
-                  key: _dailyGoalsKey,
-                  title: 'Daily Goals',
-                  description: 'Set daily goals can be seen on the home page.',
-                  child: UserDailyGoalsSection(),
-                ),
-                const Divider(),
-                Showcase(
-                  key: _notificationsKey,
-                  title: 'Notification Manager',
-                  description:
-                      'Manage daily reminders here. Add notifications with a title, body, and time. Existing reminders will be shown here.',
-                  child: NotificationScheduler(),
-                ),
-                const Divider(),
-                const SizedBox(height: 10),
-                Center(
-                  child: ElevatedButton(
-                    onPressed: () => AuthUtil.logout(context),
-                    style: themedButtonStyle(context),
-                    child: Text(
-                      "Logout",
-                      style: TextStyle(
-                        color: isDarkMode ? Colors.white70 : null,
+              const SizedBox(height: 5),
+              Column(
+                children: [
+                  Showcase(
+                    key: _dailyGoalsKey,
+                    title: 'Daily Goals',
+                    description: 'Set daily goals can be seen on the home page.',
+                    child: UserDailyGoalsSection(),
+                  ),
+                  const Divider(),
+                  Showcase(
+                    key: _notificationsKey,
+                    title: 'Notification Manager',
+                    description:
+                    'Manage daily reminders here. Add notifications with a title, body, and time. Existing reminders will be shown here.',
+                    child: NotificationScheduler(),
+                  ),
+                  const Divider(),
+                  const SizedBox(height: 10),
+                  Center(
+                    child: ElevatedButton(
+                      onPressed: () => AuthUtil.logout(context),
+                      style: themedButtonStyle(context),
+                      child: Text(
+                        "Logout",
+                        style: TextStyle(
+                          color: isDarkMode ? Colors.white70 : null,
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      );
-    },
-  );
-}
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
 
   Future<List> _searchTabFuture = Future.wait([
     UserProfileAccessor.fetchAllUsernames(),
@@ -760,18 +760,18 @@ Widget _buildProfileTab() {
             Icon(icon, color: color),
             SizedBox(width: 15),
             Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Text(label,
-                  style:
-                  TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.black)),
-              SizedBox(width: 5),
-              Text(value,
-                  style:
-                  TextStyle(fontSize: 12, fontWeight: FontWeight.bold,color: Colors.black)),
-            ],
-          ),
-      ],
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Text(label,
+                    style:
+                    TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.black)),
+                SizedBox(width: 5),
+                Text(value,
+                    style:
+                    TextStyle(fontSize: 12, fontWeight: FontWeight.bold,color: Colors.black)),
+              ],
+            ),
+          ],
         ),
 
       ),
@@ -930,7 +930,7 @@ Widget _buildProfileTab() {
                                       Text(
                                         "$userBio\n",
                                         style: const TextStyle(fontSize: 20,
-                                        color: Colors.black),
+                                            color: Colors.black),
                                       ),
                                       const SizedBox(height: 16),
                                       Text(
@@ -950,7 +950,7 @@ Widget _buildProfileTab() {
                                             child: _buildStatCard(
                                               Icons.timer,
                                               'Time',
-                                              '${weekHistory.averageTime.round()} min',
+                                              '${weekHistory.userAverageTime.round()} min',
                                               Colors.blueAccent,
                                             ),
                                           ),
@@ -959,7 +959,7 @@ Widget _buildProfileTab() {
                                             child: _buildStatCard(
                                               Icons.directions_bike,
                                               'Distance',
-                                              '${weekHistory.averageDistance.round()} mi',
+                                              '${weekHistory.userAverageDistance.round()} mi',
                                               Colors.orangeAccent,
                                             ),
                                           ),
@@ -968,7 +968,7 @@ Widget _buildProfileTab() {
                                             child: _buildStatCard(
                                               Icons.local_fire_department,
                                               'Calories',
-                                              '${weekHistory.averageCalories.round()} cal',
+                                              '${weekHistory.userAverageCalories.round()} cal',
                                               Colors.redAccent,
                                             ),
                                           ),
@@ -1002,7 +1002,7 @@ Widget _buildProfileTab() {
                           },
                           child: Text(
                             user,
-                          style: TextStyle(color: isDarkMode ? Colors.white70 : null),
+                            style: TextStyle(color: isDarkMode ? Colors.white70 : null),
                           ),
                         ),
                         subtitle: isFriend
@@ -1052,116 +1052,116 @@ Widget _buildProfileTab() {
       context: context,
       builder: (context) {
         return StatefulBuilder(
-          builder: (context, setModalState) {
-            return AlertDialog(
-              backgroundColor: isDarkMode ? Colors.grey[900] : Colors.white,
-              title: Text("Edit Profile", style: TextStyle(color: themedTextColor(context))),
-              content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    TextField(
-                      controller: nameController,
-                      style: TextStyle(color: themedTextColor(context)),
-                      decoration: themedInputDecoration(context, "Display Name"),
-                    ),
-                    TextField(
-                      controller: bioController,
-                      style: TextStyle(color: themedTextColor(context)),
-                      decoration: themedInputDecoration(context, "Bio"),
-                    ),
-                    Row(
-                      children: [
-                        Checkbox(
-                          value: isPublic,
-                          activeColor: Theme.of(context).colorScheme.primary,
-                          onChanged: (value) {
-                            setModalState(() {
-                              isPublic = value ?? true;
-                            });
-                          },
-                        ),
-                        Text(
-                          "Make My Profile Public",
-                          style: TextStyle(color: themedTextColor(context)),
-                        ),
-                      ],
-                    ),
-                    const Divider(),
-                    TextField(
-                      controller: heightController,
-                      keyboardType: TextInputType.number,
-                      style: TextStyle(color: themedTextColor(context)),
-                      decoration: themedInputDecoration(context, "Height (in)"),
-                    ),
-                    TextField(
-                      controller: weightController,
-                      keyboardType: TextInputType.number,
-                      style: TextStyle(color: themedTextColor(context)),
-                      decoration: themedInputDecoration(context, "Weight (lb)"),
-                    ),
-                    TextField(
-                      controller: ageController,
-                      keyboardType: TextInputType.number,
-                      style: TextStyle(color: themedTextColor(context)),
-                      decoration: themedInputDecoration(context, "Age"),
-                    ),
-                  ],
+            builder: (context, setModalState) {
+              return AlertDialog(
+                backgroundColor: isDarkMode ? Colors.grey[900] : Colors.white,
+                title: Text("Edit Profile", style: TextStyle(color: themedTextColor(context))),
+                content: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      TextField(
+                        controller: nameController,
+                        style: TextStyle(color: themedTextColor(context)),
+                        decoration: themedInputDecoration(context, "Display Name"),
+                      ),
+                      TextField(
+                        controller: bioController,
+                        style: TextStyle(color: themedTextColor(context)),
+                        decoration: themedInputDecoration(context, "Bio"),
+                      ),
+                      Row(
+                        children: [
+                          Checkbox(
+                            value: isPublic,
+                            activeColor: Theme.of(context).colorScheme.primary,
+                            onChanged: (value) {
+                              setModalState(() {
+                                isPublic = value ?? true;
+                              });
+                            },
+                          ),
+                          Text(
+                            "Make My Profile Public",
+                            style: TextStyle(color: themedTextColor(context)),
+                          ),
+                        ],
+                      ),
+                      const Divider(),
+                      TextField(
+                        controller: heightController,
+                        keyboardType: TextInputType.number,
+                        style: TextStyle(color: themedTextColor(context)),
+                        decoration: themedInputDecoration(context, "Height (in)"),
+                      ),
+                      TextField(
+                        controller: weightController,
+                        keyboardType: TextInputType.number,
+                        style: TextStyle(color: themedTextColor(context)),
+                        decoration: themedInputDecoration(context, "Weight (lb)"),
+                      ),
+                      TextField(
+                        controller: ageController,
+                        keyboardType: TextInputType.number,
+                        style: TextStyle(color: themedTextColor(context)),
+                        decoration: themedInputDecoration(context, "Age"),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: Text("Cancel", style: TextStyle(color: themedTextColor(context))),
-                ),
-                ElevatedButton(
-                  style: themedButtonStyle(context),
-                  onPressed: () async {
-                    try {
-                      final updatedProfile = UserProfile(
-                        username: profile.username,
-                        displayName: nameController.text.trim(),
-                        bio: bioController.text.trim(),
-                        isPublic: isPublic,
-                        isNewAccount: false,
-                        profileIcon: appState.selectedIcon,
-                        pack: profile.pack,
-                      );
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: Text("Cancel", style: TextStyle(color: themedTextColor(context))),
+                  ),
+                  ElevatedButton(
+                    style: themedButtonStyle(context),
+                    onPressed: () async {
+                      try {
+                        final updatedProfile = UserProfile(
+                          username: profile.username,
+                          displayName: nameController.text.trim(),
+                          bio: bioController.text.trim(),
+                          isPublic: isPublic,
+                          isNewAccount: false,
+                          profileIcon: appState.selectedIcon,
+                          pack: profile.pack,
+                        );
 
-                      final updatedHealth = HealthInfo(
-                        heightInches: int.tryParse(heightController.text) ?? 0,
-                        weightPounds: int.tryParse(weightController.text) ?? 0,
-                        ageYears: int.tryParse(ageController.text) ?? 0,
-                      );
+                        final updatedHealth = HealthInfo(
+                          heightInches: int.tryParse(heightController.text) ?? 0,
+                          weightPounds: int.tryParse(weightController.text) ?? 0,
+                          ageYears: int.tryParse(ageController.text) ?? 0,
+                        );
 
-                      await UserProfileAccessor.updateOwnProfile(updatedProfile);
-                      await HealthInfoAccessor.setHealthInfoInts(updatedHealth.heightInches, updatedHealth.weightPounds, updatedHealth.ageYears);
+                        await UserProfileAccessor.updateOwnProfile(updatedProfile);
+                        await HealthInfoAccessor.setHealthInfoInts(updatedHealth.heightInches, updatedHealth.weightPounds, updatedHealth.ageYears);
 
-                      if (mounted) {
-                        // ✅ Sync local state fields with edited values
-                        setState(() {
-                          this.nameController.text = nameController.text;
-                          this.bioController.text = bioController.text;
-                          this.isPublic = isPublic;
-                        });
-                        _loadUserProfile();
+                        if (mounted) {
+                          // ✅ Sync local state fields with edited values
+                          setState(() {
+                            this.nameController.text = nameController.text;
+                            this.bioController.text = bioController.text;
+                            this.isPublic = isPublic;
+                          });
+                          _loadUserProfile();
+                        }
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text("Profile and health info updated.")),
+                        );
+                      } catch (e) {
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text("Error: $e")),
+                        );
                       }
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("Profile and health info updated.")),
-                      );
-                    } catch (e) {
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text("Error: $e")),
-                      );
-                    }
-                  },
-                  child: const Text("Save"),
-                ),
-              ],
-            );
-          }
+                    },
+                    child: const Text("Save"),
+                  ),
+                ],
+              );
+            }
         );
       },
     );
@@ -1297,8 +1297,8 @@ Widget _buildProfileTab() {
                                   child: Text(
                                     "This user is your friend.",
                                     style: TextStyle(
-                                      color: Colors.green,
-                                      fontWeight: FontWeight.bold),
+                                        color: Colors.green,
+                                        fontWeight: FontWeight.bold),
                                   ),
                                 )
                               ],

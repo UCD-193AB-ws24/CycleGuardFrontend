@@ -34,3 +34,13 @@ InputDecoration themedInputDecoration(BuildContext context, String label) {
     ),
   );
 }
+
+/// Returns true if current theme is dark mode.
+bool inDarkMode(BuildContext context) {
+  return Theme.of(context).brightness == Brightness.dark;
+}
+
+/// Returns light or dark color depending on current theme.
+Color themedColor(BuildContext context, Color light, Color dark) {
+  return inDarkMode(context) ? dark : light;
+}

@@ -24,8 +24,9 @@ class SocialPage extends StatefulWidget {
   _SocialPageState createState() => _SocialPageState();
 }
 
-class _SocialPageState extends State<SocialPage>
-    with SingleTickerProviderStateMixin {
+class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateMixin {
+  String? _myUsername;
+  Map<String, UserProfile> _userProfiles = {};
   late TabController _tabController;
   late TextEditingController _searchController;
   late final ScrollController _searchScrollController;
@@ -58,6 +59,12 @@ class _SocialPageState extends State<SocialPage>
 
   @override
   void initState() {
+    UserProfileAccessor.getOwnProfile().then((profile) {
+      print("My username is ${profile.username}");
+      setState(() {
+        _myUsername = profile.username;
+      });
+    });
     super.initState();
 
     print("Social: initState()");
@@ -364,7 +371,9 @@ class _SocialPageState extends State<SocialPage>
             ),
             actions: [
               TextButton(
-                onPressed: () => Navigator.pop(context),
+                onPressed: () {
+                  if (context.mounted) Navigator.pop(context);
+                },
                 child: const Text('Close'),
               ),
             ],
@@ -397,7 +406,7 @@ class _SocialPageState extends State<SocialPage>
 
   @override
   Widget build(BuildContext context) {
-    bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    bool isDarkMode = inDarkMode(context);
     Color selectedColor = Provider.of<MyAppState>(context).selectedColor;
 
     if (_isLoading) {
@@ -412,7 +421,7 @@ class _SocialPageState extends State<SocialPage>
         leading: IconButton(
           icon: Icon(
             Icons.settings,
-            color: Theme.of(context).brightness == Brightness.dark
+            color: isDarkMode
                 ? Colors.white70
                 : Colors.black, // or any contrasting color
           ),
@@ -447,9 +456,9 @@ class _SocialPageState extends State<SocialPage>
               tabs: const [
                 Tab(icon: Icon(Icons.person), text: "Profile"),
                 Tab(icon: Icon(Icons.groups_3), text: "Friends"),
-                Tab(icon: Icon(Icons.search), text: "Bikers"),
                 Tab(icon: Icon(Icons.handshake_outlined), text: "Requests"),
                 Tab(icon: Icon(Icons.bike_scooter_rounded), text: "Packs"),
+                Tab(icon: Icon(Icons.search), text: "Bikers"),
               ],
             ),
           ),
@@ -509,16 +518,16 @@ class _SocialPageState extends State<SocialPage>
             child: _buildProfileTab(),
           ),
           _buildFriendsTab(),
-          _buildSearchTab(),
           RequestsTab(),
-          PacksPage()
+          PacksPage(),
+          _buildSearchTab()
         ],
       ),
     );
   }
 
   void _showIconSelectionModal(BuildContext context, MyAppState appState, UserProfile profile) {
-    bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    bool isDarkMode = inDarkMode(context);
     final allIcons = {...appState.availableIcons, ...appState.ownedIcons}.toList();
 
     showModalBottomSheet(
@@ -585,7 +594,7 @@ class _SocialPageState extends State<SocialPage>
 
   /// **1️⃣ Profile Tab - View & Edit Profile**
 Widget _buildProfileTab() {
-  bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
+  bool isDarkMode = inDarkMode(context);
 
   return FutureBuilder<UserProfile>(
     future: _profileFuture,
@@ -744,6 +753,7 @@ Widget _buildProfileTab() {
     UserProfileAccessor.fetchAllUsernames(),
     FriendsListAccessor.getFriendsList(),
     FriendRequestsListAccessor.getFriendRequestList(),
+    UserProfileAccessor.getAllUsers(),
   ]);
 
   Widget _buildStatCard(
@@ -779,7 +789,7 @@ Widget _buildProfileTab() {
   }
   /// **2️⃣ Bikers Tab — show all bikers and filter by the search field**
   Widget _buildSearchTab() {
-    bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    bool isDarkMode = inDarkMode(context);
 
     return Column(
       children: [
@@ -816,15 +826,26 @@ Widget _buildProfileTab() {
               final usersRaw = snapshot.data![0] as List<String>;
               final friendsList = snapshot.data![1] as FriendsList;
               final requestList = snapshot.data![2] as FriendRequestList;
+              final usersListWrapper = snapshot.data![3] as UsersList;
+              final profilesList = usersListWrapper.users;
+              _userProfiles = { for (var p in profilesList) p.username: p };
+              //_userProfiles = userProfiles;
 
-              final users = usersRaw;
+              //if (_myUsername == null) return SizedBox.shrink();
+              final userNames = _myUsername == null
+                ? usersRaw
+                : usersRaw.where((u) => u != _myUsername).toList();
+              //final userNames = usersRaw;
               final friends = friendsList.friends;
               final pendingSent = requestList.pendingFriendRequests;
 
-              final query = _searchController.text.toLowerCase();
-              final filtered = query.isEmpty
-                  ? users
-                  : users
+              final query = _searchController.text.trim().toLowerCase();
+
+              if (query.isEmpty) {
+                return Center(child: Text("Start typing to search bikers."));
+              }
+
+              final filtered = userNames
                   .where((u) => u.toLowerCase().contains(query))
                   .toList();
 
@@ -842,22 +863,45 @@ Widget _buildProfileTab() {
                     final user = filtered[idx];
                     final isFriend = friends.contains(user);
                     final isPending = pendingSent.contains(user);
+                    final isPendingMyAccept = requestList.receivedFriendRequests.contains(user);
+                    final isPrivate = _isUserPrivate(user);
+                    //final isDark    = inDarkMode(context);
 
                     Widget trailingWidget;
                     if (isFriend) {
-                      trailingWidget = Text(
-                        "Friend",
-                        style: TextStyle(color: Colors.green),
+                      trailingWidget = Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                           Icon(Icons.check, color: themedColor(context, Colors.green, Colors.lightGreenAccent), size: 16),
+                          SizedBox(width: 4),
+                          Text("Friend", style: TextStyle(color: themedColor(context, Colors.green, Colors.lightGreenAccent))),
+                        ],
                       );
                     } else if (isPending) {
                       trailingWidget = Row(
                         mainAxisSize: MainAxisSize.min,
-                        children: const [
-                          Icon(Icons.hourglass_top,
-                              color: Colors.orange, size: 16),
+                        children: [
+                          Icon(Icons.send, color: themedColor(context, Colors.deepOrangeAccent,  Colors.orange), size: 16),
                           SizedBox(width: 4),
-                          Text("Pending",
-                              style: TextStyle(color: Colors.orange)),
+                          Text("Request Sent", style: TextStyle(color: themedColor(context, Colors.deepOrangeAccent, Colors.orange))),
+                        ],
+                      );
+                    } else if (isPendingMyAccept) {
+                      trailingWidget = Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.mail, color: themedColor(context, Colors.black26, Colors.black12), size: 16),
+                          SizedBox(width: 4),
+                          Text("Accept Request", style: TextStyle(color: themedColor(context, Colors.blue, Colors.lightBlueAccent))),
+                        ],
+                      );
+                    } else if (isPrivate) {
+                      trailingWidget = Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.lock, color: themedColor(context, Colors.white70, Colors.grey), size: 16),
+                          SizedBox(width: 4),
+                          Text("Private", style: TextStyle(color: themedColor(context, Colors.black, Colors.black))),
                         ],
                       );
                     } else {
@@ -867,155 +911,34 @@ Widget _buildProfileTab() {
                         child: const Text("Add Friend"),
                       );
                     }
-                    return Card(
-                      margin: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                      color: isDarkMode
-                          ? Theme.of(context)
-                          .colorScheme
-                          .onSecondaryFixedVariant
-                          : Colors.white,
-                      child: ListTile(
-                        leading:
-                        CircleAvatar(child: Text(user[0].toUpperCase())),
-                        title: GestureDetector(
-                          onTap: () async {
-                            var userInfo =
-                            await UserProfileAccessor.getPublicProfile(
-                                user);
-                            var userDisplayName =
-                            userInfo.displayName.isNotEmpty
-                                ? userInfo.displayName
-                                : userInfo.username;
-                            var userBio =
-                            userInfo.bio.isNotEmpty ? userInfo.bio : "";
-                            var userIcon = userInfo.profileIcon;
-                            Provider.of<WeekHistoryProvider>(context,
-                                listen: false)
-                                .fetchUserWeekHistory(user);
-                            final weekHistory =
-                            Provider.of<WeekHistoryProvider>(context,
-                                listen: false);
 
-                            showDialog(
-                              context: context,
-                              builder: (context) {
-                                return AlertDialog(
-                                  insetPadding: const EdgeInsets.symmetric(
-                                      horizontal: 10, vertical: 40),
-                                  contentPadding: const EdgeInsets.all(16),
-                                  title: Text(
-                                    "$user's Profile",
-                                    style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 20,
-                                        color: Colors.black),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                  content: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      SvgPicture.asset(
-                                        'assets/$userIcon.svg',
-                                        height: 100,
-                                        width: 100,
-                                      ),
-                                      const SizedBox(height: 16),
-                                      Text(
-                                        userDisplayName,
-                                        style: const TextStyle(
-                                            fontSize: 20,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.black),
-                                      ),
-                                      Text(
-                                        "$userBio\n",
-                                        style: const TextStyle(fontSize: 20,
-                                        color: Colors.black),
-                                      ),
-                                      const SizedBox(height: 16),
-                                      Text(
-                                        'Average Ride this Week',
-                                        style: const TextStyle(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.black),
-                                        textAlign: TextAlign.center,
-                                      ),
-                                      const SizedBox(height: 16),
-                                      Row(
-                                        mainAxisAlignment:
-                                        MainAxisAlignment.spaceEvenly,
-                                        children: [
-                                          Flexible(
-                                            child: _buildStatCard(
-                                              Icons.timer,
-                                              'Time',
-                                              '${weekHistory.averageTime.round()} min',
-                                              Colors.blueAccent,
-                                            ),
-                                          ),
-                                          const SizedBox(width: 4),
-                                          Flexible(
-                                            child: _buildStatCard(
-                                              Icons.directions_bike,
-                                              'Distance',
-                                              '${weekHistory.averageDistance.round()} mi',
-                                              Colors.orangeAccent,
-                                            ),
-                                          ),
-                                          const SizedBox(width: 4),
-                                          Flexible(
-                                            child: _buildStatCard(
-                                              Icons.local_fire_department,
-                                              'Calories',
-                                              '${weekHistory.averageCalories.round()} cal',
-                                              Colors.redAccent,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 16),
-                                      if (isFriend)
-                                        const Padding(
-                                          padding: EdgeInsets.only(top: 8),
-                                          child: Text(
-                                            "This user is your friend.",
-                                            style: TextStyle(
-                                                color: Colors.green,
-                                                fontWeight: FontWeight.bold),
-                                          ),
-                                        ),
-                                    ],
-                                  ),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () => Navigator.pop(context),
-                                      child: const Text(
-                                        "Close",
-                                        style: TextStyle(fontSize: 16),
-                                      ),
-                                    ),
-                                  ],
-                                );
-                              },
-                            );
-                          },
+                    return Card(
+                      margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      color: themedColor(
+                        context,
+                        Colors.white,
+                        Theme.of(context).colorScheme.surfaceContainerHighest,
+                      ),
+                      child: ListTile(
+                        leading: CircleAvatar(child: Text(user[0].toUpperCase())),
+                        title: GestureDetector(
+                          onTap: () { /* your existing onTap */ },
                           child: Text(
                             user,
-                          style: TextStyle(color: isDarkMode ? Colors.white70 : null),
+                            style: TextStyle(
+                              color: themedColor(
+                                context,
+                                Colors.black,        // light mode text
+                                Colors.black,      // dark mode text
+                              ),
+                            ),
                           ),
                         ),
                         subtitle: isFriend
-                            ? Text("Friend",
-                            style: TextStyle(color: Colors.green))
+                            ? Text("Friend", style: TextStyle(
+                              color: themedColor(context, Colors.green, Colors.lightGreenAccent)))
                             : null,
-                        trailing: isFriend
-                            ? null
-                            : ElevatedButton(
-                          style: themedButtonStyle(context),
-                          onPressed: () => _sendFriendRequest(user),
-                          child: Text("Add Friend"),
-                        ),
+                        trailing: trailingWidget,  // <— this makes the row appear
                       ),
                     );
                   },
@@ -1029,7 +952,7 @@ Widget _buildProfileTab() {
   }
 
   void _showEditProfileDialog(UserProfile profile) {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final isDarkMode = inDarkMode(context);
     final appState = context.read<MyAppState>();
 
     final nameController = TextEditingController(text: profile.displayName);
@@ -1188,7 +1111,7 @@ Widget _buildProfileTab() {
                 margin: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 child: ListTile(
                   leading: CircleAvatar(child: Text(friend[0].toUpperCase())),
-                  subtitle: Text('Cycling buddy 🚴'),
+                  //subtitle: Text('Cycling buddy 🚴'),
                   trailing: IconButton(
                     icon: Icon(Icons.emoji_events,
                         color: Theme.of(context).colorScheme.primary),
@@ -1331,6 +1254,12 @@ Widget _buildProfileTab() {
       },
     );
   }
+
+  bool _isUserPrivate(String userId) {
+    final userProfile = _userProfiles[userId];
+    print("Checking if user $userId is private $userProfile.isPublic");
+    return userProfile != null && userProfile.isPublic == false;
+  }
 }
 
 class UserDailyGoalsSection extends StatelessWidget {
@@ -1385,7 +1314,7 @@ class UserDailyGoalsSection extends StatelessWidget {
                 child: Text(
                   "Change Goals",
                   style: TextStyle(
-                    color: Theme.of(context).brightness == Brightness.dark ? Colors.white70 : null,
+                    color: inDarkMode(context) ? Colors.white70 : null,
                   ),
                 ),
 
@@ -1400,7 +1329,7 @@ class UserDailyGoalsSection extends StatelessWidget {
   void _showChangeGoalsDialog(
       BuildContext context, UserDailyGoalProvider userGoals) {
     final appState = Provider.of<MyAppState>(context, listen: false);
-    bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    bool isDarkMode = inDarkMode(context);
     final distanceController =
     TextEditingController(text: userGoals.dailyDistanceGoal.toString());
     final timeController =
@@ -1587,7 +1516,7 @@ class _RequestsTabState extends State<RequestsTab> {
 
   @override
   Widget build(BuildContext context) {
-    bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    bool isDarkMode = inDarkMode(context);
     if (_isLoading) {
       return Center(child: CircularProgressIndicator());
     } else if (_requests.isEmpty) {

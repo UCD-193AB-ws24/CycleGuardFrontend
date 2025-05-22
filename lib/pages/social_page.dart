@@ -934,10 +934,10 @@ Widget _buildProfileTab() {
                             ),
                           ),
                         ),
-                        subtitle: isFriend
+                        /*subtitle: isFriend
                             ? Text("Friend", style: TextStyle(
                               color: themedColor(context, Colors.green, Colors.lightGreenAccent)))
-                            : null,
+                            : null,*/
                         trailing: trailingWidget,  // <— this makes the row appear
                       ),
                     );

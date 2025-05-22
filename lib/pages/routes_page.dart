@@ -121,7 +121,6 @@ class mapState extends State<RoutesPage> {
   Future<void> setCustomIcon() async {
     try{
       UserProfile userProfile = await UserProfileAccessor.getOwnProfile();
-      //print('${userProfile.profileIcon}.png aaaaaaaaaaaaaaaaaaaaAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
       BitmapDescriptor.asset(
         ImageConfiguration(size: Size(30, 30)),
         'assets/${userProfile.profileIcon}.png',
@@ -261,7 +260,6 @@ class mapState extends State<RoutesPage> {
   }
 
   List<double> _toLats(List<LatLng> list) => list.map((e) => e.latitude).toList(growable: false);
-
   List<double> _toLngs(List<LatLng> list) => list.map((e) => e.longitude).toList(growable: false);
 
   double _calculateCalories(double miles, double minutes) {
@@ -434,7 +432,7 @@ class mapState extends State<RoutesPage> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          RoutesAutofill(),
+          RoutesAutofill(this),
         ],
       ),
     ),
@@ -761,7 +759,18 @@ class mapState extends State<RoutesPage> {
           currentLocation.longitude != null) {
 
         setState(() {
+          // print("$center -> $curLatLng");
+          // if (center != null) {
+          //   print(distanceBetweenMeters(center!, curLatLng));
+          // }
           if (!_helmetConnected) {
+            final curLatLng = LatLng(currentLocation.latitude!, currentLocation.longitude!);
+            if (center != null) {
+              final dist = distanceBetweenMeters(center!, curLatLng);
+              if (dist <= 10) return;
+
+              print("$center -> $curLatLng: $dist");
+            }
             if (recordingDistance) prevLoc = center;
             center = LatLng(currentLocation.latitude!, currentLocation.longitude!);
             if (recordingDistance) {
@@ -869,6 +878,13 @@ class mapState extends State<RoutesPage> {
       }
       final newCenter = LatLng(data.latitude, data.longitude);
       if (newCenter == center) return;
+
+      if (center != null) {
+        final dist = distanceBetweenMeters(center!, newCenter);
+        if (dist <= 10) return;
+
+        print("$center -> $newCenter: $dist");
+      }
     }
 
 

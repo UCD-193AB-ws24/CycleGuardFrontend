@@ -59,11 +59,14 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
 
   @override
   void initState() {
+    print("Fetching my profile...");
     UserProfileAccessor.getOwnProfile().then((profile) {
-      print("My username is ${profile.username}");
+      print("Fetched my username: ${profile.username}");
       setState(() {
         _myUsername = profile.username;
       });
+    }).catchError((e) {
+      print("Failed to fetch my profile: $e");
     });
     super.initState();
 
@@ -754,6 +757,7 @@ Widget _buildProfileTab() {
     FriendsListAccessor.getFriendsList(),
     FriendRequestsListAccessor.getFriendRequestList(),
     UserProfileAccessor.getAllUsers(),
+    UserProfileAccessor.getOwnProfile(),
   ]);
 
   Widget _buildStatCard(
@@ -823,36 +827,35 @@ Widget _buildProfileTab() {
                 return Center(child: Text("Error loading users"));
               }
 
-              final usersRaw = snapshot.data![0] as List<String>;
+              /*if (_myUsername == null) {
+                return const Center(child: CircularProgressIndicator());
+              }*/
+              print("Snapshot data length ${snapshot.data?.length}");
               final friendsList = snapshot.data![1] as FriendsList;
               final requestList = snapshot.data![2] as FriendRequestList;
               final usersListWrapper = snapshot.data![3] as UsersList;
+              final myProfile = snapshot.data![4] as UserProfile;
+              final myUsername = myProfile.username;
+              print("My username $myUsername");
               final profilesList = usersListWrapper.users;
               _userProfiles = { for (var p in profilesList) p.username: p };
               //_userProfiles = userProfiles;
 
               //if (_myUsername == null) return SizedBox.shrink();
-              final userNames = _myUsername == null
-                ? usersRaw
-                : usersRaw.where((u) => u != _myUsername).toList();
-              //final userNames = usersRaw;
               final friends = friendsList.friends;
               final pendingSent = requestList.pendingFriendRequests;
-
               final query = _searchController.text.trim().toLowerCase();
-
-              if (query.isEmpty) {
+              if (query.isEmpty || query.length < 3) {
                 return Center(child: Text("Start typing to search bikers."));
               }
-
+              final usersRaw = snapshot.data![0] as List<String>;
+              final userNames = usersRaw.where((u) => u != myUsername).toList();
               final filtered = userNames
                   .where((u) => u.toLowerCase().contains(query))
                   .toList();
-
               if (filtered.isEmpty) {
                 return Center(child: Text("No bikers found."));
               }
-
               return Scrollbar(
                 controller: _searchScrollController,
                 thumbVisibility: true,
@@ -860,6 +863,7 @@ Widget _buildProfileTab() {
                   controller: _searchScrollController,
                   itemCount: filtered.length,
                   itemBuilder: (context, idx) {
+                    print("user index $idx  size ${filtered.length}");
                     final user = filtered[idx];
                     final isFriend = friends.contains(user);
                     final isPending = pendingSent.contains(user);
@@ -928,7 +932,7 @@ Widget _buildProfileTab() {
                             style: TextStyle(
                               color: themedColor(
                                 context,
-                                Colors.black,        // light mode text
+                                Colors.black,      // light mode text
                                 Colors.black,      // dark mode text
                               ),
                             ),
@@ -1257,8 +1261,12 @@ Widget _buildProfileTab() {
 
   bool _isUserPrivate(String userId) {
     final userProfile = _userProfiles[userId];
+      if (userProfile == null) {
+        print("⚠️ No profile found for $userId");
+        return false;
+    }
     print("Checking if user $userId is private $userProfile.isPublic");
-    return userProfile != null && userProfile.isPublic == false;
+    return userProfile.isPublic == false;
   }
 }
 

@@ -59,6 +59,7 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
 
   @override
   void initState() {
+    super.initState();
     print("Fetching my profile...");
     UserProfileAccessor.getOwnProfile().then((profile) {
       print("Fetched my username: ${profile.username}");
@@ -68,10 +69,22 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
     }).catchError((e) {
       print("Failed to fetch my profile: $e");
     });
-    super.initState();
-
+    
     print("Social: initState()");
     _tabController = TabController(length: numOfTabs, vsync: this);
+    _tabController.addListener(() {
+      print("🔁 Tab index changed to ${_tabController.index}");
+      setState(() {
+        _searchTabFuture = Future.wait([
+          UserProfileAccessor.fetchAllUsernames(),
+          FriendsListAccessor.getFriendsList(),
+          FriendRequestsListAccessor.getFriendRequestList(),
+          UserProfileAccessor.getAllUsers(),
+          UserProfileAccessor.getOwnProfile(),
+        ]);
+      });
+    });
+
     _loadUserProfile();
     _loadHealthInfo();
     _profileFuture = UserProfileAccessor.getOwnProfile();
@@ -830,13 +843,13 @@ Widget _buildProfileTab() {
               /*if (_myUsername == null) {
                 return const Center(child: CircularProgressIndicator());
               }*/
-              print("Snapshot data length ${snapshot.data?.length}");
+              //print("Snapshot data length ${snapshot.data?.length}");
               final friendsList = snapshot.data![1] as FriendsList;
               final requestList = snapshot.data![2] as FriendRequestList;
               final usersListWrapper = snapshot.data![3] as UsersList;
               final myProfile = snapshot.data![4] as UserProfile;
               final myUsername = myProfile.username;
-              print("My username $myUsername");
+              //print("My username $myUsername");
               final profilesList = usersListWrapper.users;
               _userProfiles = { for (var p in profilesList) p.username: p };
               //_userProfiles = userProfiles;
@@ -863,7 +876,7 @@ Widget _buildProfileTab() {
                   controller: _searchScrollController,
                   itemCount: filtered.length,
                   itemBuilder: (context, idx) {
-                    print("user index $idx  size ${filtered.length}");
+                    //print("user index $idx  size ${filtered.length}");
                     final user = filtered[idx];
                     final isFriend = friends.contains(user);
                     final isPending = pendingSent.contains(user);
@@ -876,36 +889,36 @@ Widget _buildProfileTab() {
                       trailingWidget = Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                           Icon(Icons.check, color: themedColor(context, Colors.green, Colors.lightGreenAccent), size: 16),
+                           Icon(Icons.check, color: themedColor(context, Colors.green, Colors.lightGreenAccent), size: 18),
                           SizedBox(width: 4),
-                          Text("Friend", style: TextStyle(color: themedColor(context, Colors.green, Colors.lightGreenAccent))),
+                          Text("Friend", style: TextStyle(fontSize: 16, color: themedColor(context, Colors.green, Colors.lightGreenAccent))),
                         ],
                       );
                     } else if (isPending) {
                       trailingWidget = Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.send, color: themedColor(context, Colors.deepOrangeAccent,  Colors.orange), size: 16),
+                          Icon(Icons.send, color: themedColor(context, Colors.deepOrangeAccent,  Colors.orange), size: 18),
                           SizedBox(width: 4),
-                          Text("Request Sent", style: TextStyle(color: themedColor(context, Colors.deepOrangeAccent, Colors.orange))),
+                          Text("Request Sent", style: TextStyle(fontSize: 16, color: themedColor(context, Colors.deepOrangeAccent, Colors.orange))),
                         ],
                       );
                     } else if (isPendingMyAccept) {
                       trailingWidget = Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.mail, color: themedColor(context, Colors.black26, Colors.black12), size: 16),
+                          Icon(Icons.mail, color: themedColor(context, Colors.black26, Colors.black12), size: 18),
                           SizedBox(width: 4),
-                          Text("Accept Request", style: TextStyle(color: themedColor(context, Colors.blue, Colors.lightBlueAccent))),
+                          Text("Accept Request", style: TextStyle(fontSize: 16, color: themedColor(context, Colors.blue, Colors.lightBlueAccent))),
                         ],
                       );
                     } else if (isPrivate) {
                       trailingWidget = Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.lock, color: themedColor(context, Colors.white70, Colors.grey), size: 16),
+                          Icon(Icons.lock, color: themedColor(context, Colors.white70, Colors.grey), size: 18),
                           SizedBox(width: 4),
-                          Text("Private", style: TextStyle(color: themedColor(context, Colors.black, Colors.black))),
+                          Text("Private", style: TextStyle(fontSize: 16, color: themedColor(context, Colors.black, Colors.blueGrey))),
                         ],
                       );
                     } else {
@@ -921,7 +934,8 @@ Widget _buildProfileTab() {
                       color: themedColor(
                         context,
                         Colors.white,
-                        Theme.of(context).colorScheme.surfaceContainerHighest,
+                        //Theme.of(context).colorScheme.surfaceContainerHighest,
+                        Colors.grey[850]!,
                       ),
                       child: ListTile(
                         leading: CircleAvatar(child: Text(user[0].toUpperCase())),
@@ -932,8 +946,8 @@ Widget _buildProfileTab() {
                             style: TextStyle(
                               color: themedColor(
                                 context,
-                                Colors.black,      // light mode text
-                                Colors.black,      // dark mode text
+                                Colors.black,
+                                Colors.white, // ✅ clear and visible in dark mode
                               ),
                             ),
                           ),

@@ -7,6 +7,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/adapters.dart';
 import 'package:provider/provider.dart';
+import 'package:cycle_guard_app/providers/social_data_provider.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:cycle_guard_app/data/user_stats_provider.dart';
 import 'package:cycle_guard_app/data/user_daily_goal_provider.dart';
@@ -73,6 +74,7 @@ void main() async {
     runApp(
       MultiProvider(
         providers: [
+          ChangeNotifierProvider(create: (_) => SocialDataProvider()..reloadAll()),
           ChangeNotifierProvider(create: (context) => UserStatsProvider()),
           ChangeNotifierProvider(
               create: (context) => AchievementsProgressProvider()),

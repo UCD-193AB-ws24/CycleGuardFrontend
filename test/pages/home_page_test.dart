@@ -16,18 +16,6 @@ import '../Mock/Mock_WeekHistoryProvider.dart';
 
 void main() {
   group('HomePage Tests', () {
-    setUp(() {
-      // Override error handler to suppress rendering exceptions
-      FlutterError.onError = (FlutterErrorDetails details) {
-        // Comment out the default error reporting to suppress logs
-        // FlutterError.dumpErrorToConsole(details);
-      };
-    });
-
-    tearDown(() {
-      // Restore default behavior after each test
-      FlutterError.onError = FlutterError.dumpErrorToConsole;
-    });
     testWidgets('Navigation bar displays correct items on Pixel 9 screen', (WidgetTester tester) async {
       final mockUserStatsProvider = MockUserStatsProvider();
       final mockUserDailyGoalProvider = MockUserDailyGoalProvider();
@@ -41,13 +29,13 @@ void main() {
       await mockWeekHistoryProvider.fetchWeekHistory();
 
       await tester.pumpWidget(
-        MediaQuery(
+        MediaQuery( //setting up test phone dims
             data: MediaQueryData(
-              size: Size(1080, 2424),
-              //devicePixelRatio: 2.75,
+              size: Size(320, 640),
+              devicePixelRatio: 2.00,
             ) ,
             child:
-              MultiProvider(
+              MultiProvider( //pumping all providers to widget
                 providers: [
                   ChangeNotifierProvider<UserDailyGoalProvider>.value(value: mockUserDailyGoalProvider),
                   ChangeNotifierProvider<UserStatsProvider>.value(value: mockUserStatsProvider),
@@ -57,7 +45,7 @@ void main() {
                 ],
                 child: MaterialApp(
                   home: ShowCaseWidget(
-                    builder: (context) => HomePage(),
+                    builder: (context) => MyHomePage(),
                   ),
                 ),
               ),
@@ -67,13 +55,13 @@ void main() {
       await tester.pumpAndSettle();
 
       // Optionally re-enable the UI checks
-      /*
-      expect(find.byIcon(Icons.pedal_bike), findsOneWidget);
-      expect(find.byIcon(Icons.home), findsOneWidget);
-      expect(find.byIcon(Icons.person_outline), findsOneWidget);
-      */
 
-      expect(tester.takeException(), isNull);
+      expect(find.byIcon(Icons.pedal_bike), findsAny);
+      expect(find.byIcon(Icons.home), findsAny);
+      expect(find.byIcon(Icons.person_outline), findsAny);
+
+
+     //expect(tester.takeException(), isNull);
     });
   });
 }

@@ -801,19 +801,23 @@ class _HomePageState extends State<HomePage>
             );
           },
           child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.store,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.store,
+                    size: 24,
+                  ),
+                  Flexible(
+                    child: Text(
+                      'Store',
+                      style: TextStyle(
+                        fontSize: 14,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
               ),
-              Text(
-                'Store',
-                style: TextStyle(
-                  fontSize: 14,
-                ),
-              ),
-            ],
-          ),
         ),
       ),
     );

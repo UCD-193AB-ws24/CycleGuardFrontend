@@ -267,6 +267,10 @@ class MyAppState extends ChangeNotifier {
   ];
   final List<String> ownedIcons = [];
 
+
+
+
+
   Future<void> fetchOwnedThemes() async {
     final ownedThemeNames =
         (await PurchaseInfoAccessor.getPurchaseInfo()).themesOwned;

@@ -61,8 +61,137 @@ void main() {
       expect(find.byIcon(Icons.person_outline), findsAny);
 
 
-     //expect(tester.takeException(), isNull);
     });
+
+    testWidgets('Achievement progress displays correctly', (WidgetTester tester) async {
+          final mockUserStatsProvider = MockUserStatsProvider();
+          final mockUserDailyGoalProvider = MockUserDailyGoalProvider();
+          final mockWeekHistoryProvider = MockWeekHistoryProvider();
+          final myAppState = MyAppState();
+          final mockAchievementProgressProvider = MockAchievementsProgressProvider();
+
+          await mockUserStatsProvider.fetchUserStats();
+          await mockUserDailyGoalProvider.fetchDailyGoals();
+          await mockAchievementProgressProvider.fetchAchievementProgress();
+          await mockWeekHistoryProvider.fetchWeekHistory();
+
+          await tester.pumpWidget(
+            MediaQuery(
+              data: MediaQueryData(
+                size: Size(320, 640),
+                devicePixelRatio: 2.00,
+              ),
+              child: MultiProvider(
+                providers: [
+                  ChangeNotifierProvider<UserDailyGoalProvider>.value(value: mockUserDailyGoalProvider),
+                  ChangeNotifierProvider<UserStatsProvider>.value(value: mockUserStatsProvider),
+                  ChangeNotifierProvider<WeekHistoryProvider>.value(value: mockWeekHistoryProvider),
+                  ChangeNotifierProvider<AchievementsProgressProvider>.value(value: mockAchievementProgressProvider),
+                  ChangeNotifierProvider<MyAppState>.value(value: myAppState),
+                ],
+                child: MaterialApp(
+                  home: ShowCaseWidget(
+                    builder: (context) => MyHomePage(),
+                  ),
+                ),
+              ),
+            ),
+          );
+
+          await tester.pumpAndSettle();
+          await tester.scrollUntilVisible(find.text('Almost There!'), 200);
+
+          expect(find.text('Almost There!'), findsAny);
+          expect(find.text('Achievements in progress'),findsAny);
+          expect(find.byType(LinearProgressIndicator), findsWidgets);
+        });
+
+    testWidgets('Tutorial starts correctly when active', (WidgetTester tester) async {
+      final mockUserStatsProvider = MockUserStatsProvider();
+      final mockUserDailyGoalProvider = MockUserDailyGoalProvider();
+      final mockWeekHistoryProvider = MockWeekHistoryProvider();
+      final myAppState = MyAppState()..isHomeTutorialActive = true;
+      final mockAchievementProgressProvider = MockAchievementsProgressProvider();
+
+      await mockUserStatsProvider.fetchUserStats();
+      await mockUserDailyGoalProvider.fetchDailyGoals();
+      await mockAchievementProgressProvider.fetchAchievementProgress();
+      await mockWeekHistoryProvider.fetchWeekHistory();
+
+      await tester.pumpWidget(
+        MediaQuery(
+          data: MediaQueryData(
+            size: Size(320, 640),
+            devicePixelRatio: 2.00,
+          ),
+          child: MultiProvider(
+            providers: [
+              ChangeNotifierProvider<UserDailyGoalProvider>.value(value: mockUserDailyGoalProvider),
+              ChangeNotifierProvider<UserStatsProvider>.value(value: mockUserStatsProvider),
+              ChangeNotifierProvider<WeekHistoryProvider>.value(value: mockWeekHistoryProvider),
+              ChangeNotifierProvider<AchievementsProgressProvider>.value(value: mockAchievementProgressProvider),
+              ChangeNotifierProvider<MyAppState>.value(value: myAppState),
+            ],
+            child: MaterialApp(
+              home: ShowCaseWidget(
+                builder: (context) => MyHomePage(),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.pump();
+
+      expect(myAppState.isHomeTutorialActive, isFalse);
+      expect(myAppState.isSocialTutorialActive, isTrue);
+    });
+
+    testWidgets('Daily challenge completion displays correctly', (WidgetTester tester) async {
+      final mockUserStatsProvider = MockUserStatsProvider();
+      final mockUserDailyGoalProvider = MockUserDailyGoalProvider();
+      final mockWeekHistoryProvider = MockWeekHistoryProvider();
+      final myAppState = MyAppState();
+      final mockAchievementProgressProvider = MockAchievementsProgressProvider();
+
+      await mockUserStatsProvider.fetchUserStats();
+      await mockUserDailyGoalProvider.fetchDailyGoals();
+      await mockAchievementProgressProvider.fetchAchievementProgress();
+      await mockWeekHistoryProvider.fetchWeekHistory();
+
+      mockWeekHistoryProvider.dayDistances = [5.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0];
+
+      await tester.pumpWidget(
+        MediaQuery(
+          data: MediaQueryData(
+            size: Size(320, 640),
+            devicePixelRatio: 2.00,
+          ),
+          child: MultiProvider(
+            providers: [
+              ChangeNotifierProvider<UserDailyGoalProvider>.value(value: mockUserDailyGoalProvider),
+              ChangeNotifierProvider<UserStatsProvider>.value(value: mockUserStatsProvider),
+              ChangeNotifierProvider<WeekHistoryProvider>.value(value: mockWeekHistoryProvider),
+              ChangeNotifierProvider<AchievementsProgressProvider>.value(value: mockAchievementProgressProvider),
+              ChangeNotifierProvider<MyAppState>.value(value: myAppState),
+            ],
+            child: MaterialApp(
+              home: ShowCaseWidget(
+                builder: (context) => MyHomePage(),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(find.text('Daily Challenge: Bike 5 miles'), 200);
+
+      expect(find.text('Daily Challenge: Bike 5 miles'), findsOneWidget);
+      expect(find.text('Reward: 5 CycleCoins'), findsOneWidget);
+      expect(find.byIcon(Icons.directions_bike), findsAny);
+    });
+
   });
 }
 

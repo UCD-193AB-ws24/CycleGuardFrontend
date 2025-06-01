@@ -927,7 +927,7 @@ class mapState extends State<RoutesPage> {
     return angle;
   }
 
-  static final double COSINES_THRESHOLD_RADIANS = 20 * (pi/180);
+  static final double COSINES_THRESHOLD_RADIANS = 10 * (pi/180);
   void compressCoords(List<LatLng> list) {
     if (list.length<3) return;
 

@@ -5,8 +5,7 @@ import 'package:mockito/mockito.dart';
 class MockUserStatsProvider extends ChangeNotifier implements UserStatsProvider {
   // Method to fetch user stats and update the state
   Future<void> fetchUserStats() async {
-
-    accountCreationTime  = 10;
+    accountCreationTime  = 10; // Example initialization;
     totalDistance        = 10;
     totalTime            = 10;
     rideStreak           = 10;

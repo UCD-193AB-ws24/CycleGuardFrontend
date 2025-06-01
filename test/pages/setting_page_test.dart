@@ -12,7 +12,7 @@ void main() {
   group('SettingsPage Tests', () {
     late MyAppState mockAppState;
     late UserStatsProvider mockUserStatsProvider;
-    late UserStatsAccessor mockUserStatsAccessor;
+
     setUp(() {
       mockAppState = MyAppState();
       mockUserStatsProvider = MockUserStatsProvider();

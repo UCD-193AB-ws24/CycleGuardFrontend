@@ -418,20 +418,20 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
     // Only build the full scaffold when we have data
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-          icon: Icon(
-            Icons.settings,
-            color: isDarkMode
-                ? Colors.white70
-                : Colors.black, // or any contrasting color
+        leading: Align(
+          alignment: Alignment.centerLeft,
+          child: Padding(
+            padding: const EdgeInsets.only(left: 16.0), // adjust as needed
+            child: SvgPicture.asset(
+              'assets/cg_logomark.svg',
+              height: 30,
+              width: 30,
+              colorFilter: ColorFilter.mode(
+                themedColor(context, Colors.black, Colors.white70),
+                BlendMode.srcIn,
+              ),
+            ),
           ),
-          tooltip: 'Settings',
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => SettingsPage()),
-            );
-          },
         ),
         title: Text(
           'Social',
@@ -464,84 +464,93 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
           ),
         ),
 
-        /*actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 32.0),
-            child: GestureDetector(
-              onTap: () {
-                selectedIndexGlobal.value = 1;
-                Navigator.pushAndRemoveUntil(
-                  context,
-                  PageRouteBuilder(
-                    pageBuilder: (context, animation, secondaryAnimation) => MyHomePage(),
-                    transitionDuration: Duration(milliseconds: 500),
-                    transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                      var offsetAnimation = Tween<Offset>(
-                        begin: Offset(0.0, -1.0),
-                        end: Offset.zero,
-                      ).animate(CurvedAnimation(
-                        parent: animation,
-                        curve: Curves.easeOut,
-                      ));
-
-                      return SlideTransition(
-                        position: offsetAnimation,
-                        child: child,
-                      );
-                    },
-                  ),
-                      (_) => false,
-                );
-              },
-              child: Showcase(
-                key: _finalMessageKey,
-                title: 'Great job!',
-                description:
-                'You can restart the tutorial in settings, enjoy CycleGuard!',
-                child: SvgPicture.asset(
-                  'assets/cg_logomark.svg',
-                  height: 30,
-                  width: 30,
-                  colorFilter: ColorFilter.mode(
-                    isDarkMode ? Colors.white70 : Colors.black,
-                    BlendMode.srcIn,
-                  ),
-                ),
-              ),
-            ),
-          )
-        ],*/
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 32.0),
-            child: PopupMenuButton<String>(
-              onSelected: (value) {
-                if (value == 'profile') {
-                  // Navigate to profile tab/page
-                  _tabController.animateTo(0); // Assuming 0 is Profile tab
-                } else if (value == 'settings') {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => SettingsPage()),
-                  );
-                } else if (value == 'logout') {
-                  _showLogoutDialog(context);
-                }
+            child: Consumer<SocialDataProvider>(
+              builder: (context, provider, _) {
+                final isDark = inDarkMode(context);
+
+                return PopupMenuButton<String>(
+                  icon: SvgPicture.asset(
+                    'assets/panda.svg',
+                    height: 30,
+                    width: 30,
+                    colorFilter: ColorFilter.mode(
+                      themedColor(context, Colors.black, Colors.white70),
+                      BlendMode.srcIn,
+                    ),
+                  ),
+                  color: themedColor(context, Colors.white, Colors.grey[900]!),
+                  onSelected: (value) {
+                    if (value == 'profile') {
+                      final myProfile = provider.myProfile;
+                      if (myProfile != null) {
+                        _showEditProfileDialog(myProfile);
+                      } else {
+                        print("myProfile is null!");
+                      }
+                    } else if (value == 'settings') { 
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => SettingsPage()),
+                      );
+                    } else if (value == 'logout') {
+                      _showLogoutDialog(context);
+                    }
+                  },
+                  itemBuilder: (context) => [
+                    PopupMenuItem(
+                      value: 'profile',
+                      child: Row(
+                        children: [
+                          Icon(Icons.person,
+                              color: themedColor(context, Colors.black, Colors.white70)),
+                          SizedBox(width: 8),
+                          Text(
+                            'Profile',
+                            style: TextStyle(
+                              color: themedColor(context, Colors.black, Colors.white70),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    PopupMenuItem(
+                      value: 'settings',
+                      child: Row(
+                        children: [
+                          Icon(Icons.settings,
+                              color: themedColor(context, Colors.black, Colors.white70)),
+                          SizedBox(width: 8),
+                          Text(
+                            'Settings',
+                            style: TextStyle(
+                              color: themedColor(context, Colors.black, Colors.white70),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    PopupMenuItem(
+                      value: 'logout',
+                      child: Row(
+                        children: [
+                          Icon(Icons.logout,
+                              color: themedColor(context, Colors.black, Colors.white70)),
+                          SizedBox(width: 8),
+                          Text(
+                            'Logout',
+                            style: TextStyle(
+                              color: themedColor(context, Colors.black, Colors.white70),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                );
               },
-              itemBuilder: (context) => [
-                PopupMenuItem(value: 'profile', child: Text('Profile')),
-                PopupMenuItem(value: 'settings', child: Text('Settings')),
-                PopupMenuItem(value: 'logout', child: Text('Logout')),
-              ],
-              child: CircleAvatar(
-                radius: 18,
-                backgroundColor: Colors.transparent,
-                child: SvgPicture.asset(
-                  'assets/panda.svg',
-                  width: 36,
-                  height: 36,
-                ),
-              ),
             ),
           ),
         ],
@@ -585,7 +594,7 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child: Text(
-              'Cancel',
+              'No',
               style: TextStyle(color: colorScheme.primary),
             ),
           ),
@@ -595,7 +604,7 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
               Navigator.pop(ctx);
             },
             child: Text(
-              'Logout',
+              'Yes',
               style: TextStyle(
                 color: isDarkMode ? Colors.white70 : Colors.black
               )
@@ -820,20 +829,6 @@ Widget _buildProfileTab() {
                     'Manage daily reminders here. Add notifications with a title, body, and time. Existing reminders will be shown here.',
                     child: NotificationScheduler(),
                   ),
-                  const Divider(),
-                  const SizedBox(height: 10),
-                  Center(
-                    child: ElevatedButton(
-                      onPressed: () => AuthUtil.logout(context),
-                      style: themedButtonStyle(context),
-                      child: Text(
-                        "Logout",
-                        style: TextStyle(
-                          color: isDarkMode ? Colors.white70 : null,
-                        ),
-                      ),
-                    ),
-                  ),
                 ],
               ),
             ],
@@ -1027,7 +1022,7 @@ Widget _buildProfileTab() {
             builder: (context, setModalState) {
               return AlertDialog(
                 backgroundColor: isDarkMode ? Colors.grey[900] : Colors.white,
-                title: Text("Edit Profile", style: TextStyle(color: themedTextColor(context))),
+                title: Text("My Profile", style: TextStyle(color: themedTextColor(context))),
                 content: SingleChildScrollView(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,

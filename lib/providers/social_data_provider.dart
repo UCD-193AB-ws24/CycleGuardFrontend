@@ -21,6 +21,9 @@ class SocialDataProvider extends ChangeNotifier {
   List<String> get pendingReceived => _pendingReceived;
 
   String? get myUsername => _myUsername;
+  UserProfile? _myProfile;
+
+  UserProfile? get myProfile => _myProfile;
 
   Future<void> reloadAll() async {
     _isLoading = true;
@@ -35,6 +38,7 @@ class SocialDataProvider extends ChangeNotifier {
     final fl = await FriendsListAccessor.getFriendsList();
     final fr = await FriendRequestsListAccessor.getFriendRequestList();
     final me = await UserProfileAccessor.getOwnProfile();
+    _myProfile = me;
 
     _myUsername = me.username;
     _allUsers = names.where((u) => u != me.username).toList();

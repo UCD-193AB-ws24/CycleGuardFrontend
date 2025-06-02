@@ -66,67 +66,69 @@ class StorePage extends StatelessWidget {
               ),
             ),
           ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              SizedBox(height: 60),
-              Center(
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  SizedBox(height: 60),
+                  Center(
+                    child: Column(
                       children: [
-                        _buildItem(
-                          context: context,
-                          title: "Color Theme",
-                          cost: "10 CycleCoins",
-                          onBuy: () => _showThemeMenu(context, appState),
-                          icon: Icons.color_lens, 
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            _buildItem(
+                              context: context,
+                              title: "Color Theme",
+                              cost: "10 CycleCoins",
+                              onBuy: () => _showThemeMenu(context, appState),
+                              icon: Icons.color_lens,
+                            ),
+                            _buildItem(
+                              context: context,
+                              title: "Profile Icon",
+                              cost: "30 CycleCoins",
+                              onBuy: () => _showIconMenu(context, appState),
+                              icon: Icons.person,
+                            ),
+                          ],
                         ),
-                        _buildItem(
-                          context: context,
-                          title: "Profile Icon",
-                          cost: "50 CycleCoins",
-                          onBuy: () => _showIconMenu(context, appState),
-                          icon: Icons.person, 
+                        SizedBox(height: 20),
+
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            _buildItem(
+                              context: context,
+                              title: "Rocket Boost",
+                              cost: "100 CycleCoins",
+                              onBuy: () => _buyRocketBoost(context, appState),
+                              icon: Icons.rocket,
+                            ),
+                          ],
+                        ),
+
+                        // Temporary buttons
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            elevation: 5,
+                          ),
+                          onPressed: _addCycleCoins,
+                          child: Text("Temp: Add 5 CycleCoins to account"),
+                        ),
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            elevation: 5,
+                          ),
+                          onPressed: _getOwnedItems,
+                          child: Text("Temp: Show owned items"),
                         ),
                       ],
                     ),
-                    SizedBox(height: 20),
-
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        _buildItem(
-                          context: context,
-                          title: "Rocket Boost",
-                          cost: "100 CycleCoins",
-                          onBuy: () => _buyRocketBoost(context, appState),
-                          icon: Icons.rocket, 
-                        ),
-                      ],
-                    ),
-
-                    // Temporary buttons
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        elevation: 5,
-                      ),
-                      onPressed: _addCycleCoins,
-                      child: Text("Temp: Add 5 CycleCoins to account"),
-                    ),
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        elevation: 5,
-                      ),
-                      onPressed: _getOwnedItems,
-                      child: Text("Temp: Show owned items"),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
           Positioned(
             top: 10,
             right: 10,

@@ -7,7 +7,7 @@ class AchievementsProgressProvider with ChangeNotifier {
   // Method to fetch user stats and update the state
   Future<void> fetchAchievementProgress() async {
     final achievementInfo = await AchievementInfoAccessor.getAchievementInfo();
-    
+
     achievementsCompleted = achievementInfo.getCompletedAchievements();
 
     notifyListeners();

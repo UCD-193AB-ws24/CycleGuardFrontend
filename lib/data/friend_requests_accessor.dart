@@ -49,7 +49,7 @@ class FriendRequestsListAccessor {
 
   static Future<void> rejectFriendRequest(String username) async {
     final body = {"username": username};
-    final response = await RequestsUtil.postWithToken("/friends/rejectFriendRequest", body);
+    final response = await RequestsUtil.postWithToken("/friends/declineFriendRequest", body);
 
     if (response.statusCode == 200) {
       return;

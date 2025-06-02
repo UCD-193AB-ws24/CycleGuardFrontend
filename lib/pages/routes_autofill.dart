@@ -1,7 +1,11 @@
 import 'dart:async';
 
 import 'package:cycle_guard_app/data/navigation_accessor.dart';
+import 'package:cycle_guard_app/pages/routes_page.dart';
 import 'package:flutter/material.dart';
+import 'package:cycle_guard_app/main.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:provider/provider.dart';
 
 // Thanks, Flutter guides!
 // https://api.flutter.dev/flutter/material/Autocomplete-class.html
@@ -17,7 +21,8 @@ void setCallback(Function(String) callback) {
 }
 
 class RoutesAutofill extends StatefulWidget {
-  const RoutesAutofill();
+  final mapState map;
+  const RoutesAutofill(this.map);
 
   @override
   State<RoutesAutofill> createState() => _RoutesAutofillState();
@@ -41,7 +46,7 @@ class _RoutesAutofillState extends State<RoutesAutofill> {
     _currentQuery = query;
 
     // In a real application, there should be some error handling here.
-    final Iterable<String> options = await _NavigationAPI.search(_currentQuery!);
+    final Iterable<String> options = await _NavigationAPI.search(_currentQuery!, widget.map.center!);
 
     // If another search happened after this one, throw away these options.
     if (_currentQuery != query) {
@@ -60,23 +65,44 @@ class _RoutesAutofillState extends State<RoutesAutofill> {
 
   @override
   Widget build(BuildContext context) {
+    Color selectedColor = Provider.of<MyAppState>(context).selectedColor;
     return Autocomplete<String>(
-      fieldViewBuilder: (BuildContext context, TextEditingController textEditingController, FocusNode focusNode, VoidCallback onFieldSubmitted) {
+      fieldViewBuilder: (
+        BuildContext context,
+        TextEditingController textEditingController,
+        FocusNode focusNode,
+        VoidCallback onFieldSubmitted,
+      ) {
         return TextFormField(
+          style: TextStyle(color: Colors.black),
           controller: textEditingController,
-          decoration: InputDecoration(
-            icon: Icon(Icons.search),
-            filled: true,
-            fillColor: Colors.black45,
-          ),
           focusNode: focusNode,
+          decoration: InputDecoration(
+            prefixIcon: Icon(Icons.search, color: selectedColor),
+            hintText: 'Search...',
+            hintStyle: TextStyle(color: Colors.grey[500]),
+            filled: true,
+            fillColor: Colors.grey[200],
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(30),
+              borderSide: BorderSide.none,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(30),
+              borderSide: BorderSide(color: Colors.grey, width: 1),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(30),
+              borderSide: BorderSide(color: selectedColor, width: 2),
+            ),
+            contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+          ),
         );
       },
       optionsBuilder: (TextEditingValue textEditingValue) async {
-        final Iterable<String>? options = await _debouncedSearch(textEditingValue.text);
-        if (options == null) {
-          return _lastOptions;
-        }
+        final Iterable<String>? options =
+            await _debouncedSearch(textEditingValue.text);
+        if (options == null) return _lastOptions;
         _lastOptions = options;
         return options;
       },
@@ -90,16 +116,16 @@ class _RoutesAutofillState extends State<RoutesAutofill> {
 
 class _NavigationAPI {
   // Searches the options, but injects a fake "network" delay.
-  static Future<List<String>> search(String query) async {
+  static Future<List<String>> search(String query, LatLng center) async {
     if (query == '') {
       return const [];
     }
-    final res = await NavigationAccessor.getAutofill(query);
+    final res = await NavigationAccessor.getAutofill(query, center);
     return res.results;
   }
 }
 
-typedef _Debounceable<S, T> = Future<S?> Function(T parameter);
+typedef _Debounceable<S, T> = Future<S?> Function(T p1);
 
 /// Returns a new function that is a debounced version of the given function.
 ///
@@ -108,7 +134,7 @@ typedef _Debounceable<S, T> = Future<S?> Function(T parameter);
 _Debounceable<S, T> _debounce<S, T>(_Debounceable<S?, T> function) {
   _DebounceTimer? debounceTimer;
 
-  return (T parameter) async {
+  return (T p1) async {
     if (debounceTimer != null && !debounceTimer!.isCompleted) {
       debounceTimer!.cancel();
     }
@@ -118,7 +144,7 @@ _Debounceable<S, T> _debounce<S, T>(_Debounceable<S?, T> function) {
     } on _CancelException {
       return null;
     }
-    return function(parameter);
+    return function(p1);
   };
 }
 

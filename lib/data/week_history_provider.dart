@@ -10,6 +10,13 @@ class WeekHistoryProvider with ChangeNotifier {
   List<double> dayDistances = [];
   List<int> days = [];
 
+  Map<int, SingleTripInfo> userDayHistoryMap = {};
+  double userAverageDistance = 0.0;
+  double userAverageCalories = 0.0;
+  double userAverageTime = 0.0;
+  List<double> userDayDistances = [];
+  List<int> userDays = [];
+
   Future<void> fetchWeekHistory() async {
     final weekHistory = await WeekHistoryAccessor.getWeekHistory();
     
@@ -33,5 +40,30 @@ class WeekHistoryProvider with ChangeNotifier {
     }
 
     notifyListeners(); 
+  }
+
+  Future<void> fetchUserWeekHistory(String username) async {
+    final weekHistory = await WeekHistoryAccessor.getWeekHistory(username: username);
+
+    userDayHistoryMap = weekHistory.dayHistoryMap;
+
+    double totalDistance = 0.0, totalCalories = 0.0, totalTime = 0.0;
+    int numberOfDays = userDayHistoryMap.length;
+
+    if (numberOfDays > 0) {
+      userDayHistoryMap.forEach((day, history) {
+        totalDistance += history.distance;
+        totalCalories += history.calories;
+        totalTime += history.time;
+        userDayDistances.add(history.distance);
+        userDays.add(day);
+      });
+
+      userAverageDistance = totalDistance / numberOfDays;
+      userAverageCalories = totalCalories / numberOfDays;
+      userAverageTime = totalTime / numberOfDays;
+    }
+
+    notifyListeners();
   }
 }

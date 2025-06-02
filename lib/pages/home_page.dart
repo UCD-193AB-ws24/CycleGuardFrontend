@@ -146,18 +146,19 @@ class _HomePageState extends State<HomePage>
     final weekHistory = Provider.of<WeekHistoryProvider>(context);
     final userGoals = Provider.of<UserDailyGoalProvider>(context);
     Color selectedColor = Provider.of<MyAppState>(context).selectedColor;
+    final appState = Provider.of<MyAppState>(context, listen: false);
     final colorScheme = Theme.of(context).colorScheme;
 
     final todayUtcTimestamp = DateTime.utc(
-          DateTime.now().year,
-          DateTime.now().month,
-          DateTime.now().day,
-          0,
-          0,
-          0,
-          0,
-          0,
-        ).millisecondsSinceEpoch ~/
+      DateTime.now().year,
+      DateTime.now().month,
+      DateTime.now().day,
+      0,
+      0,
+      0,
+      0,
+      0,
+    ).millisecondsSinceEpoch ~/
         1000;
 
     final todayInfo = weekHistory.dayHistoryMap[todayUtcTimestamp] ??
@@ -171,6 +172,10 @@ class _HomePageState extends State<HomePage>
     double todayDistance = todayInfo.distance;
     double todayCalories = todayInfo.calories;
     double todayTime = todayInfo.time;
+
+    appState.isDistanceGoalMet = todayDistance >= userGoals.dailyDistanceGoal;
+    appState.isCalorieGoalMet = todayCalories >= userGoals.dailyCaloriesGoal;
+    appState.isTimeGoalMet = todayTime >= userGoals.dailyTimeGoal;
 
     List<double> distancesForWeek = List.filled(7, 0.0);
     for (int i = 0; i < weekHistory.days.length; i++) {
@@ -186,7 +191,7 @@ class _HomePageState extends State<HomePage>
     }
 
     List<double> rotatedDistances =
-        getRotatedArray(distancesForWeek, DateTime.now().weekday - 1);
+    getRotatedArray(distancesForWeek, DateTime.now().weekday - 1);
     bool isDailyChallengeComplete = rotatedDistances[6] >= 5;
 
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
@@ -231,7 +236,7 @@ class _HomePageState extends State<HomePage>
               key: _welcomeMessageKey,
               title: 'Welcome to CycleGuard!',
               description:
-                  "Tap on the screen or 'next' to continue or tap 'skip' to end the tutorial early.",
+              "Tap on the screen or 'next' to continue or tap 'skip' to end the tutorial early.",
               child: SvgPicture.asset(
                 'assets/cg_logomark.svg',
                 height: 30,
@@ -261,7 +266,7 @@ class _HomePageState extends State<HomePage>
                 key: _homeUIKey,
                 title: 'Home Page',
                 description:
-                    'See various statistics and goal progress on the home page. Set goals in profile!',
+                'See various statistics and goal progress on the home page. Set goals in profile!',
                 child: Column(
                   children: [
                     Column(
@@ -376,8 +381,8 @@ class _HomePageState extends State<HomePage>
                                               'Su'
                                             ];
                                             List<String> rotatedDays =
-                                                getRotatedArray(days,
-                                                    DateTime.now().weekday);
+                                            getRotatedArray(days,
+                                                DateTime.now().weekday);
                                             return Text(
                                                 rotatedDays[value.toInt()],
                                                 style: TextStyle(fontSize: 12));
@@ -386,10 +391,10 @@ class _HomePageState extends State<HomePage>
                                       ),
                                       rightTitles: AxisTitles(
                                           sideTitles:
-                                              SideTitles(showTitles: false)),
+                                          SideTitles(showTitles: false)),
                                       topTitles: AxisTitles(
                                           sideTitles:
-                                              SideTitles(showTitles: false)),
+                                          SideTitles(showTitles: false)),
                                     ),
                                     gridData: FlGridData(
                                       drawHorizontalLine: false,
@@ -464,68 +469,68 @@ class _HomePageState extends State<HomePage>
                                       content: Column(
                                           mainAxisSize: MainAxisSize.min,
                                           crossAxisAlignment:
-                                              CrossAxisAlignment.start,
+                                          CrossAxisAlignment.start,
                                           children: [
                                             userGoals.dailyDistanceGoal == 0 &&
-                                                    userGoals.dailyTimeGoal ==
-                                                        0 &&
-                                                    userGoals
-                                                            .dailyCaloriesGoal ==
-                                                        0
+                                                userGoals.dailyTimeGoal ==
+                                                    0 &&
+                                                userGoals
+                                                    .dailyCaloriesGoal ==
+                                                    0
                                                 ? Column(
-                                                    crossAxisAlignment:
-                                                        CrossAxisAlignment
-                                                            .start,
-                                                    children: [
-                                                      Text(
-                                                        'Your goals are currently unset.',
-                                                        style: TextStyle(
-                                                          color: isDarkMode
-                                                              ? Colors.white70
-                                                              : Colors.black,
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  )
-                                                : Column(
-                                                    crossAxisAlignment:
-                                                        CrossAxisAlignment
-                                                            .start,
-                                                    children: [
-                                                      Text(
-                                                        'Your goals are currently : ',
-                                                        style: TextStyle(
-                                                          color: isDarkMode
-                                                              ? Colors.white70
-                                                              : Colors.black,
-                                                        ),
-                                                      ),
-                                                      Text(
-                                                        ' • ${userGoals.dailyTimeGoal} minutes',
-                                                        style: TextStyle(
-                                                          color: isDarkMode
-                                                              ? Colors.white70
-                                                              : Colors.black,
-                                                        ),
-                                                      ),
-                                                      Text(
-                                                        ' • ${userGoals.dailyDistanceGoal} miles',
-                                                        style: TextStyle(
-                                                          color: isDarkMode
-                                                              ? Colors.white70
-                                                              : Colors.black,
-                                                        ),
-                                                      ),
-                                                      Text(
-                                                        ' • ${userGoals.dailyCaloriesGoal} calories',
-                                                        style: TextStyle(
-                                                          color: isDarkMode
-                                                              ? Colors.white70
-                                                              : Colors.black,
-                                                        ),
-                                                      ),
-                                                    ],
+                                              crossAxisAlignment:
+                                              CrossAxisAlignment
+                                                  .start,
+                                              children: [
+                                                Text(
+                                                  'Your goals are currently unset.',
+                                                  style: TextStyle(
+                                                    color: isDarkMode
+                                                        ? Colors.white70
+                                                        : Colors.black,
                                                   ),
+                                                ),
+                                              ],
+                                            )
+                                                : Column(
+                                              crossAxisAlignment:
+                                              CrossAxisAlignment
+                                                  .start,
+                                              children: [
+                                                Text(
+                                                  'Your goals are currently : ',
+                                                  style: TextStyle(
+                                                    color: isDarkMode
+                                                        ? Colors.white70
+                                                        : Colors.black,
+                                                  ),
+                                                ),
+                                                Text(
+                                                  ' • ${userGoals.dailyTimeGoal} minutes',
+                                                  style: TextStyle(
+                                                    color: isDarkMode
+                                                        ? Colors.white70
+                                                        : Colors.black,
+                                                  ),
+                                                ),
+                                                Text(
+                                                  ' • ${userGoals.dailyDistanceGoal} miles',
+                                                  style: TextStyle(
+                                                    color: isDarkMode
+                                                        ? Colors.white70
+                                                        : Colors.black,
+                                                  ),
+                                                ),
+                                                Text(
+                                                  ' • ${userGoals.dailyCaloriesGoal} calories',
+                                                  style: TextStyle(
+                                                    color: isDarkMode
+                                                        ? Colors.white70
+                                                        : Colors.black,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
                                             SizedBox(height: 8),
                                             Text(
                                               'You can update daily goals in your profile.',
@@ -637,7 +642,7 @@ class _HomePageState extends State<HomePage>
                 key: _dailyChallengeKey,
                 title: 'Daily Challenge',
                 description:
-                    'Ride five miles a day to receive 5 CycleCoins for purchasing items in the store!',
+                'Ride five miles a day to receive 5 CycleCoins for purchasing items in the store!',
                 child: _buildDailyChallenge(context, isDailyChallengeComplete),
               ),
               SizedBox(height: DimUtil.safeHeight(context) * 1 / 20),
@@ -651,7 +656,7 @@ class _HomePageState extends State<HomePage>
                       key: _rideHistoryKey,
                       title: 'Ride History',
                       description:
-                          'Takes you to a page with your all time ride history.',
+                      'Takes you to a page with your all time ride history.',
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
                           elevation: 6,
@@ -659,7 +664,7 @@ class _HomePageState extends State<HomePage>
                               ? colorScheme.onPrimaryFixedVariant
                               : colorScheme.onInverseSurface,
                           foregroundColor:
-                              isDarkMode ? Colors.white : colorScheme.primary,
+                          isDarkMode ? Colors.white : colorScheme.primary,
                           padding: EdgeInsets.symmetric(vertical: 8.0),
                           textStyle: TextStyle(
                               fontSize: 20, fontWeight: FontWeight.bold),
@@ -722,7 +727,7 @@ class _HomePageState extends State<HomePage>
                       key: _achievementsKey,
                       title: 'Achievements Page',
                       description:
-                          'Takes you to where you can see all your achievements.',
+                      'Takes you to where you can see all your achievements.',
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
                           elevation: 6,
@@ -730,7 +735,7 @@ class _HomePageState extends State<HomePage>
                               ? colorScheme.onPrimaryFixedVariant
                               : colorScheme.onInverseSurface,
                           foregroundColor:
-                              isDarkMode ? Colors.white : colorScheme.primary,
+                          isDarkMode ? Colors.white : colorScheme.primary,
                           padding: EdgeInsets.symmetric(vertical: 8.0),
                           textStyle: TextStyle(
                               fontSize: 20, fontWeight: FontWeight.bold),
@@ -796,19 +801,23 @@ class _HomePageState extends State<HomePage>
             );
           },
           child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.store,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.store,
+                    size: 24,
+                  ),
+                  Flexible(
+                    child: Text(
+                      'Store',
+                      style: TextStyle(
+                        fontSize: 14,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
               ),
-              Text(
-                'Store',
-                style: TextStyle(
-                  fontSize: 14,
-                ),
-              ),
-            ],
-          ),
         ),
       ),
     );
@@ -867,10 +876,10 @@ class _HomePageState extends State<HomePage>
               children: [
                 Text(label,
                     style:
-                        TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                    TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
                 Text(value,
                     style:
-                        TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
               ],
             ),
           ],
@@ -929,20 +938,20 @@ class _HomePageState extends State<HomePage>
 
   Widget _buildAchievementProgress(BuildContext context, bool isDarkMode) {
     final achievementsProgress =
-        Provider.of<AchievementsProgressProvider>(context);
+    Provider.of<AchievementsProgressProvider>(context);
     List<bool> achievementsProgressList =
         achievementsProgress.achievementsCompleted;
     List<int> priorityOrder = [ 0, 6, 3, 9, 12, 1, 4, 7, 10, 13, 14, 15, 5, 8, 11, 2];
 
     var result = findFirstTwoFalse(achievementsProgressList, priorityOrder);
     var selectedAchievements =
-        getSelectedAchievements(result.first, result.second);
+    getSelectedAchievements(result.first, result.second);
 
     return Container(
       padding: EdgeInsets.all(16.0),
       decoration: BoxDecoration(
         color:
-            isDarkMode ? Theme.of(context).colorScheme.secondary : Colors.white,
+        isDarkMode ? Theme.of(context).colorScheme.secondary : Colors.white,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
@@ -1072,15 +1081,15 @@ class _HomePageState extends State<HomePage>
     }
 
     return (
-      first: falseIndices[0],
-      second: falseIndices.length > 1 ? falseIndices[1] : -1
+    first: falseIndices[0],
+    second: falseIndices.length > 1 ? falseIndices[1] : -1
     );
   }
 
   Map<String, dynamic> getAchievementByIndex(int index) {
     Map<String, dynamic> achievement;
     final achievementsProgress =
-        Provider.of<AchievementsProgressProvider>(context);
+    Provider.of<AchievementsProgressProvider>(context);
     final userStats = Provider.of<UserStatsProvider>(context);
     if (index < 2) {
       achievement = achievementsProgress.uniqueAchievements[index]; // 0-2
@@ -1093,7 +1102,7 @@ class _HomePageState extends State<HomePage>
       achievement['progress'] = userStats.totalTime / 60;
     } else if (index < 12) {
       achievement =
-          achievementsProgress.consistencyAchievements[index - 9]; // 9-11
+      achievementsProgress.consistencyAchievements[index - 9]; // 9-11
       achievement['progress'] = userStats.rideStreak;
     } else {
       achievement = achievementsProgress.packsAchievements[index - 12]; // 12-15
@@ -1142,7 +1151,7 @@ class _AnimatedCircularStatState extends State<_AnimatedCircularStat>
   @override
   void initState() {
     super.initState();
-     debugPrint('AnimatedCircularStat initState called');
+    debugPrint('AnimatedCircularStat initState called');
 
     _iconController = AnimationController(
       duration: const Duration(milliseconds: 300),

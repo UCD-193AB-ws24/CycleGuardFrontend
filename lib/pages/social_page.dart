@@ -6,10 +6,13 @@ import 'package:cycle_guard_app/data/friend_requests_accessor.dart';
 import 'package:cycle_guard_app/data/health_info_accessor.dart';
 import 'package:cycle_guard_app/pages/settings_page.dart';
 import 'package:cycle_guard_app/data/global_leaderboards_accessor.dart';
+import 'package:cycle_guard_app/utils/ui_theme_helpers.dart';
 
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
+import 'package:cycle_guard_app/providers/social_data_provider.dart';
 import '../auth/auth_util.dart';
+import '../data/week_history_provider.dart';
 import '../main.dart';
 import 'package:showcaseview/showcaseview.dart';
 
@@ -22,13 +25,12 @@ class SocialPage extends StatefulWidget {
   _SocialPageState createState() => _SocialPageState();
 }
 
-class _SocialPageState extends State<SocialPage>
-    with SingleTickerProviderStateMixin {
+class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateMixin {
+  String? _myUsername;
+  Map<String, UserProfile> _userProfiles = {};
   late TabController _tabController;
   late TextEditingController _searchController;
   late final ScrollController _searchScrollController;
-
-  late Future<Map<String, dynamic>> _usersAndFriendsFuture;
 
   int numOfTabs = 5;
   bool isPublic = true; // Move isPublic to the state class
@@ -49,13 +51,40 @@ class _SocialPageState extends State<SocialPage>
   final GlobalKey _dailyGoalsKey = GlobalKey();
   final GlobalKey _notificationsKey = GlobalKey();
   final GlobalKey _finalMessageKey = GlobalKey();
+  HealthInfo? _currentHealth;
+  UserProfile? _currentProfile;
 
+//  final GlobalKey _socialPageKey = GlobalKey();
+
+  int _lastTabIndex = 0;
   @override
   void initState() {
     super.initState();
 
+    print("Fetching my profile...");
+    UserProfileAccessor.getOwnProfile().then((profile) {
+      print("Fetched my username: ${profile.username}");
+      setState(() {
+        _myUsername = profile.username;
+      });
+    }).catchError((e) {
+      print("Failed to fetch my profile: $e");
+    });
+
     print("Social: initState()");
     _tabController = TabController(length: numOfTabs, vsync: this);
+
+    _tabController.addListener(() {
+      if (_tabController.index != _lastTabIndex) {
+        _lastTabIndex = _tabController.index;
+        print("🔁 Tab index changed to $_lastTabIndex — refreshing social data");
+        // Refresh all social data when switching tabs
+        Provider.of<SocialDataProvider>(context, listen: false).reloadAll();
+      }
+    });
+
+    _loadUserProfile();
+    _loadHealthInfo();
     _profileFuture = UserProfileAccessor.getOwnProfile();
     Future.microtask(() =>
         Provider.of<UserDailyGoalProvider>(context, listen: false)
@@ -64,7 +93,6 @@ class _SocialPageState extends State<SocialPage>
     bioController = TextEditingController();
     _searchController = TextEditingController();
     _searchScrollController = ScrollController();
-    // _usersAndFriendsFuture = _fetchUsersAndFriends();
     _searchController.addListener(() => setState(() {}));
     _loadProfile();
 
@@ -100,6 +128,32 @@ class _SocialPageState extends State<SocialPage>
 
       appState.addListener(_handleTutorialSkip);
     });
+  }
+
+  void _loadHealthInfo() async {
+    final health = await HealthInfoAccessor.getHealthInfo();
+    if (mounted) {
+      setState(() {
+        _currentHealth = health;
+      });
+    }
+  }
+
+  void _loadUserProfile() async {
+    try {
+      final profile = await UserProfileAccessor.getOwnProfile();
+      if (mounted) {
+        setState(() {
+          _currentProfile = profile;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to load profile: $e')),
+        );
+      }
+    }
   }
 
   void _handleTutorialSkip() async {
@@ -197,11 +251,11 @@ class _SocialPageState extends State<SocialPage>
       // Fetch all users
       final UsersList allUsersList = await UserProfileAccessor.getAllUsers();
       final List<String> allUsers =
-          allUsersList.getUsernames(); // Get all usernames
+      allUsersList.getUsernames(); // Get all usernames
 
       // Fetch friend list separately
       final FriendsList friendsList =
-          await FriendsListAccessor.getFriendsList();
+      await FriendsListAccessor.getFriendsList();
       List<String> friends = friendsList.friends; // List of friends
 
       return {
@@ -214,22 +268,9 @@ class _SocialPageState extends State<SocialPage>
     }
   }
 
-  /// **Send Friend Request to a User**
-  Future<void> _sendFriendRequest(String username) async {
-    try {
-      await FriendRequestsListAccessor.sendFriendRequest(username);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Friend request sent to $username")),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Failed to send request: $e")),
-      );
-    }
-  }
-
   // ignore: use_build_context_synchronously
   Future<void> _showFriendRanking(BuildContext context, String username) async {
+    bool isDarkMode = inDarkMode(context);
     // Show loading spinner
     showDialog(
       context: context,
@@ -242,7 +283,7 @@ class _SocialPageState extends State<SocialPage>
       if (!mounted) return;
 
       final entryIndex = leaderboards.entries.indexWhere(
-        (e) => e.username.trim().toLowerCase() == username.trim().toLowerCase(),
+            (e) => e.username.trim().toLowerCase() == username.trim().toLowerCase(),
       );
 
       // Fetch profile data (for bio, pack, profileIcon)
@@ -264,7 +305,7 @@ class _SocialPageState extends State<SocialPage>
         showDialog(
           context: context,
           builder: (_) => AlertDialog(
-            backgroundColor: Theme.of(context).dialogBackgroundColor,
+            backgroundColor: isDarkMode ? Colors.grey[900] : Colors.white,
             title: Row(
               children: [
                 if (isEmoji)
@@ -301,7 +342,7 @@ class _SocialPageState extends State<SocialPage>
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    '🚴 Total Distance: ${entry.value.toStringAsFixed(2)} km',
+                    '🚴 Total Distance: ${entry.value.toStringAsFixed(2)} mi',
                     style: TextStyle(
                       fontSize: 16,
                       color: Theme.of(context).textTheme.bodyLarge?.color,
@@ -330,7 +371,9 @@ class _SocialPageState extends State<SocialPage>
             ),
             actions: [
               TextButton(
-                onPressed: () => Navigator.pop(context),
+                onPressed: () {
+                  if (context.mounted) Navigator.pop(context);
+                },
                 child: const Text('Close'),
               ),
             ],
@@ -363,7 +406,7 @@ class _SocialPageState extends State<SocialPage>
 
   @override
   Widget build(BuildContext context) {
-    bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    bool isDarkMode = inDarkMode(context);
     Color selectedColor = Provider.of<MyAppState>(context).selectedColor;
 
     if (_isLoading) {
@@ -375,6 +418,21 @@ class _SocialPageState extends State<SocialPage>
     // Only build the full scaffold when we have data
     return Scaffold(
       appBar: AppBar(
+        leading: Align(
+          alignment: Alignment.centerLeft,
+          child: Padding(
+            padding: const EdgeInsets.only(left: 16.0), // adjust as needed
+            child: SvgPicture.asset(
+              'assets/cg_logomark.svg',
+              height: 30,
+              width: 30,
+              colorFilter: ColorFilter.mode(
+                themedColor(context, Colors.black, Colors.white70),
+                BlendMode.srcIn,
+              ),
+            ),
+          ),
+        ),
         title: Text(
           'Social',
           style: TextStyle(
@@ -388,7 +446,7 @@ class _SocialPageState extends State<SocialPage>
             key: _tabsKey,
             title: 'Navigation Tabs',
             description:
-                'Use these tabs to switch between your profile, friends, and packs.',
+            'Use these tabs to switch between your profile, friends, and packs.',
             child: TabBar(
               controller: _tabController,
               unselectedLabelColor: isDarkMode ? Colors.white70 : null,
@@ -398,59 +456,103 @@ class _SocialPageState extends State<SocialPage>
               tabs: const [
                 Tab(icon: Icon(Icons.person), text: "Profile"),
                 Tab(icon: Icon(Icons.groups_3), text: "Friends"),
-                Tab(icon: Icon(Icons.search), text: "Bikers"),
                 Tab(icon: Icon(Icons.handshake_outlined), text: "Requests"),
                 Tab(icon: Icon(Icons.bike_scooter_rounded), text: "Packs"),
+                Tab(icon: Icon(Icons.search), text: "Bikers"),
               ],
             ),
           ),
         ),
+
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 32.0),
-            child: GestureDetector(
-              onTap: () {
-                selectedIndexGlobal.value = 1;
-                Navigator.pushAndRemoveUntil(
-                  context,
-                  PageRouteBuilder(
-                    pageBuilder: (context, animation, secondaryAnimation) => MyHomePage(),
-                    transitionDuration: Duration(milliseconds: 500),  
-                    transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                      var offsetAnimation = Tween<Offset>(
-                        begin: Offset(0.0, -1.0),  
-                        end: Offset.zero,           
-                      ).animate(CurvedAnimation(
-                        parent: animation,
-                        curve: Curves.easeOut,
-                      ));
+            child: Consumer<SocialDataProvider>(
+              builder: (context, provider, _) {
+                final isDark = inDarkMode(context);
 
-                      return SlideTransition(
-                        position: offsetAnimation,
-                        child: child,
-                      );
-                    },
+                return PopupMenuButton<String>(
+                  icon: SvgPicture.asset(
+                    'assets/panda.svg',
+                    height: 30,
+                    width: 30,
+                    colorFilter: ColorFilter.mode(
+                      themedColor(context, Colors.black, Colors.white70),
+                      BlendMode.srcIn,
+                    ),
                   ),
-                  (_) => false,
+                  color: themedColor(context, Colors.white, Colors.grey[900]!),
+                  onSelected: (value) {
+                    if (value == 'profile') {
+                      final myProfile = provider.myProfile;
+                      if (myProfile != null) {
+                        _showEditProfileDialog(myProfile);
+                      } else {
+                        print("myProfile is null!");
+                      }
+                    } else if (value == 'settings') { 
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => SettingsPage()),
+                      );
+                    } else if (value == 'logout') {
+                      _showLogoutDialog(context);
+                    }
+                  },
+                  itemBuilder: (context) => [
+                    PopupMenuItem(
+                      value: 'profile',
+                      child: Row(
+                        children: [
+                          Icon(Icons.person,
+                              color: themedColor(context, Colors.black, Colors.white70)),
+                          SizedBox(width: 8),
+                          Text(
+                            'Profile',
+                            style: TextStyle(
+                              color: themedColor(context, Colors.black, Colors.white70),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    PopupMenuItem(
+                      value: 'settings',
+                      child: Row(
+                        children: [
+                          Icon(Icons.settings,
+                              color: themedColor(context, Colors.black, Colors.white70)),
+                          SizedBox(width: 8),
+                          Text(
+                            'Settings',
+                            style: TextStyle(
+                              color: themedColor(context, Colors.black, Colors.white70),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    PopupMenuItem(
+                      value: 'logout',
+                      child: Row(
+                        children: [
+                          Icon(Icons.logout,
+                              color: themedColor(context, Colors.black, Colors.white70)),
+                          SizedBox(width: 8),
+                          Text(
+                            'Logout',
+                            style: TextStyle(
+                              color: themedColor(context, Colors.black, Colors.white70),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 );
               },
-              child: Showcase(
-                key: _finalMessageKey,
-                title: 'Great job!',
-                description:
-                    'You can restart the tutorial in settings, enjoy CycleGuard!',
-                child: SvgPicture.asset(
-                  'assets/cg_logomark.svg',
-                  height: 30,
-                  width: 30,
-                  colorFilter: ColorFilter.mode(
-                    isDarkMode ? Colors.white70 : Colors.black,
-                    BlendMode.srcIn,
-                  ),
-                ),
-              ),
             ),
-          )
+          ),
         ],
       ),
       body: TabBarView(
@@ -460,16 +562,64 @@ class _SocialPageState extends State<SocialPage>
             child: _buildProfileTab(),
           ),
           _buildFriendsTab(),
-          _buildSearchTab(),
           RequestsTab(),
-          PacksPage()
+          PacksPage(),
+          _buildSearchTab()
         ],
       ),
     );
   }
 
+  void _showLogoutDialog(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDarkMode = inDarkMode(context);
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: isDarkMode ? Colors.grey[900] : Colors.white,
+        title: Text(
+          'Log out?',
+          style: TextStyle(
+            color: themedColor(context, Colors.black, Colors.white),
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        content: Text(
+          'Are you sure you want to log out?',
+          style: TextStyle(
+            color: isDarkMode ? Colors.white70 : Colors.black)
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(
+              'No',
+              style: TextStyle(color: colorScheme.primary),
+            ),
+          ),
+          TextButton(
+            onPressed: () {
+              AuthUtil.logout(context);
+              Navigator.pop(ctx);
+            },
+            child: Text(
+              'Yes',
+              style: TextStyle(
+                color: isDarkMode ? Colors.white70 : Colors.black
+              )
+            ),
+          ),
+        ],
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+      ),
+    );
+  }
+
   void _showIconSelectionModal(BuildContext context, MyAppState appState, UserProfile profile) {
-    bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    bool isDarkMode = inDarkMode(context);
     final allIcons = {...appState.availableIcons, ...appState.ownedIcons}.toList();
 
     showModalBottomSheet(
@@ -520,8 +670,8 @@ class _SocialPageState extends State<SocialPage>
                     height: 50,
                     width: 50,
                     colorFilter: (isDarkMode && !['pig', 'panda', 'tiger', 'bear', 'cow'].contains(iconName))
-                      ? const ColorFilter.mode(Colors.white70, BlendMode.srcIn)
-                      : null,
+                        ? const ColorFilter.mode(Colors.white70, BlendMode.srcIn)
+                        : null,
                   ),
                   SizedBox(height: 4),
                   Text(iconName, style: TextStyle(fontSize: 12)),
@@ -535,11 +685,11 @@ class _SocialPageState extends State<SocialPage>
   }
 
   /// **1️⃣ Profile Tab - View & Edit Profile**
-  Widget _buildProfileTab() {
-    bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
+Widget _buildProfileTab() {
+  bool isDarkMode = inDarkMode(context);
 
     return FutureBuilder<UserProfile>(
-      future: _profileFuture, //UserProfileAccessor.getOwnProfile(),
+      future: _profileFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Center(child: CircularProgressIndicator());
@@ -557,323 +707,104 @@ class _SocialPageState extends State<SocialPage>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  Consumer<MyAppState>(builder: (context, appState, child) {
-                    String displayIcon = _hasLocalProfileChanges
-                        ? _currentIconSelection
-                        : appState.selectedIcon;
-                    return GestureDetector(
-                      onTap: () => _showIconSelectionModal(context, appState, profile),
-                      child: Container(
-                        width: 125,
-                        height: 125,
-                        padding: EdgeInsets.all(15),
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: isDarkMode
-                              ? Theme.of(context).colorScheme.secondary
-                              : Theme.of(context).colorScheme.primaryContainer,
-                        ),
-                        child: SvgPicture.asset(
-                          'assets/$displayIcon.svg',
-                        ),
-                      ),
-                    );
-                  }),
-                  Align(
-                    alignment: Alignment.topRight,
-                    child: TextButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          PageRouteBuilder(
-                            pageBuilder:
-                                (context, animation, secondaryAnimation) =>
-                                    SettingsPage(),
-                            transitionDuration: Duration(milliseconds: 300),
-                            transitionsBuilder: (context, animation,
-                                secondaryAnimation, child) {
-                              var offsetAnimation = Tween<Offset>(
-                                begin: Offset(-1.0, 0.0),
-                                end: Offset.zero,
-                              ).animate(CurvedAnimation(
-                                parent: animation,
-                                curve: Curves.easeOut,
-                              ));
-
-                              return SlideTransition(
-                                position: offsetAnimation,
-                                child: child,
-                              );
-                            },
-                          ),
-                        );
-                      },
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.settings,
-                            size: 40,
-                            color: isDarkMode
-                                ? Theme.of(context)
-                                    .colorScheme
-                                    .secondaryFixedDim
-                                : Theme.of(context).colorScheme.secondary,
-                          ),
-                          SizedBox(height: 2),
-                          Text(
-                            'Settings',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: isDarkMode
-                                  ? Theme.of(context)
-                                      .colorScheme
-                                      .secondaryFixedDim
-                                  : Theme.of(context).colorScheme.secondary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
               Showcase(
                 key: _profileKey,
                 title: 'Profile Management',
                 description:
-                    'Update your icon, profile, status, and health information.',
+                'Update your icon, profile, status, and health information.',
                 child: Column(
                   children: [
-                    Column(
-                      children: [
-                        TextField(
-                          controller: nameController,
-                          decoration: InputDecoration(labelText: "Name"),
-                        ),
-                        TextField(
-                          controller: bioController,
-                          decoration: InputDecoration(labelText: "Bio"),
-                        ),
-                        Row(
-                          children: [
-                            Checkbox(
-                              value: isPublic,
-                              onChanged: (bool? newValue) {
-                                setState(() {
-                                  isPublic = newValue ?? true;
-                                });
-                              },
-                            ),
-                            Text("Make My Profile Public"),
-                          ],
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 20),
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        ElevatedButton(
-                          onPressed: () async {
-                            try {
-                              UserProfile updatedProfile = UserProfile(
-                                username:
-                                    "", // The backend handles this, but I'll find a way on the frontend too
-                                displayName: nameController.text.trim(),
-                                bio: bioController.text.trim(),
-                                isPublic: isPublic,
-                                isNewAccount: false,
-                                profileIcon: appState.selectedIcon,
-                              );
-
-                              await UserProfileAccessor.updateOwnProfile(
-                                  updatedProfile);
-
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                    content:
-                                        Text("Profile updated successfully!")),
-                              );
-                            } catch (e) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                    content:
-                                        Text("Failed to update profile: $e")),
-                              );
-                            }
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: isDarkMode
-                                ? Theme.of(context).colorScheme.secondary
-                                : Theme.of(context)
-                                    .colorScheme
-                                    .onInverseSurface,
-                          ),
-                          child: Text(
-                            "Update Profile",
-                            style: TextStyle(
-                              color: isDarkMode ? Colors.white70 : null,
+                        Consumer<MyAppState>(builder: (context, appState, child) {
+                          String displayIcon = _hasLocalProfileChanges
+                              ? _currentIconSelection
+                              : appState.selectedIcon;
+                          return GestureDetector(
+                            onTap: () => _showIconSelectionModal(context, appState, profile),
+                            child: Container(
+                              width: 125,
+                              height: 125,
+                              padding: EdgeInsets.all(15),
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: isDarkMode
+                                    ? Theme.of(context).colorScheme.secondary
+                                    : Theme.of(context).colorScheme.primaryContainer,
+                              ),
+                              child: SvgPicture.asset(
+                                'assets/$displayIcon.svg',
+                              ),
                             ),
-                          ),
-                        ),
-                        ElevatedButton(
-                          onPressed: () async {
-                            final healthInfo =
-                                await HealthInfoAccessor.getHealthInfo();
-                            final heightController = TextEditingController(
-                                text: healthInfo.heightInches.toString());
-                            final weightController = TextEditingController(
-                                text: healthInfo.weightPounds.toString());
-                            final ageController = TextEditingController(
-                                text: healthInfo.ageYears.toString());
-
-                            showDialog(
-                              context: context,
-                              builder: (BuildContext context) {
-                                return AlertDialog(
-                                  backgroundColor: isDarkMode
-                                      ? Colors.grey[900]
-                                      : Colors.white,
-                                  title: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        "Set Health Information",
-                                        style: TextStyle(
-                                            color: isDarkMode
-                                                ? Colors.white
-                                                : Colors.black),
-                                      ),
-                                      SizedBox(height: 8),
-                                      Text(
-                                        "Health information is kept private and will be used to estimate how many calories are burned on a ride.",
-                                        style: TextStyle(
-                                          color: isDarkMode
-                                              ? Colors.white70
-                                              : Colors.black87,
-                                          fontSize: 13,
-                                        ),
-                                      ),
-                                    ],
+                          );
+                        }),
+                        const SizedBox(width: 24), // ← Added spacing between icon and info
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                nameController.text.isEmpty
+                                    ? "(No display name set)"
+                                    : nameController.text,
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: isDarkMode ? Colors.white70 : Colors.black,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                bioController.text.isEmpty
+                                    ? "(No bio provided)"
+                                    : bioController.text,
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontStyle: FontStyle.italic,
+                                  color: isDarkMode ? Colors.white60 : Colors.black87,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    isPublic ? Icons.public : Icons.lock,
+                                    size: 16,
+                                    color: isDarkMode ? Colors.blue[200] : Colors.blue[800], // Or your themedColor method
                                   ),
-                                  content: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      TextField(
-                                        controller: heightController,
-                                        keyboardType: TextInputType.number,
-                                        style: TextStyle(
-                                            color: isDarkMode
-                                                ? Colors.white
-                                                : Colors.black),
-                                        decoration: InputDecoration(
-                                          labelText: "Height (inches)",
-                                          labelStyle: TextStyle(
-                                              color: isDarkMode
-                                                  ? Colors.white70
-                                                  : Colors.black),
-                                        ),
-                                      ),
-                                      TextField(
-                                        controller: weightController,
-                                        keyboardType: TextInputType.number,
-                                        style: TextStyle(
-                                            color: isDarkMode
-                                                ? Colors.white
-                                                : Colors.black),
-                                        decoration: InputDecoration(
-                                          labelText: "Weight (pounds)",
-                                          labelStyle: TextStyle(
-                                              color: isDarkMode
-                                                  ? Colors.white70
-                                                  : Colors.black),
-                                        ),
-                                      ),
-                                      TextField(
-                                        controller: ageController,
-                                        keyboardType: TextInputType.number,
-                                        style: TextStyle(
-                                            color: isDarkMode
-                                                ? Colors.white
-                                                : Colors.black),
-                                        decoration: InputDecoration(
-                                          labelText: "Age (years)",
-                                          labelStyle: TextStyle(
-                                              color: isDarkMode
-                                                  ? Colors.white70
-                                                  : Colors.black),
-                                        ),
-                                      ),
-                                    ],
+                                  SizedBox(width: 4),
+                                  Text(
+                                    isPublic ? "Public" : "Private",
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500,
+                                      color: isDarkMode ? Colors.blue[200] : Colors.blue[800],
+                                    ),
                                   ),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () => Navigator.pop(context),
-                                      child: Text("Cancel",
-                                          style: TextStyle(
-                                              color: isDarkMode
-                                                  ? Colors.white70
-                                                  : Colors.black)),
-                                    ),
-                                    TextButton(
-                                      onPressed: () async {
-                                        try {
-                                          await HealthInfoAccessor
-                                              .setHealthInfoInts(
-                                            int.parse(
-                                                heightController.text.trim()),
-                                            int.parse(
-                                                weightController.text.trim()),
-                                            int.parse(
-                                                ageController.text.trim()),
-                                          );
-
-                                          Navigator.pop(context);
-
-                                          ScaffoldMessenger.of(context)
-                                              .showSnackBar(
-                                            SnackBar(
-                                                content: Text(
-                                                    'Health info updated successfully!')),
-                                          );
-                                        } catch (e) {
-                                          Navigator.pop(context);
-                                          ScaffoldMessenger.of(context)
-                                              .showSnackBar(
-                                            SnackBar(
-                                                content: Text(
-                                                    'Failed to update health info: $e')),
-                                          );
-                                        }
-                                      },
-                                      child: Text("Submit",
-                                          style: TextStyle(
-                                              color: isDarkMode
-                                                  ? Colors.white70
-                                                  : Colors.black)),
-                                    ),
-                                  ],
-                                );
-                              },
-                            );
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: isDarkMode
-                                ? Theme.of(context).colorScheme.secondary
-                                : Theme.of(context)
-                                    .colorScheme
-                                    .onInverseSurface,
-                          ),
-                          child: Text(
-                            "Set Health Information",
-                            style: TextStyle(
-                              color: isDarkMode ? Colors.white70 : null,
-                            ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Align(
+                                alignment: Alignment.centerRight,
+                                child: IconButton(
+                                  icon: Icon(
+                                    Icons.edit_note_sharp,
+                                    color: isDarkMode
+                                        ? Colors.white70
+                                        : Theme.of(context).colorScheme.primary,
+                                  ),
+                                  tooltip: "Edit Profile",
+                                  onPressed: () async {
+                                    final refreshedProfile = await UserProfileAccessor.getOwnProfile();
+                                    if (mounted) {
+                                      _showEditProfileDialog(refreshedProfile);
+                                    }
+                                  },
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
@@ -881,46 +812,22 @@ class _SocialPageState extends State<SocialPage>
                   ],
                 ),
               ),
-              SizedBox(height: 40),
+              const SizedBox(height: 5),
               Column(
                 children: [
                   Showcase(
                     key: _dailyGoalsKey,
                     title: 'Daily Goals',
-                    description:
-                        'Set daily goals can be seen on the home page.',
+                    description: 'Set daily goals can be seen on the home page.',
                     child: UserDailyGoalsSection(),
                   ),
-                  Divider(),
+                  const Divider(),
                   Showcase(
                     key: _notificationsKey,
                     title: 'Notification Manager',
                     description:
-                        'Manage daily reminders here. Add notifications with a title, body, and time. Existing reminders will be shown here.',
+                    'Manage daily reminders here. Add notifications with a title, body, and time. Existing reminders will be shown here.',
                     child: NotificationScheduler(),
-                  ),
-
-                  Divider(),
-                  SizedBox(height: 10),
-                  Center(
-                    child: ElevatedButton(
-                      onPressed: () {
-                        AuthUtil.logout(context);
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: isDarkMode
-                            ? Theme.of(context).colorScheme.secondary
-                            : Theme.of(context)
-                            .colorScheme
-                            .onInverseSurface,
-                      ),
-                      child: Text(
-                        "Logout",
-                        style: TextStyle(
-                          color: isDarkMode ? Colors.white70 : null,
-                        ),
-                      ),
-                    ),
                   ),
                 ],
               ),
@@ -931,16 +838,39 @@ class _SocialPageState extends State<SocialPage>
     );
   }
 
-  Future<List> _searchTabFuture = Future.wait([
-    UserProfileAccessor.fetchAllUsernames(),
-    FriendsListAccessor.getFriendsList(),
-    FriendRequestsListAccessor.getFriendRequestList(),
-  ]);
+  Widget _buildStatCard(
+      IconData icon, String label, String value, Color color) {
+    return Card(
+      color: color.withAlpha(30),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      elevation: 2,
 
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10.0),
+        child: Column(
+          children : [
+            Icon(icon, color: color),
+            SizedBox(width: 15),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Text(label,
+                    style:
+                    TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.black)),
+                SizedBox(width: 5),
+                Text(value,
+                    style:
+                    TextStyle(fontSize: 12, fontWeight: FontWeight.bold,color: Colors.black)),
+              ],
+            ),
+          ],
+        ),
+
+      ),
+    );
+  }
   /// **2️⃣ Bikers Tab — show all bikers and filter by the search field**
   Widget _buildSearchTab() {
-    bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
-
     return Column(
       children: [
         Padding(
@@ -953,93 +883,105 @@ class _SocialPageState extends State<SocialPage>
               suffixIcon: _searchController.text.isEmpty
                   ? null
                   : IconButton(
-                      icon: Icon(Icons.clear),
-                      onPressed: () {
-                        _searchController.clear();
-                        setState(() {}); // Refresh search
-                      },
-                    ),
+                icon: Icon(Icons.clear),
+                onPressed: () {
+                  _searchController.clear();
+                  setState(() {}); // Refresh search
+                },
+              ),
             ),
           ),
         ),
         Expanded(
-          child: FutureBuilder<List<dynamic>>(
-            future: _searchTabFuture,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
+         child: Consumer<SocialDataProvider>(
+            builder: (ctx, social, _) {
+              if (social.isLoading) {
                 return Center(child: CircularProgressIndicator());
               }
-              if (snapshot.hasError) {
-                return Center(child: Text("Error loading users"));
+              final q = _searchController.text.trim().toLowerCase();
+              if (q.length < 3) {
+                return const Center(child: Text("Start typing to search bikers."));
               }
-
-              final usersRaw = snapshot.data![0] as List<String>;
-              final friendsList = snapshot.data![1] as FriendsList;
-              final requestList = snapshot.data![2] as FriendRequestList;
-
-              final users = usersRaw;
-              final friends = friendsList.friends;
-              final pendingSent = requestList.pendingFriendRequests;
-
-              final query = _searchController.text.toLowerCase();
-              final filtered = query.isEmpty
-                  ? users
-                  : users.where((u) => u.toLowerCase().contains(query)).toList();
-
-              if (filtered.isEmpty) {
-                return Center(child: Text("No bikers found."));
+              final matches = social.allUsers
+                  .where((u) => u.toLowerCase().contains(q))
+                  .toList();
+              if (matches.isEmpty) {
+                return const Center(child: Text("No bikers found."));
               }
-
               return Scrollbar(
+                controller: _searchScrollController,
                 thumbVisibility: true,
                 child: ListView.builder(
-                  itemCount: filtered.length,
-                  itemBuilder: (context, idx) {
-                    final user = filtered[idx];
-                    final isFriend = friends.contains(user);
-                    final isPending = pendingSent.contains(user);
+                  controller: _searchScrollController,
+                  itemCount: matches.length,
+                  itemBuilder: (_, i) {
+                    final user = matches[i];
+                    final isFriend        = social.friends.contains(user);
+                    final isPending       = social.pendingSent.contains(user);
+                    final isPendingMyAccept = social.pendingReceived.contains(user);
+                    final isPrivate = social.isUserPrivate(user);
 
                     Widget trailingWidget;
                     if (isFriend) {
-                      trailingWidget = Text(
-                        "Friend",
-                        style: TextStyle(color: Colors.green),
+                      trailingWidget = Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                           Icon(Icons.check, color: themedColor(context, Colors.green, Colors.lightGreenAccent), size: 18),
+                          SizedBox(width: 4),
+                          Text("Friend", style: TextStyle(fontSize: 16, color: themedColor(context, Colors.green, Colors.lightGreenAccent))),
+                        ],
                       );
                     } else if (isPending) {
                       trailingWidget = Row(
                         mainAxisSize: MainAxisSize.min,
-                        children: const [
-                          Icon(Icons.hourglass_top, color: Colors.orange, size: 16),
+                        children: [
+                          Icon(Icons.send, color: themedColor(context, Colors.deepOrangeAccent,  Colors.orange), size: 18),
                           SizedBox(width: 4),
-                          Text("Pending", style: TextStyle(color: Colors.orange)),
+                          Text("Request Sent", style: TextStyle(fontSize: 16, color: themedColor(context, Colors.deepOrangeAccent, Colors.orange))),
+                        ],
+                      );
+                    } else if (isPendingMyAccept) {
+                      trailingWidget = Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.mail, color: themedColor(context, Colors.black26, Colors.black12), size: 18),
+                          SizedBox(width: 4),
+                          Text("Accept Request", style: TextStyle(fontSize: 16, color: themedColor(context, Colors.blue, Colors.lightBlueAccent))),
+                        ],
+                      );
+                    } else if (isPrivate) {
+                      trailingWidget = Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.lock, color: themedColor(context, Colors.black, Colors.grey), size: 18),
+                          SizedBox(width: 4),
+                          Text("Private", style: TextStyle(fontSize: 16, color: themedColor(context, Colors.black, Colors.blueGrey))),
                         ],
                       );
                     } else {
                       trailingWidget = ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: isDarkMode
-                              ? Theme.of(context).colorScheme.secondary
-                              : Theme.of(context).colorScheme.onInverseSurface,
-                          foregroundColor: isDarkMode
-                              ? Colors.white70
-                              : Theme.of(context).colorScheme.primary,
-                        ),
-                        onPressed: () => _sendFriendRequest(user),
+                        style: themedButtonStyle(context),
+                        onPressed: () => social.sendFriendRequest(user),
                         child: const Text("Add Friend"),
                       );
                     }
 
                     return Card(
-                      margin: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                      color: isDarkMode
-                          ? Theme.of(context).colorScheme.onSecondaryFixedVariant
-                          : Colors.white,
+                      margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      color: themedColor(context, Colors.white, Colors.grey[850]!),
                       child: ListTile(
-                        leading: CircleAvatar(child: Text(user[0].toUpperCase())),
-                        title: Text(
-                          user,
-                          style: TextStyle(color: isDarkMode ? Colors.white70 : null),
+                        leading: CircleAvatar(
+                          child: Text(
+                            user.length >= 2
+                                ? user.substring(0, 2).toUpperCase()
+                                : user[0].toUpperCase(),
+                          ),
                         ),
+
+                        title: Text(user,
+                            style: TextStyle(
+                              color: themedColor(context, Colors.black, Colors.white),
+                            )),
                         trailing: trailingWidget,
                       ),
                     );
@@ -1053,7 +995,310 @@ class _SocialPageState extends State<SocialPage>
     );
   }
 
+  void _showEditProfileDialog(UserProfile profile) {
+    final isDarkMode = inDarkMode(context);
+    final appState = context.read<MyAppState>();
+
+    final nameController = TextEditingController(text: profile.displayName);
+    final bioController = TextEditingController(text: profile.bio);
+    final heightController = TextEditingController();
+    final weightController = TextEditingController();
+    final ageController = TextEditingController();
+
+    // Preload health info
+    HealthInfoAccessor.getHealthInfo().then((health) {
+      if (!mounted) return;
+      setState(() {
+        heightController.text = health.heightInches.toString();
+        weightController.text = health.weightPounds.toString();
+        ageController.text = health.ageYears.toString();
+      });
+    });
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+            builder: (context, setModalState) {
+              return AlertDialog(
+                backgroundColor: isDarkMode ? Colors.grey[900] : Colors.white,
+                title: Text("My Profile", style: TextStyle(color: themedTextColor(context))),
+                content: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      TextField(
+                        controller: nameController,
+                        style: TextStyle(color: themedTextColor(context)),
+                        decoration: themedInputDecoration(context, "Display Name"),
+                      ),
+                      TextField(
+                        controller: bioController,
+                        style: TextStyle(color: themedTextColor(context)),
+                        decoration: themedInputDecoration(context, "Bio"),
+                      ),
+                      Row(
+                        children: [
+                          Checkbox(
+                            value: isPublic,
+                            activeColor: Theme.of(context).colorScheme.primary,
+                            onChanged: (value) {
+                              setModalState(() {
+                                isPublic = value ?? true;
+                              });
+                            },
+                          ),
+                          Text(
+                            "Make My Profile Public",
+                            style: TextStyle(color: themedTextColor(context)),
+                          ),
+                        ],
+                      ),
+                      const Divider(),
+                      TextField(
+                        controller: heightController,
+                        keyboardType: TextInputType.number,
+                        style: TextStyle(color: themedTextColor(context)),
+                        decoration: themedInputDecoration(context, "Height (in)"),
+                      ),
+                      TextField(
+                        controller: weightController,
+                        keyboardType: TextInputType.number,
+                        style: TextStyle(color: themedTextColor(context)),
+                        decoration: themedInputDecoration(context, "Weight (lb)"),
+                      ),
+                      TextField(
+                        controller: ageController,
+                        keyboardType: TextInputType.number,
+                        style: TextStyle(color: themedTextColor(context)),
+                        decoration: themedInputDecoration(context, "Age"),
+                      ),
+                    ],
+                  ),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: Text("Cancel", style: TextStyle(color: themedTextColor(context))),
+                  ),
+                  ElevatedButton(
+                    style: themedButtonStyle(context),
+                    onPressed: () async {
+                      try {
+                        final updatedProfile = UserProfile(
+                          username: profile.username,
+                          displayName: nameController.text.trim(),
+                          bio: bioController.text.trim(),
+                          isPublic: isPublic,
+                          isNewAccount: false,
+                          profileIcon: appState.selectedIcon,
+                          pack: profile.pack,
+                        );
+
+                        final updatedHealth = HealthInfo(
+                          heightInches: int.tryParse(heightController.text) ?? 0,
+                          weightPounds: int.tryParse(weightController.text) ?? 0,
+                          ageYears: int.tryParse(ageController.text) ?? 0,
+                        );
+
+                        await UserProfileAccessor.updateOwnProfile(updatedProfile);
+                        await HealthInfoAccessor.setHealthInfoInts(updatedHealth.heightInches, updatedHealth.weightPounds, updatedHealth.ageYears);
+
+                        if (mounted) {
+                          // ✅ Sync local state fields with edited values
+                          setState(() {
+                            this.nameController.text = nameController.text;
+                            this.bioController.text = bioController.text;
+                            this.isPublic = isPublic;
+                          });
+                          _loadUserProfile();
+                        }
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text("Profile and health info updated.")),
+                        );
+                      } catch (e) {
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text("Error: $e")),
+                        );
+                      }
+                    },
+                    child: const Text("Save"),
+                  ),
+                ],
+              );
+            }
+        );
+      },
+    );
+  }
+
   Widget _buildFriendsTab() {
+    return Consumer<SocialDataProvider>(
+      builder: (context, provider, _) {
+        final friends = provider.friends;
+        if (provider.isLoading) {
+          return Center(child: CircularProgressIndicator());
+        } else if (provider.hasError) {
+          return Center(child: Text('Failed to load friends'));
+        } else if (friends.isEmpty) {
+          return Center(child: Text('You have no friends yet 😞'));
+        } else {
+          return ListView.builder(
+            itemCount: friends.length,
+            itemBuilder: (context, index) {
+              final friend = friends[index];
+              return Card(
+                color: themedColor(context, Colors.white, Colors.grey[850]!),
+                margin: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                child: ListTile(     
+                //tileColor: themedColor(context, Colors.white, Colors.grey[900]!),
+                leading: CircleAvatar(
+                    child: Text(
+                      friend.length >= 2
+                      ? friend.substring(0, 2).toUpperCase()
+                      : friend[0].toUpperCase(),
+                    ),
+                  ),
+                  trailing: IconButton(
+                    icon: Icon(Icons.emoji_events,
+                        color: Theme.of(context).colorScheme.primary),
+                    tooltip: 'Show Leaderboard Position',
+                    onPressed: () => _showFriendRanking(context, friend),
+                  ),
+                  title: GestureDetector(
+                    onTap: () async {
+                      var userInfo =
+                          await UserProfileAccessor.getPublicProfile(friend);
+                      var userDisplayName = userInfo.displayName.isNotEmpty
+                          ? userInfo.displayName
+                          : userInfo.username;
+                      var userBio = userInfo.bio.isNotEmpty ? userInfo.bio : "";
+                      var userIcon = userInfo.profileIcon;
+                      Provider.of<WeekHistoryProvider>(context, listen: false)
+                          .fetchUserWeekHistory(friend);
+                      final weekHistory =
+                          Provider.of<WeekHistoryProvider>(context, listen: false);
+
+                      showDialog(
+                        context: context,
+                        builder: (context) {
+                          return AlertDialog(
+                            insetPadding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 40),
+                            contentPadding: const EdgeInsets.all(16),
+                            title: Text(
+                              "$friend's Profile",
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 20,
+                                  color: Colors.black),
+                              textAlign: TextAlign.center,
+                            ),
+                            content: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                SvgPicture.asset(
+                                  'assets/$userIcon.svg',
+                                  height: 100,
+                                  width: 100,
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  userDisplayName,
+                                  style: const TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black),
+                                ),
+                                Text(
+                                  "$userBio\n",
+                                  style: const TextStyle(
+                                      fontSize: 20, color: Colors.black),
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  'Average Ride this Week',
+                                  style: const TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black),
+                                  textAlign: TextAlign.center,
+                                ),
+                                const SizedBox(height: 16),
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceEvenly,
+                                  children: [
+                                    Flexible(
+                                      child: _buildStatCard(
+                                        Icons.timer,
+                                        'Time',
+                                        '${weekHistory.averageTime.round()} min',
+                                        Colors.blueAccent,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Flexible(
+                                      child: _buildStatCard(
+                                        Icons.directions_bike,
+                                        'Distance',
+                                        '${weekHistory.averageDistance.round()} mi',
+                                        Colors.orangeAccent,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Flexible(
+                                      child: _buildStatCard(
+                                        Icons.local_fire_department,
+                                        'Calories',
+                                        '${weekHistory.averageCalories.round()} cal',
+                                        Colors.redAccent,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 16),
+                                const Padding(
+                                  padding: EdgeInsets.only(top: 8),
+                                  child: Text(
+                                    "This user is your friend.",
+                                    style: TextStyle(
+                                        color: Colors.green,
+                                        fontWeight: FontWeight.bold),
+                                  ),
+                                )
+                              ],
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context),
+                                child: const Text(
+                                  "Close",
+                                  style: TextStyle(fontSize: 16),
+                                ),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    },
+                    child: Text(
+                      friend,
+                      style: TextStyle(color: themedColor(context,Colors.grey[850]!, Colors.white)),
+                    ),
+                  ),
+                ),
+              );
+            },
+          );
+        }
+      },
+    );
+  }
+
+ /* Widget _buildFriendsTab() {
     return FutureBuilder<FriendsList>(
       future: FriendsListAccessor.getFriendsList(),
       builder: (context, snapshot) {
@@ -1069,17 +1314,145 @@ class _SocialPageState extends State<SocialPage>
             itemCount: friends.length,
             itemBuilder: (context, index) {
               final friend = friends[index];
+
               return Card(
                 margin: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 child: ListTile(
                   leading: CircleAvatar(child: Text(friend[0].toUpperCase())),
-                  title: Text(friend),
-                  subtitle: Text('Cycling buddy 🚴'),
+                  //subtitle: Text('Cycling buddy 🚴'),
                   trailing: IconButton(
                     icon: Icon(Icons.emoji_events,
                         color: Theme.of(context).colorScheme.primary),
                     tooltip: 'Show Leaderboard Position',
                     onPressed: () => _showFriendRanking(context, friend),
+                  ),
+                  title: GestureDetector(
+                    onTap: () async {
+                      var userInfo =
+                      await UserProfileAccessor.getPublicProfile(friend);
+                      var userDisplayName =
+                      userInfo.displayName.isNotEmpty
+                          ? userInfo.displayName
+                          : userInfo.username;
+                      var userBio =
+                      userInfo.bio.isNotEmpty ? userInfo.bio : "";
+                      var userIcon = userInfo.profileIcon;
+                      Provider.of<WeekHistoryProvider>(context,
+                          listen: false)
+                          .fetchUserWeekHistory(friend);
+                      final weekHistory =
+                      Provider.of<WeekHistoryProvider>(context,
+                          listen: false);
+
+                      showDialog(
+                        context: context,
+                        builder: (context) {
+                          return AlertDialog(
+                            insetPadding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 40),
+                            contentPadding: const EdgeInsets.all(16),
+                            title: Text(
+                              "$friend's Profile",
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 20,
+                                  color: Colors.black),
+                              textAlign: TextAlign.center,
+                            ),
+                            content: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                SvgPicture.asset(
+                                  'assets/$userIcon.svg',
+                                  height: 100,
+                                  width: 100,
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  userDisplayName,
+                                  style: const TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black),
+                                ),
+                                Text(
+                                  "$userBio\n",
+                                  style: const TextStyle(fontSize: 20,
+                                      color: Colors.black),
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  'Average Ride this Week',
+                                  style: const TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black),
+                                  textAlign: TextAlign.center,
+                                ),
+                                const SizedBox(height: 16),
+                                Row(
+                                  mainAxisAlignment:
+                                  MainAxisAlignment.spaceEvenly,
+                                  children: [
+                                    Flexible(
+                                      child: _buildStatCard(
+                                        Icons.timer,
+                                        'Time',
+                                        '${weekHistory.averageTime.round()} min',
+                                        Colors.blueAccent,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Flexible(
+                                      child: _buildStatCard(
+                                        Icons.directions_bike,
+                                        'Distance',
+                                        '${weekHistory.averageDistance.round()} mi',
+                                        Colors.orangeAccent,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Flexible(
+                                      child: _buildStatCard(
+                                        Icons.local_fire_department,
+                                        'Calories',
+                                        '${weekHistory.averageCalories.round()} cal',
+                                        Colors.redAccent,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 16),
+                                const Padding(
+                                  padding:  EdgeInsets.only(top: 8),
+                                  child: Text(
+                                    "This user is your friend.",
+                                    style: TextStyle(
+                                        color: Colors.green,
+                                        fontWeight: FontWeight.bold),
+                                  ),
+                                )
+                              ],
+                            ),
+                            actions: [
+
+                              TextButton(
+                                onPressed: () => Navigator.pop(context),
+                                child: const Text(
+                                  "Close",
+                                  style: TextStyle(fontSize: 16),
+                                ),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    },
+                    child: Text(
+                      friend,
+                      style: TextStyle(
+                          color: Colors.black),
+                    ),
                   ),
                 ),
               );
@@ -1089,6 +1462,7 @@ class _SocialPageState extends State<SocialPage>
       },
     );
   }
+*/
 }
 
 class UserDailyGoalsSection extends StatelessWidget {
@@ -1097,65 +1471,59 @@ class UserDailyGoalsSection extends StatelessWidget {
     return Consumer<UserDailyGoalProvider>(
       builder: (context, userGoals, child) {
         return Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Divider(height: 40),
-            Center(
-              child: Text(
-                "Daily Goals",
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 24,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Divider(height: 40),
+              Center(
+                child: Text(
+                  "Daily Goals",
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 24,
+                  ),
                 ),
               ),
-            ),
-            SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                Column(
-                  children: [
-                    Icon(Icons.access_time, size: 56, color: Colors.blue), 
-                    SizedBox(height: 8),
-                    Text("${userGoals.dailyTimeGoal} min"),
-                  ],
-                ),
-                Column(
-                  children: [
-                    Icon(Icons.directions_bike, size: 56, color: Colors.amber), 
-                    SizedBox(height: 8),
-                    Text("${userGoals.dailyDistanceGoal} mi"),
-                  ],
-                ),
-                Column(
-                  children: [
-                    Icon(Icons.local_fire_department, size: 56, color: Colors.red), 
-                    SizedBox(height: 8),
-                    Text("${userGoals.dailyCaloriesGoal} cal"),
-                  ],
-                ),
-              ],
-            ),
-            SizedBox(height: 8), 
-            ElevatedButton(
-              onPressed: () => _showChangeGoalsDialog(context, userGoals),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Theme.of(context).brightness == Brightness.dark
-                    ? Theme.of(context).colorScheme.secondary
-                    : Theme.of(context)
-                        .colorScheme
-                        .onInverseSurface,
+              SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  Column(
+                    children: [
+                      Icon(Icons.access_time, size: 56, color: Colors.blue),
+                      SizedBox(height: 8),
+                      Text("${userGoals.dailyTimeGoal} min"),
+                    ],
+                  ),
+                  Column(
+                    children: [
+                      Icon(Icons.directions_bike, size: 56, color: Colors.amber),
+                      SizedBox(height: 8),
+                      Text("${userGoals.dailyDistanceGoal} mi"),
+                    ],
+                  ),
+                  Column(
+                    children: [
+                      Icon(Icons.local_fire_department, size: 56, color: Colors.red),
+                      SizedBox(height: 8),
+                      Text("${userGoals.dailyCaloriesGoal} cal"),
+                    ],
+                  ),
+                ],
               ),
-              child: Text(
-                "Change Goals", 
-                style: TextStyle(
-                  color: Theme.of(context).brightness == Brightness.dark ? Colors.white70 : null,
+              SizedBox(height: 8),
+              ElevatedButton(
+                onPressed: () => _showChangeGoalsDialog(context, userGoals),
+                style: themedButtonStyle(context),
+                child: Text(
+                  "Change Goals",
+                  style: TextStyle(
+                    color: inDarkMode(context) ? Colors.white70 : null,
+                  ),
                 ),
+
               ),
-              
-            ),
-            SizedBox(height: 8), 
-          ]
+              SizedBox(height: 8),
+            ]
         );
       },
     );
@@ -1163,13 +1531,14 @@ class UserDailyGoalsSection extends StatelessWidget {
 
   void _showChangeGoalsDialog(
       BuildContext context, UserDailyGoalProvider userGoals) {
-    bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final appState = Provider.of<MyAppState>(context, listen: false);
+    bool isDarkMode = inDarkMode(context);
     final distanceController =
-        TextEditingController(text: userGoals.dailyDistanceGoal.toString());
+    TextEditingController(text: userGoals.dailyDistanceGoal.toString());
     final timeController =
-        TextEditingController(text: userGoals.dailyTimeGoal.toString());
+    TextEditingController(text: userGoals.dailyTimeGoal.toString());
     final caloriesController =
-        TextEditingController(text: userGoals.dailyCaloriesGoal.toString());
+    TextEditingController(text: userGoals.dailyCaloriesGoal.toString());
 
     showDialog(
       context: context,
@@ -1187,33 +1556,45 @@ class UserDailyGoalsSection extends StatelessWidget {
                 controller: timeController,
                 keyboardType: TextInputType.numberWithOptions(decimal: true),
                 style:
-                    TextStyle(color: isDarkMode ? Colors.white : Colors.black),
+                TextStyle(color: isDarkMode ? Colors.white : Colors.black),
                 decoration: InputDecoration(
-                  labelText: "Time (mins)",
-                  labelStyle: TextStyle(
-                      color: isDarkMode ? Colors.white70 : Colors.black),
+                  label: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text("Time (mins)", style: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black)),
+                      Text("max 1440", style: TextStyle(color: isDarkMode ? Colors.white38 : Colors.black54)),
+                    ],
+                  ),
                 ),
               ),
               TextField(
                 controller: distanceController,
                 keyboardType: TextInputType.numberWithOptions(decimal: true),
                 style:
-                    TextStyle(color: isDarkMode ? Colors.white : Colors.black),
+                TextStyle(color: isDarkMode ? Colors.white : Colors.black),
                 decoration: InputDecoration(
-                  labelText: "Distance (mi)",
-                  labelStyle: TextStyle(
-                      color: isDarkMode ? Colors.white70 : Colors.black),
+                  label: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text("Distance (mi)", style: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black)),
+                      Text("max 999", style: TextStyle(color: isDarkMode ? Colors.white38 : Colors.black54)),
+                    ],
+                  ),
                 ),
               ),
               TextField(
                 controller: caloriesController,
                 keyboardType: TextInputType.numberWithOptions(decimal: true),
                 style:
-                    TextStyle(color: isDarkMode ? Colors.white : Colors.black),
+                TextStyle(color: isDarkMode ? Colors.white : Colors.black),
                 decoration: InputDecoration(
-                  labelText: "Calories",
-                  labelStyle: TextStyle(
-                      color: isDarkMode ? Colors.white70 : Colors.black),
+                  label: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text("Calories", style: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black)),
+                      Text("max 9999", style: TextStyle(color: isDarkMode ? Colors.white38 : Colors.black54)),
+                    ],
+                  ),
                 ),
               ),
             ],
@@ -1228,15 +1609,25 @@ class UserDailyGoalsSection extends StatelessWidget {
             TextButton(
               onPressed: () async {
                 try {
-                  final newDistance =
-                      double.tryParse(distanceController.text.trim()) ?? 0;
-                  final newTime =
-                      double.tryParse(timeController.text.trim()) ?? 0;
-                  final newCalories =
-                      double.tryParse(caloriesController.text.trim()) ?? 0;
+                  double newDistance = double.tryParse(distanceController.text.trim()) ?? 0;
+                  double newTime = double.tryParse(timeController.text.trim()) ?? 0;
+                  double newCalories = double.tryParse(caloriesController.text.trim()) ?? 0;
 
-                  await userGoals.updateUserGoals(
-                      newDistance, newTime, newCalories);
+                  if (newTime > 1440) {
+                    newTime = 1440;
+                  }
+
+                  if (newDistance > 999) {
+                    newDistance = 999;
+                  }
+
+                  if (newCalories > 9999) {
+                    newCalories = 9999;
+                  }
+
+                  await userGoals.updateUserGoals(newDistance, newTime, newCalories);
+
+                  appState.updateGoalStatus();
 
                   Navigator.pop(context);
 
@@ -1272,7 +1663,7 @@ class _RequestsTabState extends State<RequestsTab> {
   @override
   void initState() {
     super.initState();
-    _loadFriendRequests(); // Fetch friend requests on init
+    //_loadFriendRequests(); // Fetch friend requests on init
   }
 
   Future<void> _loadFriendRequests() async {
@@ -1292,88 +1683,56 @@ class _RequestsTabState extends State<RequestsTab> {
     }
   }
 
-  /// **Accept a friend request and remove from UI**
-  Future<void> _acceptFriendRequest(String username) async {
-    try {
-      await FriendRequestsListAccessor.acceptFriendRequest(username);
-      setState(() {
-        _requests.remove(username); // Remove from UI without re-fetching
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("$username is now your friend!")),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Failed to accept: $e")),
-      );
-    }
-  }
 
-  /// **Reject a friend request and remove from UI**
-  Future<void> _rejectFriendRequest(String username) async {
-    try {
-      await FriendRequestsListAccessor.rejectFriendRequest(username);
-      setState(() {
-        _requests.remove(username); // Remove from UI without re-fetching
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Friend request from $username rejected.")),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Failed to reject: $e")),
-      );
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
-    bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    if (_isLoading) {
-      return Center(child: CircularProgressIndicator());
-    } else if (_requests.isEmpty) {
-      return Center(child: Text("No pending friend requests."));
-    }
+    bool isDarkMode = inDarkMode(context);
 
-    return ListView.builder(
-      itemCount: _requests.length,
-      itemBuilder: (context, index) {
-        String requester = _requests[index];
-
-        return Card(
-          margin: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-          color: isDarkMode
-              ? Theme.of(context).colorScheme.onSecondaryFixedVariant
-              : Colors.white,
-          child: ListTile(
-            leading: CircleAvatar(child: Text(requester[0].toUpperCase())),
-            title: Text(
-              requester,
-              style: TextStyle(
-                color: isDarkMode ? Colors.white70 : null,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            subtitle: Text(
-              "Sent you a friend request",
-              style: TextStyle(
-                color: isDarkMode ? Colors.white70 : null,
-              ),
-            ),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  icon: Icon(Icons.check, color: Colors.green),
-                  onPressed: () => _acceptFriendRequest(requester),
+    return Consumer<SocialDataProvider>(
+      builder: (ctx, social, _) {
+        final pending = social.pendingReceived;
+        if (pending.isEmpty) {
+          return Center(child: Text("No pending friend requests."));
+        }
+        return ListView.builder(
+          itemCount: pending.length,
+          itemBuilder: (context, index) {
+            final requester = pending[index];
+            return Card(
+              margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              color: themedColor(context, Colors.white, Colors.grey[850]!),
+              child: ListTile(
+                leading: CircleAvatar(child: Text(requester[0].toUpperCase())),
+                title: Text(
+                  requester,
+                  style: TextStyle(
+                    color: isDarkMode ? Colors.white70 : null,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-                IconButton(
-                  icon: Icon(Icons.close, color: Colors.red),
-                  onPressed: () => _rejectFriendRequest(requester),
+                subtitle: Text(
+                  "Sent you a friend request",
+                  style: TextStyle(
+                    color: isDarkMode ? Colors.white70 : null,
+                  ),
                 ),
-              ],
-            ),
-          ),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextButton(
+                      onPressed: () => social.acceptFriendRequest,
+                      child: const Text("Accept"),
+                    ),
+                    TextButton(
+                      onPressed: () => social.rejectFriendRequest(requester),
+                      child: const Text("Reject"),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
         );
       },
     );

@@ -341,7 +341,18 @@ class _PacksPageState extends State<PacksPage> {
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12.0),
+              child: Text(
+                _getChallengeDescription(goalAmount),
+                style: TextStyle(
+                  fontSize: 14,
+                  color: isDarkMode ? Colors.white70 : Colors.black87,
+                ),
+              ),
+            ),
             TextField(
               controller: nameController,
               decoration: InputDecoration(
@@ -892,6 +903,17 @@ class _PacksPageState extends State<PacksPage> {
                 // Invites section (for pack owner)
                 if (isOwner) ...[
                   const Divider(height: 24),
+                  Center(
+                    child: Text(
+                      'Manage Members',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: isDarkMode ? Colors.white : null,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -1491,43 +1513,66 @@ class _PacksPageState extends State<PacksPage> {
 
   Widget _buildChallengeCard(int distance) {
     final bool disabled = _myPack != null;
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       elevation: 2,
-      color: isDarkMode ? Theme.of(context).colorScheme.onPrimaryFixed : null,
+      color: isDarkMode
+          ? Theme.of(context).colorScheme.onSurfaceVariant
+          : Theme.of(context).colorScheme.surfaceContainerLowest,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              '$distance Mile Challenge',
+              '$distance Miles',
               style: TextStyle(
-                fontSize: 16,
+                fontSize: 18,
                 fontWeight: FontWeight.bold,
                 color: isDarkMode ? Colors.white : null,
               ),
             ),
+            const SizedBox(height: 12), 
             ElevatedButton(
               onPressed: disabled
                   ? () => _showMessage('You can only be in one pack at a time.')
                   : () => _showCreatePackDialog(distance),
               style: ElevatedButton.styleFrom(
-                elevation: 4,
+                elevation: 1,
                 backgroundColor: disabled
                     ? Colors.grey
                     : isDarkMode
                         ? Theme.of(context).colorScheme.secondary
                         : null,
                 foregroundColor: isDarkMode ? Colors.white70 : null,
+                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(6),
+                ),
               ),
-              child: const Text('Accept Challenge'),
+              child: const Text('Accept Challenge', style: TextStyle(fontSize: 14)),
             ),
           ],
         ),
       ),
     );
+}
+
+  String _getChallengeDescription(int distance) {
+    switch (distance) {
+      case 50:
+        return "Get started by crushing 50 miles with some friends!";
+      case 100:
+        return "Double up and go the distance! Can you conquer 100 miles?";
+      case 250:
+        return "You’re in serious territory now. 250 miles of determination!";
+      case 500:
+        return "This is elite-level commitment. 500 miles – you've got this!";
+      default:
+        return "Push yourself to complete $distance miles. Ready to commit?";
+    }
   }
 
   @override
@@ -1568,14 +1613,40 @@ class _PacksPageState extends State<PacksPage> {
         ),
         const Padding(
           padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          child: Center(
-            child: Text(
-              'Available Challenges',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Text(
+                'Available Challenges',
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: 4),
+              Text( 
+                'Accept a challenge to create a pack',
+                style: TextStyle(fontSize: 16),
+                textAlign: TextAlign.center,
+              ),
+            ],
           ),
         ),
-        ..._challengeDistances.map(_buildChallengeCard).toList(),
+        //..._challengeDistances.map(_buildChallengeCard).toList(),
+
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          child: GridView.count(
+            crossAxisCount: 2,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            mainAxisSpacing: 12,
+            crossAxisSpacing: 12,
+            childAspectRatio: 3/2,
+            children: _challengeDistances
+                .map((distance) => _buildChallengeCard(distance))
+                .toList(),
+          ),
+        ),
       ],
     );
   }

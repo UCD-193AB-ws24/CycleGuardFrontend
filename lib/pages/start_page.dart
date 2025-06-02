@@ -43,7 +43,7 @@ class _StartPageState extends State<StartPage> {
       appState.loadUserSettings().then((onValue) => appState
           .fetchOwnedThemes()
           .then((onValue) => Navigator.pushReplacement(
-              context, MaterialPageRoute(builder: (context) => MyHomePage()))));
+          context, MaterialPageRoute(builder: (context) => MyHomePage()))));
     }
   }
 
@@ -90,7 +90,7 @@ class _StartPageState extends State<StartPage> {
           ),
           // Button
           Positioned(
-            top: DimUtil.safeHeight(context) * 0.8, 
+            top: DimUtil.safeHeight(context) * 0.8,
             right: 16,
             child: ElevatedButton(
               onPressed: () {

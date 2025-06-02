@@ -42,7 +42,7 @@ class TestingPage extends StatelessWidget {
     keyboardType: TextInputType.numberWithOptions(signed: false, decimal: false),
     textInputAction: TextInputAction.done,
   );
-  
+
   void _closeMenu(BuildContext context) {
     Navigator.pop(context);
   }
@@ -82,37 +82,37 @@ class TestingPage extends StatelessWidget {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text(
-              "Change fitness info",
-              style: TextStyle(
-                  color: Colors.black
-              )
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _numberField(heightController, "Height (inches)"),
-              const SizedBox(height:24),
-              _numberField(weightController, "Weight (pounds)"),
-              const SizedBox(height:24),
-              _numberField(ageController, "Age (years)"),
-              const SizedBox(height:24),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  elevation: 5,
-                ),
-                onPressed: () => _updateHealthData(context),
-                child: Text("Update health info"),
-              ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  elevation: 5,
-                ),
-                onPressed: () => _closeMenu(context),
-                child: Text("Exit without saving"),
-              ),
-            ]
-          )
+            title: Text(
+                "Change fitness info",
+                style: TextStyle(
+                    color: Colors.black
+                )
+            ),
+            content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _numberField(heightController, "Height (inches)"),
+                  const SizedBox(height:24),
+                  _numberField(weightController, "Weight (pounds)"),
+                  const SizedBox(height:24),
+                  _numberField(ageController, "Age (years)"),
+                  const SizedBox(height:24),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      elevation: 5,
+                    ),
+                    onPressed: () => _updateHealthData(context),
+                    child: Text("Update health info"),
+                  ),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      elevation: 5,
+                    ),
+                    onPressed: () => _closeMenu(context),
+                    child: Text("Exit without saving"),
+                  ),
+                ]
+            )
         );
       },
     );
@@ -256,7 +256,7 @@ class TestingPage extends StatelessWidget {
     int numberOfDays = dayHistoryMap.length;
     List<double> dayDistances = [];
     List<int> days = [];
-      
+
     // Iterate through each day's history
     dayHistoryMap.forEach((day, history) {
       DateTime dateTime = DateTime.fromMillisecondsSinceEpoch(day * 1000);

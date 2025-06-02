@@ -48,7 +48,7 @@ class WeekHistoryProvider with ChangeNotifier {
     userDayHistoryMap = weekHistory.dayHistoryMap;
 
     double totalDistance = 0.0, totalCalories = 0.0, totalTime = 0.0;
-    int numberOfDays = dayHistoryMap.length;
+    int numberOfDays = userDayHistoryMap.length;
 
     if (numberOfDays > 0) {
       userDayHistoryMap.forEach((day, history) {

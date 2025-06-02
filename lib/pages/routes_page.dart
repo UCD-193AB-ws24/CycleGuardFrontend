@@ -390,6 +390,8 @@ class mapState extends State<RoutesPage> {
   }
 
   Widget mainMap() => GoogleMap(
+    myLocationButtonEnabled: false,
+    zoomControlsEnabled: false,
     onTap: (argument) {
       print("Map tap");
       SystemChannels.textInput.invokeMethod("TextInput.hide");

@@ -760,7 +760,18 @@ class mapState extends State<RoutesPage> {
           currentLocation.longitude != null) {
 
         setState(() {
+          // print("$center -> $curLatLng");
+          // if (center != null) {
+          //   print(distanceBetweenMeters(center!, curLatLng));
+          // }
           if (!_helmetConnected) {
+            final curLatLng = LatLng(currentLocation.latitude!, currentLocation.longitude!);
+            if (center != null) {
+              final dist = distanceBetweenMeters(center!, curLatLng);
+              if (dist <= 10) return;
+
+              print("$center -> $curLatLng: $dist");
+            }
             if (recordingDistance) prevLoc = center;
             center = LatLng(currentLocation.latitude!, currentLocation.longitude!);
             if (recordingDistance) {
@@ -868,6 +879,13 @@ class mapState extends State<RoutesPage> {
       }
       final newCenter = LatLng(data.latitude, data.longitude);
       if (newCenter == center) return;
+
+      if (center != null) {
+        final dist = distanceBetweenMeters(center!, newCenter);
+        if (dist <= 10) return;
+
+        print("$center -> $newCenter: $dist");
+      }
     }
 
 

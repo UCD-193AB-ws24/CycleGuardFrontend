@@ -390,6 +390,7 @@ class mapState extends State<RoutesPage> {
   }
 
   Widget mainMap() => GoogleMap(
+    myLocationButtonEnabled: false,
     onTap: (argument) {
       print("Map tap");
       SystemChannels.textInput.invokeMethod("TextInput.hide");
@@ -487,10 +488,10 @@ class mapState extends State<RoutesPage> {
             left: DimUtil.safeWidth(context) * 1 / 20,
             child: FloatingActionButton(
               onPressed: changeMapType,
-              child: Icon(Icons.compass_calibration_sharp),
               backgroundColor: Colors.white,
               foregroundColor: Colors.black,
               elevation: 4,
+              child: Icon(Icons.compass_calibration_sharp),
             ),
           ),
           Positioned(
@@ -498,10 +499,10 @@ class mapState extends State<RoutesPage> {
             right: DimUtil.safeWidth(context) * 1 / 20,
             child: FloatingActionButton(
               onPressed: () => _showRideInputPage(context),
-              child: Icon(Icons.bike_scooter),
               backgroundColor: Colors.white,
               foregroundColor: Colors.black,
               elevation: 4,
+              child: Icon(Icons.bike_scooter),
             ),
           ),
           Positioned(
@@ -509,10 +510,10 @@ class mapState extends State<RoutesPage> {
             left: DimUtil.safeWidth(context) * 1 / 20,
             child: FloatingActionButton(
               onPressed: recenterMap,
-              child: Icon(Icons.my_location),
               backgroundColor: Colors.white,
               foregroundColor: Colors.black,
               elevation: 4,
+              child: Icon(Icons.my_location),
             ),
           ),
           if (showStartButton)

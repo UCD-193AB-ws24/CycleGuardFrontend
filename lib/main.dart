@@ -126,7 +126,7 @@ class MyApp extends StatelessWidget {
           UserDailyGoalProvider>(
         builder: (context, appState, userStats, achievementsProgress,
             weekHistory, tripHistory, userDailyGoal, child) {
-          
+
           appState.setDependencies(
             weekHistoryProvider: weekHistory,
             userGoalProvider: userDailyGoal,
@@ -230,7 +230,7 @@ class MyAppState extends ChangeNotifier {
     isRouteRecordingActive.value = true;
     notifyListeners(); // Optional if you're only using ValueNotifier
   }
-  
+
   void stopRouteRecording() {
     isRouteRecordingActive.value = false;
     notifyListeners(); // Optional if you're only using ValueNotifier
@@ -265,7 +265,15 @@ class MyAppState extends ChangeNotifier {
     'panda',
     'pig',
     'cow',
-    'tiger'
+    'tiger',
+    'Cat',
+    'Dog',
+    'Elephant',
+    'Gunrock',
+    'Koala',
+    'Penguin',
+    'Rabbit',
+    'Stitch'
   ];
   final List<String> ownedIcons = [];
 
@@ -499,22 +507,22 @@ class _MyHomePageState extends State<MyHomePage> {
         : Theme.of(context).colorScheme.surface;
   }
 
-  
+
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder(
       valueListenable: selectedIndexGlobal,
       builder: (context, val, child) {
         final appState = Provider.of<MyAppState>(context);
-        
+
         return ValueListenableBuilder(
           valueListenable: appState.isRouteRecordingActive,
           builder: (context, isRecording, _) {
             return Scaffold(
               body: _getSelectedPage(selectedIndexGlobal.value),
               // Only show the navigation bar when NOT recording
-              bottomNavigationBar: isRecording 
-                  ? null 
+              bottomNavigationBar: isRecording
+                  ? null
                   : CurvedNavigationBar(
                       backgroundColor: getNavBarBackgroundColor(context),
                       color: getNavBarColor(context),

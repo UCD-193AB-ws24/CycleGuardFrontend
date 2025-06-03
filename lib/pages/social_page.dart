@@ -466,22 +466,16 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
 
         actions: [
           Padding(
-            padding: const EdgeInsets.only(right: 32.0),
+            padding: const EdgeInsets.only(right: 10.0),
             child: Consumer<SocialDataProvider>(
               builder: (context, provider, _) {
-                final isDark = inDarkMode(context);
-
                 return PopupMenuButton<String>(
-                  icon: SvgPicture.asset(
-                    'assets/panda.svg',
-                    height: 30,
-                    width: 30,
-                    colorFilter: ColorFilter.mode(
-                      themedColor(context, Colors.black, Colors.white70),
-                      BlendMode.srcIn,
-                    ),
+                  icon: provider.buildAvatarFromProfile(
+                    context,
+                    provider.myProfile!,
+                    avatarDiameter: 40.0,
                   ),
-                  color: themedColor(context, Colors.white, Colors.grey[900]!),
+                  color: themedColor(context, Colors.white, Colors.grey[800]!),
                   onSelected: (value) {
                     if (value == 'profile') {
                       final myProfile = provider.myProfile;
@@ -618,75 +612,103 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
     );
   }
 
-  void _showIconSelectionModal(BuildContext context, MyAppState appState, UserProfile profile) {
-    bool isDarkMode = inDarkMode(context);
+  void _showIconSelectionModal(
+    BuildContext context,
+    MyAppState appState,
+    UserProfile profile,
+  ) {
+
+    // Compute a foreground tint (for SVGs and text) and a sheet background:
+    final Color fgColor = themedColor(context, Colors.black, Colors.white70);
+    final Color sheetBg = themedColor(context, Colors.white, Colors.grey[700]!);
+
     final allIcons = {...appState.availableIcons, ...appState.ownedIcons}.toList();
 
     showModalBottomSheet(
       context: context,
-      builder: (_) => Container(
-        padding: const EdgeInsets.all(16),
-        height: 300,
-        child: GridView.builder(
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 4,
-            mainAxisSpacing: 10,
-            crossAxisSpacing: 10,
-          ),
-          itemCount: allIcons.length,
-          itemBuilder: (context, index) {
-            final iconName = allIcons[index];
-            return GestureDetector(
-              onTap: () async {
-                setState(() {
-                  _currentIconSelection = iconName;
-                  _hasLocalProfileChanges = true;
-                  appState.selectedIcon = iconName;
-                });
+      backgroundColor: sheetBg,
+      builder: (_) {
+        return Container(
+          padding: const EdgeInsets.all(16),
+          height: 300,
+          // We don't need to set Container color since the sheet itself is sheetBg.
+          child: GridView.builder(
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 4,
+              mainAxisSpacing: 10,
+              crossAxisSpacing: 10,
+            ),
+            itemCount: allIcons.length,
+            itemBuilder: (context, index) {
+              final iconName = allIcons[index];
 
-                final updatedProfile = UserProfile(
-                  username: profile.username,
-                  displayName: profile.displayName,
-                  bio: profile.bio,
-                  isPublic: isPublic,
-                  isNewAccount: false,
-                  profileIcon: iconName,
-                );
+              return GestureDetector(
+                onTap: () async {
+                  setState(() {
+                    _currentIconSelection = iconName;
+                    _hasLocalProfileChanges = true;
+                    appState.selectedIcon = iconName;
+                  });
 
-                try {
-                  await UserProfileAccessor.updateOwnProfile(updatedProfile);
-                } catch (error) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text("Failed to update profile icon: $error")),
+                  final updatedProfile = UserProfile(
+                    username: profile.username,
+                    displayName: profile.displayName,
+                    bio: profile.bio,
+                    isPublic: profile.isPublic,
+                    isNewAccount: false,
+                    profileIcon: iconName,
                   );
-                }
 
-                Navigator.pop(context); // Close the modal
-              },
-              child: Column(
-                children: [
-                  SvgPicture.asset(
-                    'assets/$iconName.svg',
-                    height: 50,
-                    width: 50,
-                    colorFilter: (isDarkMode && !['pig', 'panda', 'tiger', 'bear', 'cow'].contains(iconName))
-                        ? const ColorFilter.mode(Colors.white70, BlendMode.srcIn)
-                        : null,
-                  ),
-                  SizedBox(height: 4),
-                  Text(iconName, style: TextStyle(fontSize: 12)),
-                ],
-              ),
-            );
-          },
-        ),
-      ),
+                  try {
+                    await UserProfileAccessor.updateOwnProfile(updatedProfile);
+                  } catch (error) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          "Failed to update profile icon: $error",
+                          style: TextStyle(color: fgColor),
+                        ),
+                        backgroundColor: sheetBg,
+                      ),
+                    );
+                  }
+
+                  Navigator.pop(context); // Close the modal
+                },
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SvgPicture.asset(
+                      'assets/$iconName.svg',
+                      height: 75,
+                      width: 75,
+                      // Tint every icon to fgColor when in dark mode.
+                      // If you have specific full-color SVGs you want un-tinted,
+                      // you can add their names to a “noTint” list as before.
+                      //colorFilter: ColorFilter.mode(fgColor, BlendMode.srcIn),
+                    ),
+                    //const SizedBox(height: 4),
+                    Text(
+                      iconName,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: fgColor,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        );
+      },
     );
   }
 
-  /// **1️⃣ Profile Tab - View & Edit Profile**
-Widget _buildProfileTab() {
-  bool isDarkMode = inDarkMode(context);
+    /// **1️⃣ Profile Tab - View & Edit Profile**
+  Widget _buildProfileTab() {
+    bool isDarkMode = inDarkMode(context);
 
     return FutureBuilder<UserProfile>(
       future: _profileFuture,
@@ -970,14 +992,8 @@ Widget _buildProfileTab() {
                       margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                       color: themedColor(context, Colors.white, Colors.grey[850]!),
                       child: ListTile(
-                        leading: CircleAvatar(
-                          child: Text(
-                            user.length >= 2
-                                ? user.substring(0, 2).toUpperCase()
-                                : user[0].toUpperCase(),
-                          ),
-                        ),
-
+                        leading: Provider.of<SocialDataProvider>(context, listen: false)
+                          .buildAvatarFromCache(context, user, avatarDiameter: 40.0),
                         title: Text(user,
                             style: TextStyle(
                               color: themedColor(context, Colors.black, Colors.white),
@@ -1149,18 +1165,19 @@ Widget _buildProfileTab() {
             itemCount: friends.length,
             itemBuilder: (context, index) {
               final friend = friends[index];
+
+              // buildAvatarFromCache never returns null now:
+              final avatarWidget = provider.buildAvatarFromCache(
+                context,
+                friend,
+                avatarDiameter: 40.0,
+              );
+
               return Card(
                 color: themedColor(context, Colors.white, Colors.grey[850]!),
                 margin: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 child: ListTile(     
-                //tileColor: themedColor(context, Colors.white, Colors.grey[900]!),
-                leading: CircleAvatar(
-                    child: Text(
-                      friend.length >= 2
-                      ? friend.substring(0, 2).toUpperCase()
-                      : friend[0].toUpperCase(),
-                    ),
-                  ),
+                  leading: avatarWidget,
                   trailing: IconButton(
                     icon: Icon(Icons.emoji_events,
                         color: Theme.of(context).colorScheme.primary),
@@ -1296,173 +1313,7 @@ Widget _buildProfileTab() {
         }
       },
     );
-  }
-
- /* Widget _buildFriendsTab() {
-    return FutureBuilder<FriendsList>(
-      future: FriendsListAccessor.getFriendsList(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator());
-        } else if (snapshot.hasError) {
-          return Center(child: Text('Failed to load friends'));
-        } else if (!snapshot.hasData || snapshot.data!.friends.isEmpty) {
-          return Center(child: Text('You have no friends yet 😞'));
-        } else {
-          final List<String> friends = snapshot.data!.friends;
-          return ListView.builder(
-            itemCount: friends.length,
-            itemBuilder: (context, index) {
-              final friend = friends[index];
-
-              return Card(
-                margin: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                child: ListTile(
-                  leading: CircleAvatar(child: Text(friend[0].toUpperCase())),
-                  //subtitle: Text('Cycling buddy 🚴'),
-                  trailing: IconButton(
-                    icon: Icon(Icons.emoji_events,
-                        color: Theme.of(context).colorScheme.primary),
-                    tooltip: 'Show Leaderboard Position',
-                    onPressed: () => _showFriendRanking(context, friend),
-                  ),
-                  title: GestureDetector(
-                    onTap: () async {
-                      var userInfo =
-                      await UserProfileAccessor.getPublicProfile(friend);
-                      var userDisplayName =
-                      userInfo.displayName.isNotEmpty
-                          ? userInfo.displayName
-                          : userInfo.username;
-                      var userBio =
-                      userInfo.bio.isNotEmpty ? userInfo.bio : "";
-                      var userIcon = userInfo.profileIcon;
-                      Provider.of<WeekHistoryProvider>(context,
-                          listen: false)
-                          .fetchUserWeekHistory(friend);
-                      final weekHistory =
-                      Provider.of<WeekHistoryProvider>(context,
-                          listen: false);
-
-                      showDialog(
-                        context: context,
-                        builder: (context) {
-                          return AlertDialog(
-                            insetPadding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 40),
-                            contentPadding: const EdgeInsets.all(16),
-                            title: Text(
-                              "$friend's Profile",
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 20,
-                                  color: Colors.black),
-                              textAlign: TextAlign.center,
-                            ),
-                            content: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                SvgPicture.asset(
-                                  'assets/$userIcon.svg',
-                                  height: 100,
-                                  width: 100,
-                                ),
-                                const SizedBox(height: 16),
-                                Text(
-                                  userDisplayName,
-                                  style: const TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.black),
-                                ),
-                                Text(
-                                  "$userBio\n",
-                                  style: const TextStyle(fontSize: 20,
-                                      color: Colors.black),
-                                ),
-                                const SizedBox(height: 16),
-                                Text(
-                                  'Average Ride this Week',
-                                  style: const TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.black),
-                                  textAlign: TextAlign.center,
-                                ),
-                                const SizedBox(height: 16),
-                                Row(
-                                  mainAxisAlignment:
-                                  MainAxisAlignment.spaceEvenly,
-                                  children: [
-                                    Flexible(
-                                      child: _buildStatCard(
-                                        Icons.timer,
-                                        'Time',
-                                        '${weekHistory.averageTime.round()} min',
-                                        Colors.blueAccent,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Flexible(
-                                      child: _buildStatCard(
-                                        Icons.directions_bike,
-                                        'Distance',
-                                        '${weekHistory.averageDistance.round()} mi',
-                                        Colors.orangeAccent,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Flexible(
-                                      child: _buildStatCard(
-                                        Icons.local_fire_department,
-                                        'Calories',
-                                        '${weekHistory.averageCalories.round()} cal',
-                                        Colors.redAccent,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 16),
-                                const Padding(
-                                  padding:  EdgeInsets.only(top: 8),
-                                  child: Text(
-                                    "This user is your friend.",
-                                    style: TextStyle(
-                                        color: Colors.green,
-                                        fontWeight: FontWeight.bold),
-                                  ),
-                                )
-                              ],
-                            ),
-                            actions: [
-
-                              TextButton(
-                                onPressed: () => Navigator.pop(context),
-                                child: const Text(
-                                  "Close",
-                                  style: TextStyle(fontSize: 16),
-                                ),
-                              ),
-                            ],
-                          );
-                        },
-                      );
-                    },
-                    child: Text(
-                      friend,
-                      style: TextStyle(
-                          color: Colors.black),
-                    ),
-                  ),
-                ),
-              );
-            },
-          );
-        }
-      },
-    );
-  }
-*/
+  } 
 }
 
 class UserDailyGoalsSection extends StatelessWidget {
@@ -1699,6 +1550,7 @@ class _RequestsTabState extends State<RequestsTab> {
           itemCount: pending.length,
           itemBuilder: (context, index) {
             final requester = pending[index];
+            //final requesterProfile = Provider.of<SocialDataProvider>(context, listen: false).(requester);
             return Card(
               margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               color: themedColor(context, Colors.white, Colors.grey[850]!),

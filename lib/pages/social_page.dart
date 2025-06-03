@@ -466,10 +466,12 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
 
         actions: [
           Padding(
-            padding: const EdgeInsets.only(right: 10.0),
+            padding: const EdgeInsets.only(right: 15.0),
             child: Consumer<SocialDataProvider>(
               builder: (context, provider, _) {
                 return PopupMenuButton<String>(
+                  iconSize: 40.0,
+                  padding: const EdgeInsets.all(0),
                   icon: provider.buildAvatarFromProfile(
                     context,
                     provider.myProfile!,

@@ -271,7 +271,7 @@ class MyAppState extends ChangeNotifier {
     'Elephant',
     'Gunrock',
     'Koala',
-    'Penguin',
+    // 'Penguin',
     'Rabbit',
     'Stitch'
   ];

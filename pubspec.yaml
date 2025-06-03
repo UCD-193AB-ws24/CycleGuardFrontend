@@ -134,12 +134,28 @@ flutter:
     - assets/panda.svg
     - assets/pig.svg
     - assets/tiger.svg
+    - assets/Cat.svg
+    - assets/Dog.svg
+    - assets/Elephant.svg
+    - assets/Gunrock.svg
+    - assets/Koala.svg
+#    - assets/Penguin.svg
+    - assets/Rabbit.svg
+    - assets/Stitch.svg
     - assets/cow.svg
     - assets/bear.png
     - assets/panda.png
     - assets/pig.png
     - assets/tiger.png
     - assets/cow.png
+    - assets/Cat.png
+    - assets/Dog.png
+    - assets/Elephant.png
+    - assets/Gunrock.png
+    - assets/Koala.png
+    - assets/Penguin.png
+    - assets/Rabbit.png
+    - assets/Stitch.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

@@ -265,7 +265,15 @@ class MyAppState extends ChangeNotifier {
     'panda',
     'pig',
     'cow',
-    'tiger'
+    'tiger',
+    'Cat',
+    'Dog',
+    'Elephant',
+    'Gunrock',
+    'Koala',
+    'Penguin',
+    'Rabbit',
+    'Stitch'
   ];
   final List<String> ownedIcons = [];
 

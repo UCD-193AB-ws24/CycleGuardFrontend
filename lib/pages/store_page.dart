@@ -296,27 +296,29 @@ SingleChildScrollView(
             style: TextStyle(color: Colors.black),
           ),
           content: purchasableIcons.isNotEmpty
-              ? Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: purchasableIcons.map((iconName) {
-                    final iconPath = 'assets/$iconName.svg';
-                    return ListTile(
-                      leading: SvgPicture.asset(
-                        iconPath,
-                        width: 40,
-                        height: 40,
-                        placeholderBuilder: (context) => CircularProgressIndicator(),
-                      ),
-                      title: Text(iconName),
-                      onTap: () async {
-                        final success = await appState.purchaseIcon(iconName);
-                        if (success) {
-                          Navigator.pop(context);
-                        }
-                      },
-                    );
-                  }).toList(),
-                )
+              ? SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: purchasableIcons.map((iconName) {
+                final iconPath = 'assets/$iconName.svg';
+                return ListTile(
+                  leading: SvgPicture.asset(
+                    iconPath,
+                    width: 40,
+                    height: 40,
+                    placeholderBuilder: (context) => CircularProgressIndicator(),
+                  ),
+                  title: Text(iconName),
+                  onTap: () async {
+                    final success = await appState.purchaseIcon(iconName);
+                    if (success) {
+                      Navigator.pop(context);
+                    }
+                  },
+                );
+              }).toList(),
+            ),
+          )
               : Text("No more icons available!"),
         );
       },

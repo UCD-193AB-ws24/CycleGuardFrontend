@@ -11,9 +11,9 @@ import 'package:cycle_guard_app/utils/ui_theme_helpers.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import 'package:cycle_guard_app/providers/social_data_provider.dart';
-import '../auth/auth_util.dart';
-import '../data/week_history_provider.dart';
-import '../main.dart';
+import 'package:cycle_guard_app/auth/auth_util.dart';
+import 'package:cycle_guard_app/data/week_history_provider.dart';
+import 'package:cycle_guard_app/main.dart';
 import 'package:showcaseview/showcaseview.dart';
 
 import 'package:cycle_guard_app/pages/packs_page.dart';
@@ -469,22 +469,37 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
             padding: const EdgeInsets.only(right: 15.0),
             child: Consumer<SocialDataProvider>(
               builder: (context, provider, _) {
+                // ← If myProfile is still null, show a simple placeholder circle:
+                if (provider.myProfile == null) {
+                  return CircleAvatar(
+                    radius: 20.0, // half of avatarDiameter=40
+                    backgroundColor: themedColor(
+                      context,
+                      Colors.grey.shade300,
+                      Colors.grey.shade700,
+                    ),
+                    child: null,
+                  );
+                }
+
+                // Now that myProfile is non-null, it’s safe to do “!”
+                final me = provider.myProfile!;
                 return PopupMenuButton<String>(
                   iconSize: 40.0,
                   padding: const EdgeInsets.all(0),
                   icon: provider.buildAvatarFromProfile(
                     context,
-                    provider.myProfile!,
+                    me,
                     avatarDiameter: 40.0,
                   ),
                   color: themedColor(context, Colors.white, Colors.grey[800]!),
                   onSelected: (value) {
-                    if (value == 'profile') {
+                    if (value == 'My profile') {
                       final myProfile = provider.myProfile;
                       if (myProfile != null) {
                         _showEditProfileDialog(myProfile);
                       } else {
-                        print("myProfile is null!");
+                        print("my Profile is null!");
                       }
                     } else if (value == 'settings') { 
                       Navigator.push(
@@ -497,14 +512,14 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
                   },
                   itemBuilder: (context) => [
                     PopupMenuItem(
-                      value: 'profile',
+                      value: 'My profile',
                       child: Row(
                         children: [
                           Icon(Icons.person,
                               color: themedColor(context, Colors.black, Colors.white70)),
                           SizedBox(width: 8),
                           Text(
-                            'Profile',
+                            'My Profile',
                             style: TextStyle(
                               color: themedColor(context, Colors.black, Colors.white70),
                             ),
@@ -1000,6 +1015,12 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
                             style: TextStyle(
                               color: themedColor(context, Colors.black, Colors.white),
                             )),
+                        onTap: () {
+                          print("Tapped on $user");
+                          if (!social.isUserPrivate(user) || social.userExists(user)) {
+                            _showFriendRanking(context, user);
+                          }
+                        },
                         trailing: trailingWidget,
                       ),
                     );
@@ -1516,7 +1537,7 @@ class _RequestsTabState extends State<RequestsTab> {
   @override
   void initState() {
     super.initState();
-    //_loadFriendRequests(); // Fetch friend requests on init
+    _loadFriendRequests(); // Fetch friend requests on init
   }
 
   Future<void> _loadFriendRequests() async {
@@ -1575,11 +1596,31 @@ class _RequestsTabState extends State<RequestsTab> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     TextButton(
-                      onPressed: () => social.acceptFriendRequest,
+                      onPressed: () async {
+                        setState(() {
+                          _requests.remove(requester); // Immediately remove from UI
+                        });
+                        try {
+                          await social.acceptFriendRequest(requester);
+                          } catch (e) {
+                            // If the request fails, optionally re-add:
+                            setState(() {
+                              _requests.add(requester);
+                            });
+                            ScaffoldMessenger.of(ctx).showSnackBar(
+                              SnackBar(content: Text("Failed to accept request: $e")),
+                            );
+                            return;
+                          }
+                        await _loadFriendRequests(); // This will silently do nothing if already removed, or fix if needed
+                      },
                       child: const Text("Accept"),
                     ),
                     TextButton(
-                      onPressed: () => social.rejectFriendRequest(requester),
+                      onPressed: () async {
+                        await social.rejectFriendRequest(requester);
+                        await _loadFriendRequests();
+                      },
                       child: const Text("Reject"),
                     ),
                   ],

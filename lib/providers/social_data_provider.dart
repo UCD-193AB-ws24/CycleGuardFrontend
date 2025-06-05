@@ -40,7 +40,9 @@ class SocialDataProvider extends ChangeNotifier {
     final names = await UserProfileAccessor.fetchAllUsernames();
     final fl = await FriendsListAccessor.getFriendsList();
     final fr = await FriendRequestsListAccessor.getFriendRequestList();
+    
     final me = await UserProfileAccessor.getOwnProfile();
+    
     _myProfile = me;
 
     _myUsername = me.username;
@@ -66,6 +68,7 @@ class SocialDataProvider extends ChangeNotifier {
   }
 
   Future<void> acceptFriendRequest(String username) async {
+    print("Accepting friend request from $username");
     await FriendRequestsListAccessor.acceptFriendRequest(username);
     _pendingSent.add(username);
     notifyListeners();

@@ -1017,7 +1017,7 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
                             )),
                         onTap: () {
                           print("Tapped on $user");
-                          if (!social.isUserPrivate(user) || social.userExists(user)) {
+                          if (!social.isUserPrivate(user) && social.userExists(user)) {
                             _showFriendRanking(context, user);
                           }
                         },
@@ -1527,20 +1527,26 @@ class UserDailyGoalsSection extends StatelessWidget {
 
 class RequestsTab extends StatefulWidget {
   @override
-  _RequestsTabState createState() => _RequestsTabState();
+  //_RequestsTabState createState() => _RequestsTabState();
+  State<RequestsTab> createState() => _RequestsTabState();
 }
 
 class _RequestsTabState extends State<RequestsTab> {
   List<String> _requests = [];
   bool _isLoading = true;
+  late SocialDataProvider social;
 
   @override
   void initState() {
     super.initState();
-    _loadFriendRequests(); // Fetch friend requests on init
+    social = Provider.of<SocialDataProvider>(context, listen: false);
+    _loadFriendRequests();
   }
 
   Future<void> _loadFriendRequests() async {
+    setState(() {
+      _isLoading = true;
+    });
     try {
       final friendRequestList = await FriendRequestsListAccessor.getFriendRequestList();
       if (!mounted) return;
@@ -1549,7 +1555,6 @@ class _RequestsTabState extends State<RequestsTab> {
         _isLoading = false;
       });
     } catch (e) {
-      print("Error loading friend requests: $e");
       if (!mounted) return;
       setState(() {
         _isLoading = false;
@@ -1557,77 +1562,84 @@ class _RequestsTabState extends State<RequestsTab> {
     }
   }
 
+  Future<void> _handleAcceptRequest(String requester) async {
+    setState(() {
+      _requests.remove(requester);
+    });
+    try {
+      await social.acceptFriendRequest(requester);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _requests.add(requester);
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to accept request: $e")),
+      );
+      return;
+    }
+    await _loadFriendRequests();
+  }
 
+  Future<void> _handleRejectRequest(String requester) async {
+    setState(() {
+      _requests.remove(requester);
+    });
+    try {
+      await social.rejectFriendRequest(requester);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _requests.add(requester);
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to reject request: $e")),
+      );
+      return;
+    }
+    await _loadFriendRequests();
+  }
 
   @override
   Widget build(BuildContext context) {
-    bool isDarkMode = inDarkMode(context);
+    final isDarkMode = inDarkMode(context);
 
-    return Consumer<SocialDataProvider>(
-      builder: (ctx, social, _) {
-        final pending = social.pendingReceived;
-        if (pending.isEmpty) {
-          return Center(child: Text("No pending friend requests."));
-        }
-        return ListView.builder(
-          itemCount: pending.length,
-          itemBuilder: (context, index) {
-            final requester = pending[index];
-            //final requesterProfile = Provider.of<SocialDataProvider>(context, listen: false).(requester);
-            return Card(
-              margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-              color: themedColor(context, Colors.white, Colors.grey[850]!),
-              child: ListTile(
-                leading: CircleAvatar(child: Text(requester[0].toUpperCase())),
-                title: Text(
-                  requester,
-                  style: TextStyle(
-                    color: isDarkMode ? Colors.white70 : null,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                subtitle: Text(
-                  "Sent you a friend request",
-                  style: TextStyle(
-                    color: isDarkMode ? Colors.white70 : null,
-                  ),
-                ),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    TextButton(
-                      onPressed: () async {
-                        setState(() {
-                          _requests.remove(requester); // Immediately remove from UI
-                        });
-                        try {
-                          await social.acceptFriendRequest(requester);
-                          } catch (e) {
-                            // If the request fails, optionally re-add:
-                            setState(() {
-                              _requests.add(requester);
-                            });
-                            ScaffoldMessenger.of(ctx).showSnackBar(
-                              SnackBar(content: Text("Failed to accept request: $e")),
-                            );
-                            return;
-                          }
-                        await _loadFriendRequests(); // This will silently do nothing if already removed, or fix if needed
-                      },
-                      child: const Text("Accept"),
-                    ),
-                    TextButton(
-                      onPressed: () async {
-                        await social.rejectFriendRequest(requester);
-                        await _loadFriendRequests();
-                      },
-                      child: const Text("Reject"),
-                    ),
-                  ],
-                ),
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_requests.isEmpty) {
+      return Center(child: Text("No pending requests"));
+    }
+    return ListView.builder(
+      itemCount: _requests.length,
+      itemBuilder: (context, index) {
+        final requester = _requests[index];
+        return Card(
+          margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          color: themedColor(context, Colors.white, Colors.grey[850]!),
+          child: ListTile(
+            leading: social.buildAvatarFromCache(context, requester, avatarDiameter: 40.0),
+            title: Text(
+              requester,
+              style: TextStyle(
+                color: isDarkMode ? Colors.white70 : null,
+                fontWeight: FontWeight.bold,
               ),
-            );
-          },
+            ),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextButton(
+                  onPressed: () => _handleAcceptRequest(requester),
+                  child: const Text("Accept"),
+                ),
+                TextButton(
+                  onPressed: () => _handleRejectRequest(requester),
+                  child: const Text("Reject"),
+                ),
+              ],
+            ),
+          ),
         );
       },
     );
